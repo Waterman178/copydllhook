@@ -30,6 +30,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             OutputDebugStringEx("Discovery process!\r\n");
             return 1;
 	    }
+		OutputDebugStringEx("Is a process!\r\n");
 	    bhook = true;
 		StartHook();
 		break;

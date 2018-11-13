@@ -185,9 +185,9 @@ static HANDLE WINAPI NewCreateFileW(
 	_In_     DWORD                 dwFlagsAndAttributes,
 	_In_opt_ HANDLE                hTemplateFile)
 {
-
+	HANDLE keyHan = nullptr;
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0) {
-		HANDLE keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		 keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %s", keyHan, lpFileName);
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
@@ -198,20 +198,26 @@ static HANDLE WINAPI NewCreateFileW(
 			readfile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
 			/*setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN)*/;
 			//OutputDebugStringEx("******HOOK: fileHead = %s", fileHead);
-			closeHandle(keyHan);
+			//closeHandle(keyHan);
 			if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 			{
 				OutputDebugStringEx("**************HOOK:sercret file\r\n ");
-				dwDesiredAccess &= ~GENERIC_WRITE;
+				auto Attribute = GetFileAttributesA(reinterpret_cast<LPCSTR>(lpFileName))&FILE_ATTRIBUTE_READONLY;
+				if (Attribute!= FILE_ATTRIBUTE_READONLY)
+				{
+					OutputDebugStringEx("不是只读文件，设置只读属性\r\n ");
+					SetFileAttributesA(reinterpret_cast<LPCSTR>(lpFileName), FILE_ATTRIBUTE_READONLY);
+				}
+				//dwDesiredAccess &= ~GENERIC_WRITE;
 			}
 			delete fileHead;
 		}
 	}
-	HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	//HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 
 	
-	OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW: %s  ,  %d\r\n", lpFileName, ret);
-	return ret;
+	//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW: %s  ,  %d\r\n", lpFileName, ret);
+	return keyHan;
 }
 
 /***********************************************
@@ -797,14 +803,14 @@ Description: 开始所有的HOOK
 ************************************************/
 void __stdcall StartHook()
 {
-		openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
-		openPrinter = OPENPRINTER StartOneHook(WINSPOOL, "OpenPrinterW", NewOpenPrinter);
-		showWindow = SHOWWINDOW StartOneHook(USER32, "ShowWindow", NewShowWindow);
-		setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
-		setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
-		setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);
-		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
-		readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);
+	/*openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
+	openPrinter = OPENPRINTER StartOneHook(WINSPOOL, "OpenPrinterW", NewOpenPrinter);
+	showWindow = SHOWWINDOW StartOneHook(USER32, "ShowWindow", NewShowWindow);
+	setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
+	setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
+	setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
+		//createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
+		/*readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);
 		writeFile = WRITEFILE StartOneHook(KERNEL32, "WriteFile", New_WriteFile);
 		mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
 		mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
@@ -826,7 +832,7 @@ void __stdcall StartHook()
 		getFileAttributesExW = GETFILEATTRIBUTESEXW StartOneHook(KERNEL32, "GetFileAttributesEx", NewGetFileAttributesExW);
 
 		createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
-		createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
+		createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);*/
 		//listenParentProcess(GetCurrentProcessId());
 	//}
 	//else
@@ -849,14 +855,14 @@ void __stdcall EndHook()
 	//if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
 	//{
 		//TODO:进行对文件的结尾信息的分析从而去结束对应的HOOK功能
-		EndOneHook(USER32, openClipboard, NewOpenClipboard);
+		/*EndOneHook(USER32, openClipboard, NewOpenClipboard);
 		EndOneHook(WINSPOOL, openPrinter, NewOpenPrinter);
 		EndOneHook(USER32, showWindow, NewShowWindow);
 		EndOneHook(USER32, setWindowPos, NewSetWindowPos);
 		EndOneHook(USER32, setWindowTextW, NewSetWindowTextW);
-		EndOneHook(USER32, setWindowTextA, NewSetWindowTextA);
-		EndOneHook(KERNEL32, createFileW, NewCreateFileW);
-		EndOneHook(KERNEL32, readfile, NewReadfile);
+		EndOneHook(USER32, setWindowTextA, NewSetWindowTextA);*/
+		//EndOneHook(KERNEL32, createFileW, NewCreateFileW);
+		/*EndOneHook(KERNEL32, readfile, NewReadfile);
 		EndOneHook(KERNEL32, writeFile, New_WriteFile);
 		EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
@@ -877,9 +883,9 @@ void __stdcall EndHook()
 		EndOneHook(KERNEL32, ReadFileScatter, NewReadFileScatter);
 		EndOneHook(KERNELBASE, getFileAttributesExW, NewGetFileAttributesExW);
 		EndOneHook(KERNEL32, createProcessW, NewCreateProcessW);
-		EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
+		EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);*/
 		//EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
-		TerminateProcess(GetCurrentProcess(), 0);
+		//TerminateProcess(GetCurrentProcess(), 0);
 	//}
 	//else
 	//{
