@@ -24,6 +24,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		GetModuleFileNameA(NULL, cIniFileName, sizeof(cIniFileName));
+
 		//char * p = strrchr(cIniFileName,'\\') ;
 		//g_AppPath.Format("%s",cIniFileName);
 	    if (IsOrigProcess(cIniFileName)==NULL)
