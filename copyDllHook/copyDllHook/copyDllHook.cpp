@@ -18,7 +18,51 @@ HANDLE  dochFile = (HANDLE)-1;//wordµÄ¼ÓÃÜÎÄ¼þµÄ¾ä±ú
 HANDLE hMap = ::OpenFileMapping(FILE_MAP_ALL_ACCESS, 0, _T("processMem_FUCK"));
 PVOID pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 
+//void OutputDebugStringExW(const wchar_t *strOutputString, ...)
+//
+//{
+//
+//	va_list vlArgs = NULL;
+//
+//	va_start(vlArgs, strOutputString);
+//
+//	size_t nLen = _vscwprintf(strOutputString, vlArgs) + 1;
+//
+//	wchar_t *strBuffer = new wchar_t[nLen];
+//
+//	_vsnwprintf_s(strBuffer, nLen, nLen, strOutputString, vlArgs);
+//
+//	va_end(vlArgs);
+//
+//	OutputDebugStringW(strBuffer);
+//
+//	delete[] strBuffer;
+//
+//}
 
+
+
+void OutputDebugStringEx(const char *strOutputString, ...)
+
+{
+
+	va_list vlArgs = NULL;
+
+	va_start(vlArgs, strOutputString);
+
+	size_t nLen = _vscprintf(strOutputString, vlArgs) + 1;
+
+	char *strBuffer = new char[nLen];
+
+	_vsnprintf_s(strBuffer, nLen, nLen, strOutputString, vlArgs);
+
+	va_end(vlArgs);
+
+	OutputDebugStringA(strBuffer);
+
+	delete[] strBuffer;
+
+}
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>±»HOOKµÄº¯ÊýµÄÐÂ¹¦ÄÜ<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 /***********************************************
 OpenClipboard´ò¿ª¼ôÇÐ°å
@@ -70,7 +114,7 @@ showWindow()º¯Êý Áí´æÎª¹¦ÄÜ
 static BOOL WINAPI NewShowWindow(HWND hWnd, int nCmdShow)
 {
 	//CopyFileExW
-	//DP2("HOOK  showWindow: hwnd = %d,nCmdShow = %d", hWnd, nCmdShow);
+	//OutputDebugStringEx("HOOK  showWindow: hwnd = %d,nCmdShow = %d", hWnd, nCmdShow);
 	return showWindow(hWnd, nCmdShow);
 }
 /***********************************************
@@ -87,7 +131,7 @@ static BOOL WINAPI NewSetWindowPos(_In_     HWND hWnd,//ÔÚzÐòÖÐµÄÎ»ÓÚ±»ÖÃÎ»µÄ´°¿
 	)
 {
 	
-	//DP3("HOOK  setWindow: hwnd = %d,nCmdShow = %d ,uFlag = %d", hWnd, hWndInsertAfter, uFlags);
+	//OutputDebugStringEx("HOOK  setWindow: hwnd = %d,nCmdShow = %d ,uFlag = %d", hWnd, hWndInsertAfter, uFlags);
 	return setWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
 }
 /***********************************************
@@ -97,25 +141,25 @@ SetWindowTextW()º¯Êý  SetWindowTextA()º¯Êý
 static BOOL WINAPI NewSetWindowTextW(HWND hwnd, //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä±ú
 	LPCTSTR lpString)//Ö¸ÏòÒ»¸ö¿Õ½áÊøµÄ×Ö·û´®µÄÖ¸Õë£¬¸Ã×Ö·û´®½«×÷Îª´°¿Ú»ò¿Ø¼þµÄÐÂÎÄ±¾
 {
-	//DP2("HOOK  setWindowW: hwnd = %d,nCmdShow = %s", hwnd, lpString);
+	//OutputDebugStringEx("HOOK  setWindowW: hwnd = %d,nCmdShow = %s", hwnd, lpString);
 	CString otherSave = _T("Áí´æÎª");
 	if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
 	{
-		//DP0("²âÊÔ:return False>>>Áí´æÎª ");
+		//OutputDebugStringEx("²âÊÔ:return False>>>Áí´æÎª ");
 		//CloseWindow(hwnd);
 		SendMessage(hwnd, WM_CLOSE, 0, 0);
 	}
 	otherSave = _T("·¢²¼Îª PDF »ò XPS");
 	if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
 	{
-		//DP0("²âÊÔ:return False>>>Áí´æÎª ");
+		//OutputDebugStringEx("²âÊÔ:return False>>>Áí´æÎª ");
 		//CloseWindow(hwnd);
 		SendMessage(hwnd, WM_CLOSE, 0, 0);
 	}
 	otherSave = _T("±£´æ(&S)");
 	if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
 	{
-		//DP0("HOOK²âÊÔ:return False>>>±£´æ ");
+		//OutputDebugStringEx("HOOK²âÊÔ:return False>>>±£´æ ");
 		//CloseWindow(hwnd);
 		return setWindowTextW(hwnd, NULL);
 	}
@@ -125,7 +169,7 @@ static BOOL WINAPI NewSetWindowTextW(HWND hwnd, //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä
 static BOOL WINAPI NewSetWindowTextA(HWND hwnd, //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä±ú
 	LPCTSTR lpString)//Ö¸ÏòÒ»¸ö¿Õ½áÊøµÄ×Ö·û´®µÄÖ¸Õë£¬¸Ã×Ö·û´®½«×÷Îª´°¿Ú»ò¿Ø¼þµÄÐÂÎÄ±¾
 {
-	//DP2("HOOK  setWindowA: hwnd = %d,nCmdShow = %s", hwnd, lpString);
+	//OutputDebugStringEx("HOOK  setWindowA: hwnd = %d,nCmdShow = %s", hwnd, lpString);
 	return setWindowTextA(hwnd, lpString);
 }
 
@@ -144,7 +188,7 @@ static HANDLE WINAPI NewCreateFileW(
 
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0) {
 		HANDLE keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		//DP2(">>>>>>>>HOOK THE NewCreateFileW %d %s", keyHan, lpFileName);
+		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %s", keyHan, lpFileName);
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN];
@@ -153,11 +197,11 @@ static HANDLE WINAPI NewCreateFileW(
 			setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
 			readfile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
 			/*setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN)*/;
-			//DP1("******HOOK: fileHead = %s", fileHead);
+			//OutputDebugStringEx("******HOOK: fileHead = %s", fileHead);
 			closeHandle(keyHan);
 			if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 			{
-				DP0("**************HOOK:sercret file ");
+				OutputDebugStringEx("**************HOOK:sercret file\r\n ");
 				dwDesiredAccess &= ~GENERIC_WRITE;
 			}
 			delete fileHead;
@@ -166,7 +210,7 @@ static HANDLE WINAPI NewCreateFileW(
 	HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 
 	
-	DP2(">>>>>>>>HOOK THE NewCreateFileW: %s  ,  %d", lpFileName, ret);
+	OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW: %s  ,  %d\r\n", lpFileName, ret);
 	return ret;
 }
 
@@ -180,7 +224,7 @@ static int WINAPI NewReadfile(
 	_Out_opt_   LPDWORD      lpNumberOfBytesRead,
 	_Inout_opt_ LPOVERLAPPED lpOverlapped)
 {
-	DP0(">>>>>>>HOOK:   readfile function !!!");
+	OutputDebugStringEx(">>>>>>>HOOK:   readfile function !!!\r\n");
 	int Ret = 0;
 	DWORD readLen;
 	LPVOID fileHead = new char[FILE_SIGN_LEN];
@@ -189,14 +233,14 @@ static int WINAPI NewReadfile(
 	setFilePointer(hFile, -FILE_SIGN_LEN, NULL, FILE_END);
 	readfile(hFile, fileHead, FILE_SIGN_LEN, &readLen, lpOverlapped);
 	setFilePointer(hFile, currentPointer, NULL, FILE_BEGIN);
-	DP3("$$$$$$$$$HOOK : THE FILE currentPointer = %d,   nNumberOfBytesToRead=%d,getfilesize=%d", currentPointer, nNumberOfBytesToRead, getFileSize(hFile, NULL));
+	OutputDebugStringEx("$$$$$$$$$HOOK : THE FILE currentPointer = %d,   nNumberOfBytesToRead=%d,getfilesize=%d\r\n", currentPointer, nNumberOfBytesToRead, getFileSize(hFile, NULL));
 	if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 	{
 		dochFile = hFile;
 		if (currentPointer + nNumberOfBytesToRead > NewGetFileSize(hFile, NULL))
 		{
 
-			DP0(">>>>>>>HOOK:  currentPointer + nNumberOfBytesToRead > getFileSize(hFile, NULL) - 10!!!");
+			OutputDebugStringEx(">>>>>>>HOOK:  currentPointer + nNumberOfBytesToRead > getFileSize(hFile, NULL) - 10!!!\r\n");
 			DWORD  temp = NewGetFileSize(hFile, NULL) - currentPointer;
 			if (temp > 0)
 			{
@@ -204,7 +248,7 @@ static int WINAPI NewReadfile(
 			}
 		}
 		
-		DP2("$$$$$********$$$$$ HOOK!!!!!currentPointer = %d,nNumberOfBytesToRead=%d", currentPointer, nNumberOfBytesToRead);
+		OutputDebugStringEx("$$$$$********$$$$$ HOOK!!!!!currentPointer = %d,nNumberOfBytesToRead=%d\r\n", currentPointer, nNumberOfBytesToRead);
 		Ret = readfile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 		for (int i = 0; i < *lpNumberOfBytesRead; i++) {
 			((char *)lpBuffer)[i] ^= 'a';
@@ -219,7 +263,7 @@ static int WINAPI NewReadfile(
 		Ret = readfile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 	}
 	delete fileHead;
-	DP1(">>>>>>>HOOK:::  Readfile  Ret = %d", Ret);
+	OutputDebugStringEx(">>>>>>>HOOK:::  Readfile  Ret = %d\r\n", Ret);
 	return Ret;
 }
 
@@ -232,7 +276,7 @@ static BOOL WINAPI New_WriteFile(
 	LPDWORD lpNumberOfBytesWritten,
 	LPOVERLAPPED lpOverlapped)
 {
-	//DP2(">>>>>>>>HOOK THE WRITEFILE hFile=%d,dochFile=%d", hFile, dochFile);
+	//OutputDebugStringEx(">>>>>>>>HOOK THE WRITEFILE hFile=%d,dochFile=%d", hFile, dochFile);
 
 		// char *aa = new char[nNumberOfBytesToRead];
 		//rc4(FILE_SIGN, FILE_SIGN_LEN, (char *)lpBuffer, nNumberOfBytesToWrite, (char *)lpBuffer);
@@ -252,7 +296,7 @@ static LPVOID WINAPI NewMapViewOfFile(
 	)
 {
 
-	DP1(">>>>>>>>HOOK THE MapViewOfFile buf %d ", hFileMappingObject);
+	OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
 
 	LPVOID pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);		
 	LPVOID Ret = pMsg;
@@ -266,7 +310,7 @@ static LPVOID WINAPI NewMapViewOfFile(
 		{
 			if (hFileMappingObject == *map_ite)
 			{
-				DP1("@@@@@@@@HOOK: THIS IS A SECRET FILE!!!!  dwNumberOfBytesToMap = %d", dwNumberOfBytesToMap);
+				OutputDebugStringEx("@@@@@@@@HOOK: THIS IS A SECRET FILE!!!!  dwNumberOfBytesToMap = %d \r\n", dwNumberOfBytesToMap);
 				char *aa = new char[dwNumberOfBytesToMap];
 				int i = 0;
 				for (; i < (dwNumberOfBytesToMap - 10); i++) {
@@ -294,9 +338,9 @@ static LPVOID WINAPI NewMapViewOfFileEx(
 {
 	//char* buf = (char *)mapViewOfFileEx(hFileMappingObject, dwDesiredAccess, 0, 30, 30, lpBaseAddress);
 
-	//DP1(">>>>>>>>HOOK THE MapViewOfFileEx buf = %s",buf);
-//	DP3("hFileMappingObject = %d,dwDesiredAccess=%d,dwFileOffsetHigh=%d", hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh);
-//	DP3("dwFileOffsetLow = %d,dwNumberOfBytesToMap=%d,lpBaseAddress=%d", dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
+	//OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFileEx buf = %s",buf);
+//	OutputDebugStringEx("hFileMappingObject = %d,dwDesiredAccess=%d,dwFileOffsetHigh=%d", hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh);
+//	OutputDebugStringEx("dwFileOffsetLow = %d,dwNumberOfBytesToMap=%d,lpBaseAddress=%d", dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
 	return mapViewOfFileEx(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
 }
 /***********************************************
@@ -310,7 +354,7 @@ static HANDLE WINAPI NewCreateFileMapping(
 	_In_ DWORD dwMaximumSizeLow,
 	_In_opt_ LPCTSTR lpName)
 {
-	DP1(">>>>>>>>HOOK THE CreateFileMapping %d", hFile);
+	OutputDebugStringEx(">>>>>>>>HOOK THE CreateFileMapping %d\r\n", hFile);
 	HANDLE fileMap = createFileMapping(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 	DWORD readLen;
 	LPVOID fileHead = new char[FILE_SIGN_LEN];
@@ -319,10 +363,10 @@ static HANDLE WINAPI NewCreateFileMapping(
 	setFilePointer(hFile, -FILE_SIGN_LEN, NULL, FILE_END);
 	readfile(hFile, fileHead, FILE_SIGN_LEN, &readLen, NULL);
 	setFilePointer(hFile, currentPointer, NULL, FILE_BEGIN);
-	//DP1("******HOOK: fileHead = %s", fileHead);
+	//OutputDebugStringEx("******HOOK: fileHead = %s", fileHead);
 	if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 	{
-		DP0("**************HOOK:sercret file ");
+		OutputDebugStringEx("**************HOOK:sercret file \r\n");
 		MAPHAD_list.push_back(fileMap);
 	}
 	delete fileHead;
@@ -336,8 +380,8 @@ static HANDLE WINAPI NewOpenFileMappingW(
 	_In_ BOOL    bInheritHandle,
 	_In_ LPCTSTR lpName)
 {
-	DP0(">>>>>>>>HOOK THE OpenFileMappingW");
-	DP3(">HOOK< dwDesiredAccess = %d,bInheritHandle=%d,lpName=%s", dwDesiredAccess, bInheritHandle, lpName);
+	OutputDebugStringEx(">>>>>>>>HOOK THE OpenFileMappingW\r\n");
+	OutputDebugStringEx(">HOOK< dwDesiredAccess = %d,bInheritHandle=%d,lpName=%s\r\n", dwDesiredAccess, bInheritHandle, lpName);
 	return openFileMappingW(dwDesiredAccess, bInheritHandle, lpName);
 }
 /***********************************************
@@ -364,7 +408,7 @@ static DWORD WINAPI NewSetFilePointer(
 	_In_        DWORD  dwMoveMethod
 	)
 {
-	DP1("$$$$$>>>>>   3   HOOK:  THE SetFilePointer function !!!!,lDistanceToMove = %d", lpDistanceToMoveHigh);
+	OutputDebugStringEx("$$$$$>>>>>   3   HOOK:  THE SetFilePointer function !!!!,lDistanceToMove = %d\r\n", lpDistanceToMoveHigh);
 	if (dwMoveMethod == FILE_END && hFile == dochFile)
 	{	
 		lDistanceToMove -= FILE_SIGN_LEN;
@@ -379,7 +423,7 @@ static BOOL WINAPI NewGetFileInformationByHandle(
 	_In_  HANDLE                       hFile,
 	_Out_ LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
 {
-	DP1("@@@@@@@@@@HOOK:  THE GETFILEINFORMATIONBYHANDLE FUNCTION !!     %d",lpFileInformation->dwFileAttributes);
+	OutputDebugStringEx("@@@@@@@@@@HOOK:  THE GETFILEINFORMATIONBYHANDLE FUNCTION !!     %d\r\n",lpFileInformation->dwFileAttributes);
 	
 	BOOL Ret = getFileInformationByHandle(hFile, lpFileInformation);
 	//lpFileInformation->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
@@ -393,7 +437,7 @@ static DWORD WINAPI NewGetFileAttributesW(
 {
 	DWORD Ret = getFileAttributesW(lpFileName);
 
-	//DP2("@@@@@@@@@HOOK: GetFileAttributesW FUNCTION lpFileName=%s Attrib=%d", lpFileName, Ret);
+	//OutputDebugStringEx("@@@@@@@@@HOOK: GetFileAttributesW FUNCTION lpFileName=%s Attrib=%d", lpFileName, Ret);
 	//Ret |= FILE_ATTRIBUTE_READONLY;
 	return Ret;
 }
@@ -408,7 +452,7 @@ static BOOL WINAPI NewReadFileEx(
 	_In_      LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
 	)
 {
-	DP0("HOOK:  THE NewReadFileEx FUNCTION !!");
+	OutputDebugStringEx("HOOK:  THE NewReadFileEx FUNCTION !!\r\n");
 	BOOL result = readFileEx(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped, lpCompletionRoutine);
 	return result;
 }
@@ -423,7 +467,7 @@ static BOOL WINAPI NewReadFileScatter(
 	_Inout_    LPOVERLAPPED         lpOverlapped
 	)
 {
-	DP0("HOOK:  THE NewReadFileScatter FUNCTION !!");
+	OutputDebugStringEx("HOOK:  THE NewReadFileScatter FUNCTION !!\r\n");
 	BOOL result = readFileScatter(hFile, aSegmentArray, nNumberOfBytesToRead, lpReserved, lpOverlapped);
 	return result;
 }
@@ -434,7 +478,7 @@ static DWORD WINAPI NewGetFileAttributesExW(
 	__in LPCTSTR lpFileName
 	)
 {
-	DP0("HOOK:  THE NewGetFileAttributesExW FUNCTION !!");
+	OutputDebugStringEx("HOOK:  THE NewGetFileAttributesExW FUNCTION !!\r\n");
 	DWORD result = getFileAttributesExW(lpFileName);
 	return result;
 }
@@ -454,13 +498,13 @@ static BOOL WINAPI NewGetFileSizeEx(
 	setFilePointer(hFile, -FILE_SIGN_LEN, NULL, FILE_END);
 	readfile(hFile, fileHead, FILE_SIGN_LEN, &readLen, NULL);
 	setFilePointer(hFile, currentPointer, NULL, FILE_BEGIN);
-	DP1("HOOK:  THE NewGetFileSizeEx FUNCTION !!    readHead = %s", fileHead);
+	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!    readHead = %s\r\n", fileHead);
 	if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 	{		
-		DP0("********  getFileSizeEx ******HOOK:sercret file ");	
+		OutputDebugStringEx("********  getFileSizeEx ******HOOK:sercret file \r\n");	
 		lpFileSize->QuadPart -= FILE_SIGN_LEN;
 	}
-	DP1("HOOK:  THE NewGetFileSizeEx FUNCTION !!  %ld ", lpFileSize->QuadPart);
+	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!  %ld\r\n ", lpFileSize->QuadPart);
 	delete fileHead;
 	return result;
 }
@@ -473,7 +517,7 @@ static BOOL WINAPI NewSetFilePointerEx(
 	_Out_opt_ PLARGE_INTEGER lpNewFilePointer,
 	_In_      DWORD          dwMoveMethod)
 {
-	DP2("HOOK: THE SetFilePointerEx FUNCTION!!!!hFile=%d, liDistanceToMove=%d", hFile, liDistanceToMove);
+	OutputDebugStringEx("HOOK: THE SetFilePointerEx FUNCTION!!!!hFile=%d, liDistanceToMove=%d\r\n", hFile, liDistanceToMove);
 	if (dwMoveMethod == FILE_END && hFile == dochFile)
 	{
 		liDistanceToMove.QuadPart -= FILE_SIGN_LEN;
@@ -487,10 +531,10 @@ static DWORD WINAPI NewGetFileSize(
 	HANDLE hFile,
 	LPDWORD lpFileSizeHigh)
 {
-	DP0(">>>>>>>>>>>>>>>>>>>HOOK : THE Getfilesize Function!!!!")
+	OutputDebugStringEx(">>>>>>>>>>>>>>>>>>>HOOK : THE Getfilesize Function!!!!\r\n");
 	if (hFile == dochFile)
 	{
-		DP0("********  NewGetFileSize ******HOOK:sercret file ");
+		OutputDebugStringEx("********  NewGetFileSize ******HOOK:sercret file\r\n ");
 		return getFileSize(hFile, NULL) - FILE_SIGN_LEN;
 	}
 	return getFileSize(hFile, lpFileSizeHigh);
@@ -501,13 +545,13 @@ GetSaveFileNameW()º¯Êý			A»ñÈ¡¹Ø±ÕÎÄ¼þ»á»°¿ò
 static BOOL WINAPI New_GetSaveFileNameW(
 	_Inout_ LPOPENFILENAME lpofn)
 {
-	//DP0("@@@@@@@@@@HOOK:  GetSaveFileNameW FUNCTION!!!  ");
+	//OutputDebugStringEx("@@@@@@@@@@HOOK:  GetSaveFileNameW FUNCTION!!!  ");
 	BOOL Ret = getSaveFileNameW(lpofn);
 	return Ret;
 }
 static BOOL WINAPI NewCloseHandle(HANDLE hObject)
 {
-	//DP1("HOOK:  THE CLOSEHANDLE FUNCTION !!!!  handle = %d", hObject);
+	//OutputDebugStringEx("HOOK:  THE CLOSEHANDLE FUNCTION !!!!  handle = %d", hObject);
 	return closeHandle(hObject);
 }
 /***********************************************
@@ -527,7 +571,7 @@ static BOOL WINAPI New_BitBlt(_In_ HDC   hdcDest,
 	)
 {
 	int result;
-	//DP0("@@@@@@@@@@HOOK:  BitBlt FUNCTION!!!  ");
+	//OutputDebugStringEx("@@@@@@@@@@HOOK:  BitBlt FUNCTION!!!  ");
 	if ((dwRop & 0xCC0020) == 0xCC0020 && GetObjectType(hdcSrc) == 3)
 	{		
 		HWND gameh = FindWindow(NULL, TEXT("OutGoingFileTool"));
@@ -555,7 +599,7 @@ static BOOL WINAPI New_StretchBlt(HDC hdcDest, int nXOriginDest,
 	int nXOriginSrc, int nYOriginSrc, int nWidthSrc,
 	int nHeightSrc, DWORD dwRop)
 {
-	//DP3("HOOK²âÊÔ2New_StretchBlt£º hdcDest = %d,hdcSrc = %d,dwRop = %d", hdcDest, hdcSrc, dwRop);
+	//OutputDebugStringEx("HOOK²âÊÔ2New_StretchBlt£º hdcDest = %d,hdcSrc = %d,dwRop = %d", hdcDest, hdcSrc, dwRop);
 	return stretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, dwRop);
 }
 
@@ -575,7 +619,7 @@ static BOOL WINAPI NewCreateProcessW(
 	_Out_       LPPROCESS_INFORMATION lpProcessInformation
 	)
 {
-	DP0("???????????HOOK: THE NewCreateProcessW FUNCTION !!!!");
+	OutputDebugStringEx("???????????HOOK: THE NewCreateProcessW FUNCTION !!!!\r\n");
 	BOOL result;
 	result = createProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 
@@ -600,11 +644,11 @@ static HANDLE WINAPI NewCreateProcessInternal(
 	LPPROCESS_INFORMATION lpProcessInformation, 
 	PHANDLE hNewToken)
 {
-	DP1("???????????HOOK: THE NewCreateProcessInternal FUNCTION !!!! name = %s", lpApplicationName);
+	OutputDebugStringEx("???????????HOOK: THE NewCreateProcessInternal FUNCTION !!!! name = %s\r\n", lpApplicationName);
 	HANDLE result;
 	result = createProcessInternalW(hToken, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles,
 							dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, hNewToken);
-	InjectDll(lpProcessInformation->dwProcessId, _T("E:\\Íâ·¢¹¤¾ß\\HookProject_test\\fileHook\\OutGoingFileTool\\Debug\\copyDllHook.dll"));
+	InjectDll(lpProcessInformation->dwProcessId, _T("E:\\Íâ·¢¹¤¾ß\\HookProject_test\\fileHook\\OutGoingFileTool\\Debug\\copyDllHook.dll\r\n"));
 
 	return result;
 }
@@ -670,7 +714,7 @@ Input:	LPCTSTR dllName º¯ÊýËùÔÚµÄdll¿â
 ************************************************/
 void EndOneHook(LPCTSTR dllName, PVOID oldFunc, PVOID newFunc)
 {
-	////DP1("end the funcName=%s ", funcName);
+	////OutputDebugStringEx("end the funcName=%s ", funcName);
 	//¿ªÊ¼ÊÂÎñ
 	DetourTransactionBegin();
 	//¸üÐÂÏß³ÌÐÅÏ¢ 
@@ -728,17 +772,17 @@ void hexdump(const unsigned char *buf, const int num)
 	char *temp = new char[num * 3 + 20];
 	char *temp1 = new char[num * 3 * 2 + 20];
 	memset(temp1, 0, num * 3 * 2 + 20);
-	//DP0("HOOK START:\n");
+	//OutputDebugStringEx("HOOK START:\n");
 	int i;
 	for (i = 0; i < num; i++)
 	{
-		//DP2("HOOK %d:%02x ", i, buf[i]);
-		sprintf_s(temp + i * 3, 4, "%02X ", buf[i]);
+		//OutputDebugStringEx("HOOK %d:%02x ", i, buf[i]);
+		sprintf_s(temp + i * 3, 4, "%02X \r\n", buf[i]);
 	}
 	for (i = 0; i < num * 3; i++) {
 		temp1[i * 2] = temp[i];
 	}
-	DP1("HOOK DUMP!!! %s", temp1);
+	OutputDebugStringEx("HOOK DUMP!!! %s\r\n", temp1);
 	delete temp;
 	delete temp1;
 

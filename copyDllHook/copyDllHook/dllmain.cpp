@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "copyDllHook.h"
 #include "GlobalHook.h"
+bool bhook=false;
 
 BOOL	 IsOrigProcess(CHAR* pExt)
 {
@@ -24,14 +25,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		GetModuleFileNameA(NULL, cIniFileName, sizeof(cIniFileName));
-		//char * p = strrchr(cIniFileName,'\\') ;
-		//g_AppPath.Format("%s",cIniFileName);
 	    if (IsOrigProcess(cIniFileName)==NULL)
 	    {
-            //deg_print("Discovery process!\r\n");
+            OutputDebugStringEx("Discovery process!\r\n");
             return 1;
 	    }
-
+	    bhook = true;
 		StartHook();
 		break;
 	case DLL_THREAD_ATTACH:
@@ -39,7 +38,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_THREAD_DETACH:
 		break;
 	case DLL_PROCESS_DETACH:
-		EndHook();
+		if (bhook)
+		{
+			EndHook();
+		}
 		break;
 	}
 	return TRUE;

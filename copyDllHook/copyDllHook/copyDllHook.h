@@ -258,7 +258,7 @@ void __stdcall EndHook();
 
 
 
-
+void OutputDebugStringEx(const char *strOutputString, ...);
 
 
 #endif//__COPYDLLHOOK_H__

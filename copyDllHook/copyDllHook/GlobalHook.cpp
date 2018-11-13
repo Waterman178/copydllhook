@@ -13,14 +13,14 @@ LRESULT CALLBACK FunKey(
 	LPARAM lParam // keystroke-message information
 	)
 {
-	//DP0("²âÊÔ3 CALLBACK FUNCTION....\n");
+	//OutputDebugStringEx("²âÊÔ3 CALLBACK FUNCTION....\n");
 	KBDLLHOOKSTRUCT *Key_Info = (KBDLLHOOKSTRUCT*)lParam;
-	//DP3("²âÊÔ3 code: %d, wParam=%d, lParam=%d\n", code, wParam, lParam);
+	//OutputDebugStringEx("²âÊÔ3 code: %d, wParam=%d, lParam=%d\n", code, wParam, lParam);
 
 	if (HC_ACTION == code)
 	{
 
-		//DP1("²âÊÔ3 Key_Info: %d\n", Key_Info->vkCode);
+		//OutputDebugStringEx("²âÊÔ3 Key_Info: %d\n", Key_Info->vkCode);
 		if (WM_KEYDOWN == wParam || WM_SYSKEYDOWN == wParam)
 		{
 			if (Key_Info->vkCode == VK_SNAPSHOT)//ÆÁ±Î PrintScreen °´¼ü
