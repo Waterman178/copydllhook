@@ -193,11 +193,12 @@ static HANDLE WINAPI NewCreateFileW(
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN];
 			int currentPointer = 0;
-			//currentPointer = setFilePointer(keyHan, 0, NULL, FILE_CURRENT);
-			setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
+			//currentPointer = setFilePointer(keyHan, 0, NULL, FILE_END);
+			//setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
 			readfile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-			/*setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN)*/;
-			//OutputDebugStringEx("******HOOK: fileHead = %s", fileHead);
+
+			//setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN);
+			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
 			//closeHandle(keyHan);
 			if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 			{
@@ -208,16 +209,16 @@ static HANDLE WINAPI NewCreateFileW(
 					OutputDebugStringEx("不是只读文件，设置只读属性\r\n ");
 					SetFileAttributesA(reinterpret_cast<LPCSTR>(lpFileName), FILE_ATTRIBUTE_READONLY);
 				}
-				//dwDesiredAccess &= ~GENERIC_WRITE;
+				dwDesiredAccess &= ~GENERIC_WRITE;
 			}
 			delete fileHead;
 		}
 	}
-	//HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 
 	
 	//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW: %s  ,  %d\r\n", lpFileName, ret);
-	return keyHan;
+	return ret;
 }
 
 /***********************************************
@@ -809,7 +810,7 @@ void __stdcall StartHook()
 	setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
 	setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
 	setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
-		//createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
+		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 		/*readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);
 		writeFile = WRITEFILE StartOneHook(KERNEL32, "WriteFile", New_WriteFile);
 		mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
@@ -861,10 +862,10 @@ void __stdcall EndHook()
 		EndOneHook(USER32, setWindowPos, NewSetWindowPos);
 		EndOneHook(USER32, setWindowTextW, NewSetWindowTextW);
 		EndOneHook(USER32, setWindowTextA, NewSetWindowTextA);*/
-		//EndOneHook(KERNEL32, createFileW, NewCreateFileW);
-		/*EndOneHook(KERNEL32, readfile, NewReadfile);
-		EndOneHook(KERNEL32, writeFile, New_WriteFile);
-		EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
+		EndOneHook(KERNEL32, createFileW, NewCreateFileW);
+		//EndOneHook(KERNEL32, readfile, NewReadfile);
+		//EndOneHook(KERNEL32, writeFile, New_WriteFile);
+		/*EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
 		EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
 		EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);

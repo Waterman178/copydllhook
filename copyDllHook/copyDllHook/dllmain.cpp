@@ -12,8 +12,8 @@ BOOL	 IsOrigProcess(CHAR* pExt)
 	CHAR			p4[] = "wps.exe";
 	CHAR			p5[] = "WINWORD.EXE";
 	CHAR			p6[] = "POWERONT.EXE";
-	CHAR			p7[] = "EXECEL.EXE";
-	return (strstr(pExt, p1) == 0 || strstr(pExt, p2) == 0 || strstr(pExt, p3) == 0 || strstr(pExt, p4) == 0 || strstr(pExt, p5) == 0 || strstr(pExt, p6) == 0 || strstr(pExt, p7) == 0);
+	CHAR			p7[] = "NOTEPAD.EXE";
+	return (strstr(pExt, p1) != NULL  || strstr(pExt, p2) != NULL || strstr(pExt, p3) != NULL || strstr(pExt, p4) != NULL || strstr(pExt, p5) != NULL || strstr(pExt, p6) != NULL || strstr(pExt, p7) != NULL);
 }
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -25,6 +25,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		GetModuleFileNameA(NULL, cIniFileName, sizeof(cIniFileName));
+
+		OutputDebugStringEx("%s\r\n", cIniFileName);
 	    if (IsOrigProcess(cIniFileName)==NULL)
 	    {
             OutputDebugStringEx("Discovery process!\r\n");
