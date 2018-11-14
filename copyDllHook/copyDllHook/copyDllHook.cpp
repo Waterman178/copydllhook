@@ -188,18 +188,18 @@ static HANDLE WINAPI NewCreateFileW(
 	HANDLE keyHan = nullptr;
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0) {
 		 keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %s", keyHan, lpFileName);
+		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %s\r\n", keyHan, lpFileName);
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN];
 			int currentPointer = 0;
 			//currentPointer = setFilePointer(keyHan, 0, NULL, FILE_END);
 			//setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
-			readfile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-
+			//OutputDebugStringEx(">>>>>>>>readfile<<<<<<<<\r\n");
+			ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
 			//setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN);
 			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
-			//closeHandle(keyHan);
+			closeHandle(keyHan);
 			if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 			{
 				OutputDebugStringEx("**************HOOK:sercret file\r\n ");
