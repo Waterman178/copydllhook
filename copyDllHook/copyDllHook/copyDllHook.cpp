@@ -193,10 +193,10 @@ static HANDLE WINAPI NewCreateFileW(
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN];
 			int currentPointer = 0;
-			//currentPointer = setFilePointer(keyHan, 0, NULL, FILE_CURRENT);
+			currentPointer = setFilePointer(keyHan, 0, NULL, FILE_CURRENT);
 			setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
 			readfile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-			/*setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN)*/;
+			setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN);
 			//OutputDebugStringEx("******HOOK: fileHead = %s", fileHead);
 			//closeHandle(keyHan);
 			if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
