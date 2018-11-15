@@ -2,7 +2,7 @@
 #define __COPYDLLHOOK_H__
 
 /*
-* Copyright (c) 2017,福建榕基软件股份有限公司
+
 * All rights reserved.
 *
 * 当前版本：1.0
