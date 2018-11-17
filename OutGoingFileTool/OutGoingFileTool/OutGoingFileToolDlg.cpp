@@ -494,29 +494,29 @@ char* COutGoingFileToolDlg::CString2char(CString src)
 void COutGoingFileToolDlg::OnBnClickedButton2()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	encryptHead = std::shared_ptr<RjFileSrtuct>(new RjFileSrtuct());
-
-	memcpy(encryptHead->FileHeadName, FileName, 12);
+	encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
+	memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
+	encryptInfo->encryptHead.onlyread = 1;
+	encryptInfo->encryptHead.forbidensaveas = 1;
 	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\1111.txt", "rb+");
 	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\1111.rjs", "ab+");
 	int iflag = 0;
-	size_t len = 21;
-	//前二十个字节写文件加密标识头
-	while (iflag < len)
+	size_t len = sizeof(RjFileSrtuct);
+	//从结构体头开始复制，已经是1字节对齐了
+	while (iflag <= len)
 	{
-		fwrite(encryptHead->FileHeadName + iflag, 1, 1, TEMP1);
+		fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);
 		iflag++;
 	}
-
 	char buf[20] = { 0 };
 	while (fread(buf, 1, 1, TEMP)) {
 		buf[0] ^= 'a';
 		fseek(TEMP1, 0, SEEK_END);
 		fwrite(buf, 1, 1, TEMP1);
 	}
-	//char scretInfo[] = { "DSKFJLSKDF" };
 	
 	fflush(TEMP1);
+
 	fclose(TEMP);
 	fclose(TEMP1);
 	return;

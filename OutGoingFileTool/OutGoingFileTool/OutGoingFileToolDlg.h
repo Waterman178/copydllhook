@@ -61,7 +61,6 @@ private:
 	LPVOID pBuffer;                                    // ¹²ÏíÄÚ´æÖ¸Õë
 	HANDLE hMap;
 public:
-	
-	std::shared_ptr<RjFileSrtuct> encryptHead;
+	std::shared_ptr<rjFileInfo> encryptInfo;
 	PVOID TfileName;
 };
