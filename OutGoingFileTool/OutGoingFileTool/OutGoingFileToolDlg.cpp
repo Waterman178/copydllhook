@@ -102,6 +102,7 @@ BEGIN_MESSAGE_MAP(COutGoingFileToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &COutGoingFileToolDlg::OnBnClickedOpenFile)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &COutGoingFileToolDlg::OnHdnItemclickList1)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &COutGoingFileToolDlg::OnNMDblclkList1)
+	ON_BN_CLICKED(IDC_BUTTON2, &COutGoingFileToolDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -487,4 +488,36 @@ char* COutGoingFileToolDlg::CString2char(CString src)
 	// 通过以上得到的结果，转换unicode 字符为ascii 字符
 	WideCharToMultiByte(0, 0, src.GetBuffer(),nlength, m_date,nbytes,NULL,NULL);
 	return m_date;
+}
+
+
+void COutGoingFileToolDlg::OnBnClickedButton2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	encryptHead = std::shared_ptr<RjFileSrtuct>(new RjFileSrtuct());
+
+	memcpy(encryptHead->FileHeadName, FileName, 12);
+	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\1111.txt", "rb+");
+	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\1111.rjs", "ab+");
+	int iflag = 0;
+	size_t len = 21;
+	//前二十个字节写文件加密标识头
+	while (iflag < len)
+	{
+		fwrite(encryptHead->FileHeadName + iflag, 1, 1, TEMP1);
+		iflag++;
+	}
+
+	char buf[20] = { 0 };
+	while (fread(buf, 1, 1, TEMP)) {
+		buf[0] ^= 'a';
+		fseek(TEMP1, 0, SEEK_END);
+		fwrite(buf, 1, 1, TEMP1);
+	}
+	//char scretInfo[] = { "DSKFJLSKDF" };
+	
+	fflush(TEMP1);
+	fclose(TEMP);
+	fclose(TEMP1);
+	return;
 }

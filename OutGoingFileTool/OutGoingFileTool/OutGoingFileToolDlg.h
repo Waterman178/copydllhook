@@ -4,12 +4,15 @@
 
 #pragma once
 #include "afxcmn.h"
-
+#include "FIlestruct.h"
+#include <memory>
 #define DLLTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\copyDllHook.dll"
 #define RARTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\Rar.exe "
 #define UNRARTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\UnRAR.exe"
 #define TMPDIR "C:\\Users\\Administrator\\AppData\\Local\\Temp\\RJUNCOMOUTGONINGFILETOOL__"
 #define E_TMPDIR "E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD"
+
+#define FileName "RjiSafe9575"
 // COutGoingFileToolDlg 对话框
 class COutGoingFileToolDlg : public CDialogEx
 {
@@ -36,11 +39,13 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedOpenFile();
+	afx_msg void OnBnClickedButton2();
 	CListCtrl fileList;
 	afx_msg void OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
 
 public:
+
 	int InjectDll(DWORD dwProcessId, PTCHAR szDllName);//开始dll远程注入操作
 	PVOID LoadDllFunc(LPCTSTR lpFileName, LPCSTR lpProcName);
 	int CompressFile(const char* comSavewhere, const char* needCom);//压缩文件
@@ -55,4 +60,8 @@ private:
 	HANDLE hid = 0;
 	LPVOID pBuffer;                                    // 共享内存指针
 	HANDLE hMap;
+public:
+	
+	std::shared_ptr<RjFileSrtuct> encryptHead;
+	PVOID TfileName;
 };

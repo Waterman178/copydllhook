@@ -192,6 +192,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FIlestruct.h" />
     <ClInclude Include="OutGoingFileTool.h" />
     <ClInclude Include="OutGoingFileToolDlg.h" />
     <ClInclude Include="Resource.h" />
