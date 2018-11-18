@@ -36,6 +36,9 @@
     <ClInclude Include="FIlestruct.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="lxListBox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OutGoingFileTool.cpp">
@@ -45,6 +48,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lxListBox.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

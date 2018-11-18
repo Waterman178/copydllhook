@@ -5,6 +5,7 @@
 #pragma once
 #include "afxcmn.h"
 #include "FIlestruct.h"
+#include "lxListBox.h"
 #include <memory>
 #define DLLTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\copyDllHook.dll"
 #define RARTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\Rar.exe "
@@ -38,9 +39,11 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedOpenFile();
+	//afx_msg void OnBnClickedOpenFile();
+	//afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnBnClickedButton2();
-	CListCtrl fileList;
+	lxListBox fileList;
+	//lxListBox m_wndListCtrl;
 	afx_msg void OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
 
@@ -50,7 +53,7 @@ public:
 	PVOID LoadDllFunc(LPCTSTR lpFileName, LPCSTR lpProcName);
 	int CompressFile(const char* comSavewhere, const char* needCom);//压缩文件
 	int UncompreFile(const char* uncomTowhere, const char* needUncom);//解压文件
-	char* CString2char(CString str);
+	//char* CString2char(CString str);
 private:
 	void(WINAPI *InstallHook)();
 	BOOL(WINAPI *UnstallHook)();
@@ -63,4 +66,5 @@ private:
 public:
 	std::shared_ptr<rjFileInfo> encryptInfo;
 	PVOID TfileName;
+	afx_msg void OnHdnEnddragList1(NMHDR *pNMHDR, LRESULT *pResult);
 };
