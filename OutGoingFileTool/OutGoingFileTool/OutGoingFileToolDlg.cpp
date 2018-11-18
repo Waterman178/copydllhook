@@ -99,7 +99,7 @@ BEGIN_MESSAGE_MAP(COutGoingFileToolDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-//	ON_BN_CLICKED(IDC_BUTTON1, &COutGoingFileToolDlg::OnBnClickedOpenFile)
+	//ON_BN_CLICKED(IDC_BUTTON1, &COutGoingFileToolDlg::OnBnClickedOpenFile)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &COutGoingFileToolDlg::OnHdnItemclickList1)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &COutGoingFileToolDlg::OnNMDblclkList1)
 	ON_BN_CLICKED(IDC_BUTTON2, &COutGoingFileToolDlg::OnBnClickedButton2)
@@ -344,7 +344,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	if (-1 != pNMListView->iItem)
 	{
 		//获取被选择列表的第一个子项的文本
-		strLangName = fileList.GetItemText(pNMListView->iItem, 3);
+		strLangName = fileList.GetItemText(pNMListView->iItem, 0);
 		//TODO:解压此文件
 
 		//将选择的语言显示与编辑框中
