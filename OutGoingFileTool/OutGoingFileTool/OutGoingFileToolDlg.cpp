@@ -336,7 +336,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
-
+	CString str(_T("C:\\Users\\Wrench\\Desktop\\"));
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
 
@@ -346,14 +346,14 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		//获取被选择列表的第一个子项的文本
 		strLangName = fileList.GetItemText(pNMListView->iItem, 0);
 		//TODO:解压此文件
-
+		str += strLangName;
 		//将选择的语言显示与编辑框中
 		SHELLEXECUTEINFO ShExecInfo = { 0 };
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
 		ShExecInfo.hwnd = NULL;
 		ShExecInfo.lpVerb = NULL;
-		ShExecInfo.lpFile = strLangName;    //要运行的文件
+		ShExecInfo.lpFile = str;    //要运行的文件
 		ShExecInfo.lpParameters = _T("");
 		ShExecInfo.lpDirectory = NULL;
 		ShExecInfo.nShow = SW_SHOW;
@@ -495,12 +495,18 @@ int COutGoingFileToolDlg::UncompreFile(const char* uncomTowhere, const char* nee
 void COutGoingFileToolDlg::OnBnClickedButton2()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	char decryptbuffer[260];
+	char   Ext[250];
+	char  pBuffer[250];
 	encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
 	memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
 	encryptInfo->encryptHead.onlyread = 1;
 	encryptInfo->encryptHead.forbidensaveas = 1;
 	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\1111.txt", "rb+");
 	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\1111.rjs", "ab+");
+	_splitpath_s("C:\\Users\\Wrench\\Desktop\\1111.txt", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
+	strcat(pBuffer, Ext); //文件名衔接个后缀名
+	memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
 	int iflag = 0;
 	size_t len = sizeof(RjFileSrtuct);
 	//从结构体头开始复制，已经是1字节对齐了
