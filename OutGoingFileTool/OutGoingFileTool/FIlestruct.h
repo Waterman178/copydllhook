@@ -2,6 +2,14 @@
 #pragma pack(1)
 #include <windows.h>
 
+#define DLLTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\copyDllHook.dll"
+#define RARTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\Rar.exe "
+#define UNRARTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\UnRAR.exe"
+#define TMPDIR "C:\\Users\\Administrator\\AppData\\Local\\Temp\\RJUNCOMOUTGONINGFILETOOL__"
+#define E_TMPDIR "E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD"
+
+#define FileName "RjiSafe9575"
+
 typedef struct _Time {
 	char startuserTime[20] ;
 	char stopuserTime[20] ;
@@ -15,12 +23,13 @@ typedef struct _RjFileSrtuct {
 	INT Count;//使用次数
 	BOOLEAN forbidensaveas;//是否禁用另存为
 	BOOLEAN onlyread;//是否只读
+	size_t length; //加密buffter的长度；
 }RjFileSrtuct, *pRjFileSrtuct;
 
 //目标加密文件所拥有的信息
 typedef struct  _rjFileInfo {
 	RjFileSrtuct encryptHead;
-	PVOID EncryptBuffer; //加密后的buffer
+	char *  EncryptBuffer; //加密后的buffer
 }rjFileInfo,*prjFileInfo;
 
 

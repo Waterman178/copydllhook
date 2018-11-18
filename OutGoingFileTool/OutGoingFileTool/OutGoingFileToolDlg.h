@@ -7,13 +7,7 @@
 #include "FIlestruct.h"
 #include "lxListBox.h"
 #include <memory>
-#define DLLTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\copyDllHook.dll"
-#define RARTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\Rar.exe "
-#define UNRARTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\UnRAR.exe"
-#define TMPDIR "C:\\Users\\Administrator\\AppData\\Local\\Temp\\RJUNCOMOUTGONINGFILETOOL__"
-#define E_TMPDIR "E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD"
 
-#define FileName "RjiSafe9575"
 // COutGoingFileToolDlg ¶Ô»°¿ò
 class COutGoingFileToolDlg : public CDialogEx
 {
