@@ -512,7 +512,7 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	//从结构体头开始复制，已经是1字节对齐了
 	while (iflag <= len)
 	{
-		fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的可以用。
+		fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的编程设计者容易理解，也没用原始指针。
 		iflag++;
 	}
 	char buf[20] = { 0 };
