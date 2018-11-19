@@ -523,6 +523,8 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 		fwrite(buf, 1, 1, TEMP1);
 		fflush(TEMP1);
 	}
+	fseek(TEMP1, 0, SEEK_END);
+	fwrite(&eof, 1, 1, TEMP1);
 	fclose(TEMP);
 	fclose(TEMP1);
 	return;
