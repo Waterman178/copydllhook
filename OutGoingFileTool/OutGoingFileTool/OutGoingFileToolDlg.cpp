@@ -58,50 +58,52 @@ COutGoingFileToolDlg::COutGoingFileToolDlg(CWnd* pParent /*=NULL*/)
 COutGoingFileToolDlg::~COutGoingFileToolDlg()
 {
 	//卸载键盘的PRINT SCREEN 按键的控制
-	UnstallHook = (BOOL (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookKeyBord");
-	UnstallHook();
+	//UnstallHook = (BOOL (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookKeyBord");
+	//UnstallHook();
 
-	//卸载全局消息钩子
-	UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookMsg");
-	UnstallHook();
+	////卸载全局消息钩子
+	//UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookMsg");
+	//UnstallHook();
 	//关闭已打开的文件
 	//::SendMessage(, WM_SYSCOMMAND, SC_CLOSE, 0);
-	TerminateProcess(hid,0);
-	//删除临时文件中解压出来的文件
-	if (SetCurrentDirectory(_T(TMPDIR)) == TRUE)
-	{
-		CFileFind  finder;
-		BOOL bWorking = finder.FindFile(_T("*.*"));
-		int line = 0;
-		CTime tmp;
-		while (bWorking)
-		{
-			bWorking = finder.FindNextFile();
-			if (line > 1)
-			{
-				HWND hwnd = ::FindWindow(NULL, finder.GetFileName());
-				DeleteFile(finder.GetFilePath());		
-			}
-			line++;
-		}
-	}
-	::UnmapViewOfFile(pBuffer);
-	::CloseHandle(hMap);
+//	TerminateProcess(hid,0);
+//	//删除临时文件中解压出来的文件
+//	if (SetCurrentDirectory(_T(TMPDIR)) == TRUE)
+//	{
+//		CFileFind  finder;
+//		BOOL bWorking = finder.FindFile(_T("*.*"));
+//		int line = 0;
+//		CTime tmp;
+//		while (bWorking)
+//		{
+//			bWorking = finder.FindNextFile();
+//			if (line > 1)
+//			{
+//				HWND hwnd = ::FindWindow(NULL, finder.GetFileName());
+//				DeleteFile(finder.GetFilePath());		
+//			}
+//			line++;
+//		}
+//	}
+//	::UnmapViewOfFile(pBuffer);
+//	::CloseHandle(hMap);
 }
 
 void COutGoingFileToolDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_LIST1, fileList);
+	DDX_Control(pDX, IDC_LIST1, (CWnd&)fileList);
 }
 
 BEGIN_MESSAGE_MAP(COutGoingFileToolDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON1, &COutGoingFileToolDlg::OnBnClickedOpenFile)
+	//ON_BN_CLICKED(IDC_BUTTON1, &COutGoingFileToolDlg::OnBnClickedOpenFile)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &COutGoingFileToolDlg::OnHdnItemclickList1)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &COutGoingFileToolDlg::OnNMDblclkList1)
+	ON_BN_CLICKED(IDC_BUTTON2, &COutGoingFileToolDlg::OnBnClickedButton2)
+	ON_NOTIFY(HDN_ENDDRAG, 0, &COutGoingFileToolDlg::OnHdnEnddragList1)
 END_MESSAGE_MAP()
 
 
@@ -157,15 +159,15 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 		printf("CreateDirectory -> %d\n", ret);
 	}
 
-	hMap = ::CreateFileMapping(INVALID_HANDLE_VALUE,
+	/*hMap = ::CreateFileMapping(INVALID_HANDLE_VALUE,
 		NULL,
 		PAGE_READWRITE,
 		0,
 		sizeof(int),
-		_T("processMem_FUCK"));
+		_T("processMem_FUCK"));*/
 	// 映射对象的一个视图，得到指向共享内存的指针，设置里面的数据
-	pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	*(int*)pBuffer = GetCurrentProcessId();
+	/*pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	*(int*)pBuffer = GetCurrentProcessId();*/
 	
 	////键盘的PRINT SCREEN 按键的控制
 	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookKeyBord");
@@ -174,7 +176,7 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	////全局消息钩子
 	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookMsg");
 	//InstallHook();
-	LoadLibraryA("copyDllHook.dll");
+	//LoadLibraryA("copyDllHook.dll");
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -229,81 +231,81 @@ HCURSOR COutGoingFileToolDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-void COutGoingFileToolDlg::OnBnClickedOpenFile()
-{
-
-	////加密文件
-
-	/*FILE * TEMP = fopen("E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD\\test001.rar", "rb+");
-	FILE * TEMP1 = fopen("E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD\\rar001.rar", "ab+");
-
-	char buf[20] = { 0 };
-	while (fread(buf, 1, 1, TEMP)) {
-		buf[0] ^= 'a';
-		fwrite(buf, 1, 1, TEMP1);
-	}
-	char scretInfo[] = { "DSKFJLSKDF" };
-	int iflag = 0;
-	while (iflag < 10)
-	{
-		fwrite(&scretInfo[iflag], 1, 1, TEMP1);
-		iflag++;
-	}
-	fflush(TEMP1);
-	fclose(TEMP);
-	fclose(TEMP1);
-	return;*/
-
-
-	char ucomDirPath[2048] = { 0 };
-
-	//设置过滤器
-	TCHAR szFilter[] = _T("rar文件(*.rar)|*.rar|全部文件(*.*)|*.*");
-	CFileDialog dlg(TRUE, _T("doc"), _T("my"), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, this);
-	if (dlg.DoModal() == IDOK)
-	{
-		//随机生成一个文件夹名称，解压选定文件到这个目录下
-		//memcpy(ucomDirPath,GetRandLetter(),15);
-		//sprintf(ucomDirPath, "%s",GetRandLetter());
-		int ret = UncompreFile(E_TMPDIR, CString2char(dlg.GetPathName()));
-		Sleep(100);														//TODO:多文件的时候感觉还是会有问题
-		//if (ret > 31)
-		//{
-			if (SetCurrentDirectory(_T(E_TMPDIR)) == TRUE)
-			{
-				OutputDebugString(_T("find the file>>>>>>>>>>>>"));
-				CFileFind  finder;
-				CString fileInfo;
-				BOOL bWorking = finder.FindFile(_T("*.*"));
-				int line = 0;
-				CTime tmp;
-				while (bWorking)
-				{
-					bWorking = finder.FindNextFile();
-					if (line > 1)
-					{
-						OutputDebugString(_T("find the file"));
-						fileList.InsertItem(line - 2, finder.GetFileName());
-						finder.GetLastWriteTime(tmp);
-						fileInfo.Format(_T("%d/%d/%d"), tmp.GetYear(), tmp.GetMonth(), tmp.GetDay());
-						fileList.SetItemText(line - 2, 1, fileInfo);
-						fileInfo.Format(_T("%ld"), finder.GetLength());
-						fileList.SetItemText(line - 2, 2, fileInfo);
-						fileList.SetItemText(line - 2, 3, finder.GetFilePath());
-					}
-					line++;
-				}
-			}
-			else
-			{
-				return;
-			}
-		//}
-		
-
-	}
-	
-}
+//void COutGoingFileToolDlg::OnBnClickedOpenFile()
+//{
+//
+//	////加密文件
+//
+//	/*FILE * TEMP = fopen("E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD\\test001.rar", "rb+");
+//	FILE * TEMP1 = fopen("E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD\\rar001.rar", "ab+");
+//
+//	char buf[20] = { 0 };
+//	while (fread(buf, 1, 1, TEMP)) {
+//		buf[0] ^= 'a';
+//		fwrite(buf, 1, 1, TEMP1);
+//	}
+//	char scretInfo[] = { "DSKFJLSKDF" };
+//	int iflag = 0;
+//	while (iflag < 10)
+//	{
+//		fwrite(&scretInfo[iflag], 1, 1, TEMP1);
+//		iflag++;
+//	}
+//	fflush(TEMP1);
+//	fclose(TEMP);
+//	fclose(TEMP1);
+//	return;*/
+//
+//
+//	char ucomDirPath[2048] = { 0 };
+//
+//	//设置过滤器
+//	TCHAR szFilter[] = _T("rar文件(*.rar)|*.rar|全部文件(*.*)|*.*");
+//	CFileDialog dlg(TRUE, _T("doc"), _T("my"), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, this);
+//	if (dlg.DoModal() == IDOK)
+//	{
+//		//随机生成一个文件夹名称，解压选定文件到这个目录下
+//		//memcpy(ucomDirPath,GetRandLetter(),15);
+//		//sprintf(ucomDirPath, "%s",GetRandLetter());
+//		int ret = UncompreFile(E_TMPDIR, CString2char(dlg.GetPathName()));
+//		Sleep(100);														//TODO:多文件的时候感觉还是会有问题
+//		//if (ret > 31)
+//		//{
+//			if (SetCurrentDirectory(_T(E_TMPDIR)) == TRUE)
+//			{
+//				OutputDebugString(_T("find the file>>>>>>>>>>>>"));
+//				CFileFind  finder;
+//				CString fileInfo;
+//				BOOL bWorking = finder.FindFile(_T("*.*"));
+//				int line = 0;
+//				CTime tmp;
+//				while (bWorking)
+//				{
+//					bWorking = finder.FindNextFile();
+//					if (line > 1)
+//					{
+//						OutputDebugString(_T("find the file"));
+//						fileList.InsertItem(line - 2, finder.GetFileName());
+//						finder.GetLastWriteTime(tmp);
+//						fileInfo.Format(_T("%d/%d/%d"), tmp.GetYear(), tmp.GetMonth(), tmp.GetDay());
+//						fileList.SetItemText(line - 2, 1, fileInfo);
+//						fileInfo.Format(_T("%ld"), finder.GetLength());
+//						fileList.SetItemText(line - 2, 2, fileInfo);
+//						fileList.SetItemText(line - 2, 3, finder.GetFilePath());
+//					}
+//					line++;
+//				}
+//			}
+//			else
+//			{
+//				return;
+//			}
+//		//}
+//		
+//
+//	}
+//	
+//}
 
 
 void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
@@ -334,7 +336,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
-
+	CString str(_T("C:\\Users\\Wrench\\Desktop\\"));
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
 
@@ -342,16 +344,16 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	if (-1 != pNMListView->iItem)
 	{
 		//获取被选择列表的第一个子项的文本
-		strLangName = fileList.GetItemText(pNMListView->iItem, 3);
+		strLangName = fileList.GetItemText(pNMListView->iItem, 0);
 		//TODO:解压此文件
-
+		str += strLangName;
 		//将选择的语言显示与编辑框中
 		SHELLEXECUTEINFO ShExecInfo = { 0 };
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
 		ShExecInfo.hwnd = NULL;
 		ShExecInfo.lpVerb = NULL;
-		ShExecInfo.lpFile = strLangName;    //要运行的文件
+		ShExecInfo.lpFile = str;    //要运行的文件
 		ShExecInfo.lpParameters = _T("");
 		ShExecInfo.lpDirectory = NULL;
 		ShExecInfo.nShow = SW_SHOW;
@@ -473,18 +475,64 @@ int COutGoingFileToolDlg::UncompreFile(const char* uncomTowhere, const char* nee
 	free((void *)needUncom);
 	return ret;
 }
-char* COutGoingFileToolDlg::CString2char(CString src)
+//char* COutGoingFileToolDlg::CString2char(CString src)
+//{
+//	char *m_date;
+//	size_t m_length;
+//	m_length = src.GetLength() * 2 + 1;
+//	m_date = (char *)malloc(m_length);
+//	memset(m_date, 0, m_length);
+//	size_t nlength = wcslen(src.GetBuffer());
+//	//获取转换后的长度
+//	int nbytes = WideCharToMultiByte(0, 0,src.GetBuffer(),nlength,  NULL, 0,NULL,NULL);
+//	if (nbytes>(int)m_length)   nbytes = m_length;
+//	// 通过以上得到的结果，转换unicode 字符为ascii 字符
+//	WideCharToMultiByte(0, 0, src.GetBuffer(),nlength, m_date,nbytes,NULL,NULL);
+//	return m_date;
+//}
+
+
+void COutGoingFileToolDlg::OnBnClickedButton2()
 {
-	char *m_date;
-	size_t m_length;
-	m_length = src.GetLength() * 2 + 1;
-	m_date = (char *)malloc(m_length);
-	memset(m_date, 0, m_length);
-	size_t nlength = wcslen(src.GetBuffer());
-	//获取转换后的长度
-	int nbytes = WideCharToMultiByte(0, 0,src.GetBuffer(),nlength,  NULL, 0,NULL,NULL);
-	if (nbytes>(int)m_length)   nbytes = m_length;
-	// 通过以上得到的结果，转换unicode 字符为ascii 字符
-	WideCharToMultiByte(0, 0, src.GetBuffer(),nlength, m_date,nbytes,NULL,NULL);
-	return m_date;
+	// TODO: 在此添加控件通知处理程序代码
+	char decryptbuffer[260];
+	char   Ext[250];
+	char  pBuffer[250];
+	encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
+	memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
+	encryptInfo->encryptHead.onlyread = 1;
+	encryptInfo->encryptHead.forbidensaveas = 1;
+	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\1111.txt", "rb+");
+	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\1111.rjs", "ab+");
+	_splitpath_s("C:\\Users\\Wrench\\Desktop\\1111.txt", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
+	strcat(pBuffer, Ext); //文件名衔接个后缀名
+	memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
+	int iflag = 0;
+	size_t len = sizeof(RjFileSrtuct);
+	//从结构体头开始复制，已经是1字节对齐了
+	while (iflag <= len)
+	{
+		fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的编程设计者容易理解，也没用原始指针。
+		iflag++;
+	}
+	char buf[20] = { 0 };
+	while (fread(buf, 1, 1, TEMP)) {
+		buf[0] ^= 'a';
+		fseek(TEMP1, 0, SEEK_END);
+		fwrite(buf, 1, 1, TEMP1);
+	}
+	
+	fflush(TEMP1);
+
+	fclose(TEMP);
+	fclose(TEMP1);
+	return;
+}
+
+
+
+
+void COutGoingFileToolDlg::OnHdnEnddragList1(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	
 }
