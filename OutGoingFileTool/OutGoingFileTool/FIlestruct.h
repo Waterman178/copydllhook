@@ -1,5 +1,5 @@
 #pragma once
-#pragma pack(1)
+#pragma pack(4)
 #include <windows.h>
 
 #define DLLTMP "C:\\Users\\Administrator\\AppData\\Local\\Temp\\copyDllHook.dll"
@@ -23,7 +23,7 @@ typedef struct _RjFileSrtuct {
 	INT Count;//使用次数
 	BOOLEAN forbidensaveas;//是否禁用另存为
 	BOOLEAN onlyread;//是否只读
-	DWORD length; //加密buffter的长度；
+	ULONG length; //加密buffter的长度；
 }RjFileSrtuct, *pRjFileSrtuct;
 
 //目标加密文件所拥有的信息

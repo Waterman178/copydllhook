@@ -506,13 +506,15 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
 	encryptInfo->encryptHead.onlyread = 1;
 	encryptInfo->encryptHead.forbidensaveas = 1;
-	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\1111.txt", "rb+");
-	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\1111.rjs", "w+");
-	_splitpath_s("C:\\Users\\Wrench\\Desktop\\1111.txt", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
+	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\121.docx", "rb+");
+	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\121.rjs", "wb+");
+	_splitpath_s("C:\\Users\\Wrench\\Desktop\\121.docx", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
 	strcat(pBuffer, Ext); //文件名衔接个后缀名
 	fseek(TEMP, 0, SEEK_END);   //指针：移动到文件尾部
 	encryptInfo->encryptHead.length = ftell(TEMP); //获取文件大小
 	memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
+	encryptInfo->encryptHead.Count = 0; //文件使用次数
+
 	int iflag = 0;
 	size_t len = sizeof(RjFileSrtuct);
 	//从结构体头开始复制，已经是1字节对齐了
@@ -521,7 +523,9 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 		fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的编程设计者容易理解，也没用原始指针。
 		iflag++;
 	}
-	char buf[20] = { 0 };
+	char*  buf = new char[encryptInfo->encryptHead.length];
+	ZeroMemory(buf, (int)encryptInfo->encryptHead.length);
+
 	fseek(TEMP, 0, SEEK_SET);//移动到头部
 	while (fread(buf, 1, 1, TEMP)) {
 		buf[0] ^= 'a';
@@ -530,9 +534,10 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 		fflush(TEMP1);
 	}
 	fseek(TEMP1, 0, SEEK_END);
-	fwrite(&eof, 1, 1, TEMP1);
+	//fwrite(&eof, 1, 1, TEMP1);
 	fclose(TEMP);
 	fclose(TEMP1);
+	delete buf;
 	return;
 }
 
