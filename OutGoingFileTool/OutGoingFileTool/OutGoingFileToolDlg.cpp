@@ -336,7 +336,9 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
-	CString str(_T("C:\\Users\\Administrator\\Desktop\\"));
+	char  Filepullpath[250] = { 0 };
+	GetTempPathA(261, Filepullpath);
+	CString str(_T(Filepullpath));
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
 
@@ -498,14 +500,15 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	char decryptbuffer[260];
 	char   Ext[250];
 	char  pBuffer[250];
+
 	INT eof = -1;
 	encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
 	memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
 	encryptInfo->encryptHead.onlyread = 1;
 	encryptInfo->encryptHead.forbidensaveas = 1;
-	FILE * TEMP = fopen("C:\\Users\\Administrator\\Desktop\\1111.txt", "rb+");
-	FILE * TEMP1 = fopen("C:\\Users\\Administrator\\Desktop\\1111.rjs", "w+");
-	_splitpath_s("C:\\Users\\Administrator\\Desktop\\1111.txt", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
+	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\1111.txt", "rb+");
+	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\1111.rjs", "w+");
+	_splitpath_s("C:\\Users\\Wrench\\Desktop\\1111.txt", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
 	strcat(pBuffer, Ext); //文件名衔接个后缀名
 	fseek(TEMP, 0, SEEK_END);   //指针：移动到文件尾部
 	encryptInfo->encryptHead.length = ftell(TEMP); //获取文件大小
