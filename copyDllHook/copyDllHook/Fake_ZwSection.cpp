@@ -1,3 +1,14 @@
+
+#include "stdafx.h"
+#include "copyDllHook.h"
+#include "ntdll.h"
+
+
+
+
+
+
+
 NTSTATUS
 NTAPI
 HookZwCreateSection(__out PHANDLE SectionHandle,

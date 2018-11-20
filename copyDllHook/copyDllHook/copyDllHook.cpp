@@ -880,6 +880,20 @@ void __stdcall StartHook()
 		createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
 		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 		openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
+		m_pfnOriginalZwQueryInformationFile =  (ZwQueryInformationFile)GetProcAddress(NTDLL, "ZwQueryInformationFile");
+		if (m_pfnOriginalZwQueryInformationFile == 0x00) { return ; }
+		m_pfnOriginalZwCreateSection = (ZwCreateSection)GetProcAddress(NTDLL, "ZwCreateSection");
+		if (m_pfnOriginalZwCreateSection == 0x00) { return;}
+		m_pfnOriginalZwClose  = (ZwClose)GetProcAddress(NTDLL, "ZwClose");
+		if (m_pfnOriginalZwClose == 0x00) { return 0x00; }
+	    m_pfnOriginalZwMapViewOfSection  = (ZwMapViewOfSection)GetProcAddress(NTDLL, "ZwMapViewOfSection");
+		if (m_pfnOriginalZwMapViewOfSection == 0x00) { return; }
+		m_pfnOriginalRtlInitUnicodeString = (myRtlInitUnicodeString)GetProcAddress(NTDLL, "RtlInitUnicodeString");
+		if (m_pfnOriginalRtlInitUnicodeString == 0x00) { return; };
+		m_pfnOriginalZwUnmapViewOfSection = (ZwUnmapViewOfSection)GetProcAddress(NTDLL, "ZwUnmapViewOfSection");
+		if (m_pfnOriginalZwUnmapViewOfSection == 0x00) { return; };
+
+		//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);
 		/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
 		unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
 		closeHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);

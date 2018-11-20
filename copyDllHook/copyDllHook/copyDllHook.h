@@ -15,6 +15,7 @@
 
 
 #include "stdafx.h"
+#include "ntdll.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,8 +81,19 @@
 #define GETFILEATTRIBUTESEXW (DWORD(WINAPI *)(LPCTSTR ))
 #define CREATEPROCESS  (BOOL(WINAPI *)(LPCTSTR ,LPTSTR ,LPSECURITY_ATTRIBUTES ,LPSECURITY_ATTRIBUTES ,BOOL ,DWORD ,LPVOID ,LPCTSTR ,LPSTARTUPINFO ,LPPROCESS_INFORMATION ))
 #define PROCESSINTERNALW (HANDLE (WINAPI *)(HANDLE , LPCTSTR , LPTSTR , LPSECURITY_ATTRIBUTES , LPSECURITY_ATTRIBUTES , BOOL , DWORD , LPVOID , LPCTSTR , LPSTARTUPINFOA , LPPROCESS_INFORMATION , PHANDLE ))
+#define ZwQueryInformationFile (NTSTATUS (NTAPI*))(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass)
+#define ZwCreateSection (NTSTATUS (NTAPI*)) ( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)
+#define ZwMapViewOfSection (NTSTATUS (NTAPI*)) (IN HANDLE  SectionHandle,IN HANDLE  ProcessHandle,IN OUT PVOID  *BaseAddress,IN ULONG_PTR  ZeroBits,IN SIZE_T  CommitSize,IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL,IN OUT PSIZE_T  ViewSize,IN SECTION_INHERIT  InheritDisposition,IN ULONG  AllocationType,IN ULONG  Win32Protect)
+#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
+#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
+#define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
 
-
+ZwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
+ZwCreateSection    m_pfnOriginalZwCreateSection;
+ZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
+ZwClose m_pfnOriginalZwClose;
+myRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
+ZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
 //原函数的函数指针声明
 
 
@@ -118,6 +130,9 @@ static BOOL (WINAPI *readFileScatter)(HANDLE hFile,FILE_SEGMENT_ELEMENT aSegment
 static DWORD (WINAPI *getFileAttributesExW)( LPCTSTR lpFileName);
 static BOOL (WINAPI *createProcessW)(LPCTSTR lpApplicationName,LPTSTR lpCommandLine,LPSECURITY_ATTRIBUTES lpProcessAttributes,LPSECURITY_ATTRIBUTES lpThreadAttributes,BOOL bInheritHandles,DWORD dwCreationFlags,LPVOID lpEnvironment,LPCTSTR lpCurrentDirectory,LPSTARTUPINFO lpStartupInfo,LPPROCESS_INFORMATION lpProcessInformation);
 static HANDLE (WINAPI *createProcessInternalW)(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
+static NTSTATUS(NTAPI  * zwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
+
+
 
 
 
