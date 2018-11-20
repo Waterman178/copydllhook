@@ -6,9 +6,12 @@
 #include "DebugPrintf.h"
 #include "GetParentProID.h"
 #include "GlobalHook.h"
+#include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 
 #define FILE_SIGN "DSKFJLSKDF"
-#define FILE_SIGN_LEN 10
+#define FileName "RjiSafe9575"
+#define FILE_SIGN_LEN 11
+
 
 //全局变量
 std::list<HANDLE> MAPHAD_list;
@@ -185,35 +188,35 @@ static HANDLE WINAPI NewCreateFileW(
 	_In_     DWORD                 dwFlagsAndAttributes,
 	_In_opt_ HANDLE                hTemplateFile)
 {
-	HANDLE keyHan = nullptr;
-	if (memcmp(lpFileName, _T("\\\\"), 4) != 0) {
-		 keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %s\r\n", keyHan, lpFileName);
-		if (keyHan != INVALID_HANDLE_VALUE) {
-			DWORD readLen;
-			LPVOID fileHead = new char[FILE_SIGN_LEN];
-			int currentPointer = 0;
-			//currentPointer = setFilePointer(keyHan, 0, NULL, FILE_END);
-			//setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
-			//OutputDebugStringEx(">>>>>>>>readfile<<<<<<<<\r\n");
-			ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-			//setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN);
-			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
-			closeHandle(keyHan);
-			if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
-			{
-				OutputDebugStringEx("**************HOOK:sercret file\r\n ");
-				auto Attribute = GetFileAttributesA(reinterpret_cast<LPCSTR>(lpFileName))&FILE_ATTRIBUTE_READONLY;
-				if (Attribute!= FILE_ATTRIBUTE_READONLY)
-				{
-					OutputDebugStringEx("不是只读文件，设置只读属性\r\n ");
-					SetFileAttributesA(reinterpret_cast<LPCSTR>(lpFileName), FILE_ATTRIBUTE_READONLY);
-				}
-				dwDesiredAccess &= ~GENERIC_WRITE;
-			}
-			delete fileHead;
-		}
-	}
+	//HANDLE keyHan = nullptr;
+	//if (memcmp(lpFileName, _T("\\\\"), 4) != 0) {
+	//	 keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	//	OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %s\r\n", keyHan, lpFileName);
+	//	if (keyHan != INVALID_HANDLE_VALUE) {
+	//		DWORD readLen;
+	//		LPVOID fileHead = new char[FILE_SIGN_LEN];
+	//		int currentPointer = 0;
+	//		//currentPointer = setFilePointer(keyHan, 0, NULL, FILE_END);
+	//		//setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
+	//		//OutputDebugStringEx(">>>>>>>>readfile<<<<<<<<\r\n");
+	//		ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
+	//		//setFilePointer(keyHan, currentPointer, NULL, FILE_BEGIN);
+	//		OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
+	//		closeHandle(keyHan);
+	//		if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
+	//		{
+	//			OutputDebugStringEx("**************HOOK:sercret file\r\n ");
+	//			auto Attribute = GetFileAttributesA(reinterpret_cast<LPCSTR>(lpFileName))&FILE_ATTRIBUTE_READONLY;
+	//			if (Attribute!= FILE_ATTRIBUTE_READONLY)
+	//			{
+	//				OutputDebugStringEx("不是只读文件，设置只读属性\r\n ");
+	//				SetFileAttributesA(reinterpret_cast<LPCSTR>(lpFileName), FILE_ATTRIBUTE_READONLY);
+	//			}
+	//			dwDesiredAccess &= ~GENERIC_WRITE;
+	//		}
+	//		delete fileHead;
+	//	}
+	//}
 	HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 
 	
@@ -222,7 +225,7 @@ static HANDLE WINAPI NewCreateFileW(
 }
 
 /***********************************************
-Readfile()函数			函数读取文件功能
+Readfile()函数			函数读取文件功能   读取文件不是这么写，这里作废
 ************************************************/
 static int WINAPI NewReadfile(
 	_In_        HANDLE       hFile,
@@ -233,20 +236,21 @@ static int WINAPI NewReadfile(
 {
 	OutputDebugStringEx(">>>>>>>HOOK:   readfile function !!!\r\n");
 	int Ret = 0;
+	int HeadFlag = sizeof(RjFileSrtuct);
 	DWORD readLen;
-	LPVOID fileHead = new char[FILE_SIGN_LEN];
+	LPVOID fileHead = new char[HeadFlag];
 	int currentPointer = 0;
 	currentPointer = setFilePointer(hFile, 0, NULL, FILE_CURRENT);
-	setFilePointer(hFile, -FILE_SIGN_LEN, NULL, FILE_END);
-	readfile(hFile, fileHead, FILE_SIGN_LEN, &readLen, lpOverlapped);
+	setFilePointer(hFile, -HeadFlag, NULL, FILE_END);
+	readfile(hFile, fileHead, HeadFlag, &readLen, lpOverlapped);
 	setFilePointer(hFile, currentPointer, NULL, FILE_BEGIN);
 	OutputDebugStringEx("$$$$$$$$$HOOK : THE FILE currentPointer = %d,   nNumberOfBytesToRead=%d,getfilesize=%d\r\n", currentPointer, nNumberOfBytesToRead, getFileSize(hFile, NULL));
 	if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
 	{
+
 		dochFile = hFile;
 		if (currentPointer + nNumberOfBytesToRead > NewGetFileSize(hFile, NULL))
 		{
-
 			OutputDebugStringEx(">>>>>>>HOOK:  currentPointer + nNumberOfBytesToRead > getFileSize(hFile, NULL) - 10!!!\r\n");
 			DWORD  temp = NewGetFileSize(hFile, NULL) - currentPointer;
 			if (temp > 0)
@@ -305,10 +309,16 @@ static LPVOID WINAPI NewMapViewOfFile(
 
 	OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
 
-	LPVOID pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);		
+	LPVOID pMsg; 
 	LPVOID Ret = pMsg;
+	union {
+		 ULONGLONG ul;
+		 DWORD dw[2];
+	}ul2dw;
+	LPSYSTEM_INFO sysinfo;
 	if (MAPHAD_list.empty())
 	{
+		pMsg  = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 		return pMsg;
 	}
 	else
@@ -317,20 +327,37 @@ static LPVOID WINAPI NewMapViewOfFile(
 		{
 			if (hFileMappingObject == *map_ite)
 			{
-				OutputDebugStringEx("@@@@@@@@HOOK: THIS IS A SECRET FILE!!!!  dwNumberOfBytesToMap = %d \r\n", dwNumberOfBytesToMap);
+			 // sysinfo = new SYSTEM_INFO;
+				//GetSystemInfo(sysinfo);
+				//auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;
+
+				//// 设定大小、偏移量等参数 
+				////__int64 qwFileSize = 0x4000000;
+				//ul2dw.ul = dwAllocationGranularity;
+				//__int64 T = 600 * sinf(dwAllocationGranularity);
+				//DWORD dwBytesInBlock = 1000 * sinf(dwAllocationGranularity);
+
+				//OutputDebugStringEx("获取内存分配粒度:%08x,获取到的高32位:%08x；获取的低32位：%08x", dwAllocationGranularity, dwFileOffsetHigh, dwFileOffsetLow);
+				//OutputDebugStringEx("dw[0]:%08x dw[1]:%08x", ul2dw.dw[0], ul2dw.dw[1]);
+				pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
+			    Ret = pMsg;
+				OutputDebugStringEx("@@@@@@@@HOOK: THIS IS A SECRET FILE!!!!  Ret = %s \r\n", Ret);
 				char *aa = new char[dwNumberOfBytesToMap];
 				int i = 0;
-				for (; i < (dwNumberOfBytesToMap - 10); i++) {
-					aa[i] = ((char *)Ret)[i] ^ 'a';
+				for (; i < dwNumberOfBytesToMap ; i++) {
+					aa[i] = ((char*)((int)Ret+1))[i] ^ 'a';
 				}
-				for (;i < dwNumberOfBytesToMap; i++)
+	
+				/*for (;i < dwNumberOfBytesToMap - 0x84; i++)
 				{
 					aa[i] = '\0';
-				}
+				}*/
 				Ret = aa;
+				//delete sysinfo;
 				return Ret;
 			}
 		}
+		pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 	}
 	return pMsg;
 }
@@ -361,20 +388,34 @@ static HANDLE WINAPI NewCreateFileMapping(
 	_In_ DWORD dwMaximumSizeLow,
 	_In_opt_ LPCTSTR lpName)
 {
+
 	OutputDebugStringEx(">>>>>>>>HOOK THE CreateFileMapping %d\r\n", hFile);
-	HANDLE fileMap = createFileMapping(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
+	HANDLE fileMap;
 	DWORD readLen;
-	LPVOID fileHead = new char[FILE_SIGN_LEN];
-	int currentPointer = 0;
-	currentPointer = setFilePointer(hFile, 0, NULL, FILE_CURRENT);
-	setFilePointer(hFile, -FILE_SIGN_LEN, NULL, FILE_END);
-	readfile(hFile, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-	setFilePointer(hFile, currentPointer, NULL, FILE_BEGIN);
-	//OutputDebugStringEx("******HOOK: fileHead = %s", fileHead);
-	if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
+	int HeadFlaglength = sizeof(RjFileSrtuct);
+	pRjFileSrtuct fileHead = (pRjFileSrtuct)new char[HeadFlaglength];
+	//int currentPointer = 0;
+	//currentPointer = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
+	//SetFilePointer(hFile, -HeadFlaglength, NULL, FILE_END);
+	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+	ReadFile(hFile, fileHead, HeadFlaglength, &readLen, NULL); //用原始的
+	OutputDebugStringEx("******HOOK: fileHead = %s", fileHead);
+	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0) //这里改成我们的文件头
 	{
+		SetFilePointer(hFile, HeadFlaglength, NULL, FILE_BEGIN);
+		//删除文件头
+		LPSYSTEM_INFO  sysinfo = new SYSTEM_INFO;
+		//这里设置偏移
+		/*GetSystemInfo(sysinfo);
+		auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;*/
+		fileMap = createFileMapping(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 		OutputDebugStringEx("**************HOOK:sercret file \r\n");
 		MAPHAD_list.push_back(fileMap);
+		delete sysinfo;
+	}
+	else
+	{
+		fileMap = createFileMapping(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 	}
 	delete fileHead;
 	return fileMap;
@@ -388,7 +429,7 @@ static HANDLE WINAPI NewOpenFileMappingW(
 	_In_ LPCTSTR lpName)
 {
 	OutputDebugStringEx(">>>>>>>>HOOK THE OpenFileMappingW\r\n");
-	OutputDebugStringEx(">HOOK< dwDesiredAccess = %d,bInheritHandle=%d,lpName=%s\r\n", dwDesiredAccess, bInheritHandle, lpName);
+	OutputDebugStringEx(">HOOK< dwDesiredAccess = %d,bInheritHandle=%d,lpName=%ws\r\n", dwDesiredAccess, bInheritHandle, lpName);
 	return openFileMappingW(dwDesiredAccess, bInheritHandle, lpName);
 }
 /***********************************************
@@ -496,20 +537,17 @@ static BOOL WINAPI NewGetFileSizeEx(
 	_In_  HANDLE         hFile,
 	_Out_ PLARGE_INTEGER lpFileSize)
 {
-	
 	BOOL result = getFileSizeEx(hFile, lpFileSize);
+	int HeadFlaglength = sizeof(RjFileSrtuct);
 	DWORD readLen;
-	LPVOID fileHead = new char[FILE_SIGN_LEN];
-	int currentPointer = 0;
-	currentPointer = setFilePointer(hFile, 0, NULL, FILE_CURRENT);
-	setFilePointer(hFile, -FILE_SIGN_LEN, NULL, FILE_END);
-	readfile(hFile, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-	setFilePointer(hFile, currentPointer, NULL, FILE_BEGIN);
+	LPVOID fileHead = new char[HeadFlaglength];
+	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+	ReadFile(hFile, fileHead, HeadFlaglength, &readLen, NULL); //用原始的
 	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!    readHead = %s\r\n", fileHead);
-	if (memcmp(fileHead, FILE_SIGN, FILE_SIGN_LEN) == 0)
+	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 	{		
 		OutputDebugStringEx("********  getFileSizeEx ******HOOK:sercret file \r\n");	
-		lpFileSize->QuadPart -= FILE_SIGN_LEN;
+		lpFileSize->QuadPart -= HeadFlaglength;
 	}
 	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!  %ld\r\n ", lpFileSize->QuadPart);
 	delete fileHead;
@@ -527,7 +565,7 @@ static BOOL WINAPI NewSetFilePointerEx(
 	OutputDebugStringEx("HOOK: THE SetFilePointerEx FUNCTION!!!!hFile=%d, liDistanceToMove=%d\r\n", hFile, liDistanceToMove);
 	if (dwMoveMethod == FILE_END && hFile == dochFile)
 	{
-		liDistanceToMove.QuadPart -= FILE_SIGN_LEN;
+		liDistanceToMove.QuadPart -= sizeof(RjFileSrtuct);
 	}
 	return setFilePointerEx(hFile, liDistanceToMove, lpNewFilePointer, dwMoveMethod);
 }
@@ -539,10 +577,17 @@ static DWORD WINAPI NewGetFileSize(
 	LPDWORD lpFileSizeHigh)
 {
 	OutputDebugStringEx(">>>>>>>>>>>>>>>>>>>HOOK : THE Getfilesize Function!!!!\r\n");
-	if (hFile == dochFile)
+	if (MAPHAD_list.empty())
 	{
-		OutputDebugStringEx("********  NewGetFileSize ******HOOK:sercret file\r\n ");
-		return getFileSize(hFile, NULL) - FILE_SIGN_LEN;
+		return getFileSize(hFile, lpFileSizeHigh);
+	}
+	for (map_ite = MAPHAD_list.begin(); map_ite != MAPHAD_list.end(); map_ite++)
+	{
+		if (hFile == *map_ite)
+		{
+			OutputDebugStringEx("********  NewGetFileSize ******HOOK:sercret file\r\n ");
+			return (getFileSize(hFile, NULL) - sizeof(RjFileSrtuct));
+		}
 	}
 	return getFileSize(hFile, lpFileSizeHigh);
 }
@@ -660,6 +705,22 @@ static HANDLE WINAPI NewCreateProcessInternal(
 	return result;
 }
 
+
+
+static
+HANDLE
+WINAPI
+NewCreateFileMappingA(
+	__in     HANDLE hFile,
+	__in_opt LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
+	__in     DWORD flProtect,
+	__in     DWORD dwMaximumSizeHigh,
+	__in      DWORD dwMaximumSizeLow,
+	__in_opt LPCSTR lpName
+) {
+	OutputDebugStringEx("-----HOOK---createfilemappingA完成");
+	return createfilemappingA(hFile, lpFileMappingAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
+}
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>HOOK功能集函数<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
@@ -810,14 +871,16 @@ void __stdcall StartHook()
 	setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
 	setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
 	setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
-		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
-		/*readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);
-		writeFile = WRITEFILE StartOneHook(KERNEL32, "WriteFile", New_WriteFile);
+		//createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
+		//readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);
+		//writeFile = WRITEFILE StartOneHook(KERNEL32, "WriteFile", New_WriteFile);
 		mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
 		mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
 		createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
+		createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
+		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 		openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
-		zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
+		/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
 		unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
 		closeHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 		ntClose = NTCLOSE StartOneHook(NTDLL, "NtClose", NewNtClose);
@@ -825,7 +888,7 @@ void __stdcall StartHook()
 		getFileInformationByHandle = GETFILEINFBYHANDLE StartOneHook(KERNELBASE, "GetFileInformationByHandle", NewGetFileInformationByHandle);
 		getFileSizeEx = GETFILESIZEEX StartOneHook(KERNEL32, "GetFileSizeEx", NewGetFileSizeEx);
 		setFilePointerEx = SETFILEPOINTER_EX StartOneHook(KERNEL32, "SetFilePointerEx", NewSetFilePointerEx);
-		getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+		
 		getSaveFileNameW = GETSAVEFILENAMEW StartOneHook(COMDLG32, "GetSaveFileNameA", New_GetSaveFileNameW);
 		getFileAttributesW = GETFILEATTRIBUTESW StartOneHook(KERNELBASE, "GetFileAttributesW", NewGetFileAttributesW);
 		readFileEx = READFILEEX StartOneHook(KERNEL32, "ReadFileEx", NewReadFileEx);
@@ -865,11 +928,13 @@ void __stdcall EndHook()
 		EndOneHook(KERNEL32, createFileW, NewCreateFileW);
 		//EndOneHook(KERNEL32, readfile, NewReadfile);
 		//EndOneHook(KERNEL32, writeFile, New_WriteFile);
-		/*EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
+		EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
 		EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
 		EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
-		EndOneHook(NTDLL, zwClose, New_ZwClose);
+		EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
+		//EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+		/*EndOneHook(NTDLL, zwClose, New_ZwClose);
 		EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
 		EndOneHook(KERNEL32, closeHandle, NewCloseHandle);
 		EndOneHook(NTDLL, ntClose, NewNtClose);
@@ -896,6 +961,7 @@ void __stdcall EndHook()
 	//	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
 	//}
 }
+
 
 
 

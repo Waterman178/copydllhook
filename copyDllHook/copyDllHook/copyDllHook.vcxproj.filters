@@ -36,6 +36,9 @@
     <ClInclude Include="GetParentProID.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\OutGoingFileTool\OutGoingFileTool\FIlestruct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -48,6 +51,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GlobalHook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="zwreadFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Fake_ZwSection.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

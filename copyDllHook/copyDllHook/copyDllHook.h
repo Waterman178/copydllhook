@@ -27,8 +27,12 @@
 #include <list>
 #include <commdlg.h>
 
-
+#ifdef x64
+#pragma comment(lib,"detours_x64.lib")
+#else
 #pragma comment(lib,"detours.lib")
+#endif
+
 
 
 //dll库的宏定义
@@ -58,6 +62,7 @@
 #define MAPVIEWOFFILE (LPVOID(WINAPI *)(HANDLE,DWORD,DWORD,DWORD,SIZE_T))
 #define MAPVIEWOFFILEEX (LPVOID(WINAPI *)(HANDLE, DWORD, DWORD, DWORD, SIZE_T, LPVOID))
 #define CREATEFILEMAPPING (HANDLE (WINAPI *)(HANDLE ,LPSECURITY_ATTRIBUTES ,DWORD ,DWORD ,DWORD ,LPCTSTR ))
+#define CREATEFILEMAPPINGA (HANDLE(WINAPI *)(HANDLE, LPSECURITY_ATTRIBUTES, DWORD, DWORD, DWORD, LPCSTR))
 #define OPENFILEMAPPINGW (HANDLE (WINAPI *)(DWORD,BOOL ,LPCTSTR))
 #define ZWCLOSE (NTSTATUS (WINAPI *)(HANDLE))
 #define UNMAPVIEWOFFILE (BOOL (WINAPI *)(LPCVOID ))
@@ -78,6 +83,9 @@
 
 
 //原函数的函数指针声明
+
+
+
 static BOOL (WINAPI *openClipboard)(HWND hWndNewOwner);
 static HANDLE (WINAPI *getClipboardData)(UINT uFormat);
 static BOOL (WINAPI *openPrinter)( LPTSTR pPrinterName,LPHANDLE phPrinter,LPPRINTER_DEFAULTS pDefault);
@@ -111,6 +119,17 @@ static DWORD (WINAPI *getFileAttributesExW)( LPCTSTR lpFileName);
 static BOOL (WINAPI *createProcessW)(LPCTSTR lpApplicationName,LPTSTR lpCommandLine,LPSECURITY_ATTRIBUTES lpProcessAttributes,LPSECURITY_ATTRIBUTES lpThreadAttributes,BOOL bInheritHandles,DWORD dwCreationFlags,LPVOID lpEnvironment,LPCTSTR lpCurrentDirectory,LPSTARTUPINFO lpStartupInfo,LPPROCESS_INFORMATION lpProcessInformation);
 static HANDLE (WINAPI *createProcessInternalW)(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
 
+
+
+static
+HANDLE(WINAPI*createfilemappingA)(
+	__in     HANDLE hFile,
+	__in_opt LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
+	__in     DWORD flProtect,
+	__in     DWORD dwMaximumSizeHigh,
+	__in      DWORD dwMaximumSizeLow,
+	__in_opt LPCSTR lpName
+);
 //被HOOK的函数新功能，函数集合
 static BOOL WINAPI NewOpenClipboard(_In_opt_ HWND hWndNewOwner);//OpenClipboard打开剪切板
 static HANDLE WINAPI NewGetClipboardData(_In_ UINT uFormat);	//GetClipboardData()函数获取剪切板的内容
@@ -242,6 +261,17 @@ static BOOL WINAPI NewCreateProcessW(
 	_In_        LPSTARTUPINFO         lpStartupInfo,
 	_Out_       LPPROCESS_INFORMATION lpProcessInformation
 	);
+static
+HANDLE
+WINAPI
+NewCreateFileMappingA(
+	__in     HANDLE hFile,
+	__in_opt LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
+	__in     DWORD flProtect,
+	__in     DWORD dwMaximumSizeHigh,
+	__in      DWORD dwMaximumSizeLow,
+	__in_opt LPCSTR lpName
+);
 static HANDLE WINAPI NewCreateProcessInternal(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
 
 //HOOK功能集函数
