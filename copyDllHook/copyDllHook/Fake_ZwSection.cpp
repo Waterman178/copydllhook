@@ -6,10 +6,10 @@
 
 
 
-
 NTSTATUS
 NTAPI
-HookZwCreateSection(__out PHANDLE SectionHandle,
+HookZwCreateSection(
+    __out PHANDLE SectionHandle,
 	__in ACCESS_MASK DesiredAccess,
 	__in_opt POBJECT_ATTRIBUTES ObjectAttributes,
 	__in_opt PLARGE_INTEGER MaximumSize,
@@ -41,20 +41,33 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 	//FILE_RESULT fileResult = OpenError;
 
 	//bRet = m_handleList.Find(robj, FileHandle);
-
-	if (MAPHAD_list.empty())
+	//OutputDebugStringEx("开始");
+	if (!MAPHAD_list.empty())
 	{
 		for (map_ite = MAPHAD_list.begin(); map_ite != MAPHAD_list.end(); map_ite++)
 		{
 			if (FileHandle == *map_ite)
 			{
 				bRet = FileHandle;
+				OutputDebugStringEx("发现目标句柄");
+			}
+			else
+			{
+				OutputDebugStringEx("没有发现");
+				ntStatus = orgZwCreateSection(
+					__out  SectionHandle,
+					__in  DesiredAccess,
+					__in_opt  ObjectAttributes,
+					__in_opt  MaximumSize,
+					__in  SectionPageProtection,
+					__in  AllocationAttributes,
+					__in_opt  FileHandle);
+				return ntStatus;
 			}
 		}
-	
-
 	if (bRet /*&& robj.m_FileInfo.bReadDecrypt*/)
 	{
+		OutputDebugStringEx("here");
 		//if (DesiredAccess & SECTION_MAP_WRITE)
 		//{
 		//    robj.m_FileInfo.bWriteFlag = true;
@@ -93,7 +106,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 					{
 						fsi.EndOfFile.QuadPart = robj.m_FileInfo.liFileSize.QuadPart;
 					}*/
-					ntStatus = m_pfnOriginalZwCreateSection(
+					ntStatus = orgZwCreateSection(
 						__out  &hOldSection,
 						__in  DesiredAccess,
 						__in_opt  ObjectAttributes,
@@ -127,7 +140,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 					{
 						m_pfnOriginalZwClose(hOldSection);
 
-						ntStatus = m_pfnOriginalZwCreateSection(
+						ntStatus = orgZwCreateSection(
 							__out  &hOldSection,
 							__in  OldAccess,
 							__in_opt  ObjectAttributes,
@@ -199,7 +212,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 						SecurityDescriptor);
 
 					// 根据handle创建Section
-					ntStatus = m_pfnOriginalZwCreateSection(
+					ntStatus = orgZwCreateSection(
 						__out  &hNewSection,
 						__in  DesiredAccess,
 						__in_opt(ObjectAttributes != NULL) ? &NewObjectAttributes : ObjectAttributes, // guid
@@ -282,7 +295,8 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 		}
 	}
 	}
-	ntStatus = m_pfnOriginalZwCreateSection(
+	//OutputDebugStringEx("队列为空");
+	ntStatus = orgZwCreateSection(
 		__out  SectionHandle,
 		__in  DesiredAccess,
 		__in_opt  ObjectAttributes,
@@ -290,6 +304,5 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 		__in  SectionPageProtection,
 		__in  AllocationAttributes,
 		__in_opt  FileHandle);
-
 	return ntStatus;
 }

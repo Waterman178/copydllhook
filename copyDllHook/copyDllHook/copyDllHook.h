@@ -83,7 +83,7 @@ extern std::list<HANDLE>::iterator map_ite;
 #define CREATEPROCESS  (BOOL(WINAPI *)(LPCTSTR ,LPTSTR ,LPSECURITY_ATTRIBUTES ,LPSECURITY_ATTRIBUTES ,BOOL ,DWORD ,LPVOID ,LPCTSTR ,LPSTARTUPINFO ,LPPROCESS_INFORMATION ))
 #define PROCESSINTERNALW (HANDLE (WINAPI *)(HANDLE , LPCTSTR , LPTSTR , LPSECURITY_ATTRIBUTES , LPSECURITY_ATTRIBUTES , BOOL , DWORD , LPVOID , LPCTSTR , LPSTARTUPINFOA , LPPROCESS_INFORMATION , PHANDLE ))
 //#define ZwQueryInformationFile (NTSTATUS (NTAPI*))(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass)
-//#define ZwCreateSection (NTSTATUS (NTAPI*)) ( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)
+#define ZwCreateSection (NTSTATUS(NTAPI*)( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)) 
 //#define ZwMapViewOfSection (NTSTATUS (NTAPI*)) (IN HANDLE  SectionHandle,IN HANDLE  ProcessHandle,IN OUT PVOID  *BaseAddress,IN ULONG_PTR  ZeroBits,IN SIZE_T  CommitSize,IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL,IN OUT PSIZE_T  ViewSize,IN SECTION_INHERIT  InheritDisposition,IN ULONG  AllocationType,IN ULONG  Win32Protect)
 //#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
 //#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
@@ -91,7 +91,7 @@ extern std::list<HANDLE>::iterator map_ite;
 
 //原函数的函数指针声明
 
-
+static NTSTATUS (NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
 
 static BOOL (WINAPI *openClipboard)(HWND hWndNewOwner);
 static HANDLE (WINAPI *getClipboardData)(UINT uFormat);
@@ -292,7 +292,17 @@ NewCreateFileMappingA(
 	__in_opt LPCSTR lpName
 );
 static HANDLE WINAPI NewCreateProcessInternal(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
+ 
 
+NTSTATUS
+NTAPI
+HookZwCreateSection(__out PHANDLE SectionHandle,
+	__in ACCESS_MASK DesiredAccess,
+	__in_opt POBJECT_ATTRIBUTES ObjectAttributes,
+	__in_opt PLARGE_INTEGER MaximumSize,
+	__in ULONG SectionPageProtection,
+	__in ULONG AllocationAttributes,
+	__in_opt HANDLE FileHandle);
 //HOOK功能集函数
 PVOID FindProcAddress(_In_ LPCTSTR lpFileName, LPCSTR lpProcName);
 PVOID StartOneHook(LPCTSTR dllName, LPCSTR funcName, PVOID newFunc);
