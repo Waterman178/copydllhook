@@ -1,6 +1,6 @@
 #ifndef __GLOBALHOOK_H__
 #define __GLOBALHOOK_H__
-
+#pragma once
 #include "stdafx.h"
 
 

@@ -34,8 +34,8 @@
 #pragma comment(lib,"detours.lib")
 #endif
 
-std::list<HANDLE> MAPHAD_list;
-std::list<HANDLE>::iterator map_ite;
+extern std::list<HANDLE> MAPHAD_list;
+extern std::list<HANDLE>::iterator map_ite;
 
 //dll库的宏定义
 #define USER32 TEXT("User32.dll")
@@ -82,12 +82,12 @@ std::list<HANDLE>::iterator map_ite;
 #define GETFILEATTRIBUTESEXW (DWORD(WINAPI *)(LPCTSTR ))
 #define CREATEPROCESS  (BOOL(WINAPI *)(LPCTSTR ,LPTSTR ,LPSECURITY_ATTRIBUTES ,LPSECURITY_ATTRIBUTES ,BOOL ,DWORD ,LPVOID ,LPCTSTR ,LPSTARTUPINFO ,LPPROCESS_INFORMATION ))
 #define PROCESSINTERNALW (HANDLE (WINAPI *)(HANDLE , LPCTSTR , LPTSTR , LPSECURITY_ATTRIBUTES , LPSECURITY_ATTRIBUTES , BOOL , DWORD , LPVOID , LPCTSTR , LPSTARTUPINFOA , LPPROCESS_INFORMATION , PHANDLE ))
-#define ZwQueryInformationFile (NTSTATUS (NTAPI*))(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass)
-#define ZwCreateSection (NTSTATUS (NTAPI*)) ( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)
-#define ZwMapViewOfSection (NTSTATUS (NTAPI*)) (IN HANDLE  SectionHandle,IN HANDLE  ProcessHandle,IN OUT PVOID  *BaseAddress,IN ULONG_PTR  ZeroBits,IN SIZE_T  CommitSize,IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL,IN OUT PSIZE_T  ViewSize,IN SECTION_INHERIT  InheritDisposition,IN ULONG  AllocationType,IN ULONG  Win32Protect)
-#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
-#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
-#define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
+//#define ZwQueryInformationFile (NTSTATUS (NTAPI*))(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass)
+//#define ZwCreateSection (NTSTATUS (NTAPI*)) ( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)
+//#define ZwMapViewOfSection (NTSTATUS (NTAPI*)) (IN HANDLE  SectionHandle,IN HANDLE  ProcessHandle,IN OUT PVOID  *BaseAddress,IN ULONG_PTR  ZeroBits,IN SIZE_T  CommitSize,IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL,IN OUT PSIZE_T  ViewSize,IN SECTION_INHERIT  InheritDisposition,IN ULONG  AllocationType,IN ULONG  Win32Protect)
+//#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
+//#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
+//#define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
 
 //原函数的函数指针声明
 
@@ -132,12 +132,12 @@ typedef NTSTATUS(NTAPI *pfZwClose)(IN HANDLE Handle);
 typedef void (NTAPI * pfmyRtlInitUnicodeString)(PUNICODE_STRING DestinationString, PCWSTR SourceString);
 typedef NTSTATUS(NTAPI *pfZwUnmapViewOfSection)(HANDLE ProcessHandle, PVOID  BaseAddress);
 
-zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
-myZwCreateSection    m_pfnOriginalZwCreateSection;
-pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
-pfZwClose m_pfnOriginalZwClose;
-pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
-pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
+extern zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
+extern myZwCreateSection    m_pfnOriginalZwCreateSection;
+extern pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
+extern pfZwClose m_pfnOriginalZwClose;
+extern pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
+extern pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
 
 
 static

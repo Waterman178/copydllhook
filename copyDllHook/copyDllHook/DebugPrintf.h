@@ -1,6 +1,6 @@
 #ifndef _DEBUGPRINTF_H_ 
 #define _DEBUGPRINTF_H_ 
-
+#pragma once
 #include<Windows.h> 
 #include <tchar.h> 
 

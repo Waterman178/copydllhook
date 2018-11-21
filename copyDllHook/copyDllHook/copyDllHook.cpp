@@ -13,6 +13,18 @@
 #define FILE_SIGN_LEN 11
 
 
+ std::list<HANDLE> MAPHAD_list;
+ std::list<HANDLE>::iterator map_ite;
+
+
+zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
+myZwCreateSection    m_pfnOriginalZwCreateSection;
+pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
+pfZwClose m_pfnOriginalZwClose;
+pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
+pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
+
+
 //全局变量
 
 HANDLE  dochFile = (HANDLE)-1;//word的加密文件的句柄

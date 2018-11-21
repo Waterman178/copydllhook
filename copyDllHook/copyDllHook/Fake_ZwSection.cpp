@@ -5,6 +5,8 @@
 #include <string>
 
 
+
+
 NTSTATUS
 NTAPI
 HookZwCreateSection(__out PHANDLE SectionHandle,
@@ -33,7 +35,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 	HANDLE hTmpSection = INVALID_HANDLE_VALUE;
 	//char cArrDGKey[HeaderKeyLength] = {0}; //Ω‚√‹key
 	IO_STATUS_BLOCK iostatus;
-	wstring wstrMapName;
+	std::wstring wstrMapName;
 	FILE_STANDARD_INFORMATION fsi;
 	//CRc4 rc4Obj;
 	//FILE_RESULT fileResult = OpenError;
