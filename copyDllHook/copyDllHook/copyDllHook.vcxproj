@@ -123,7 +123,7 @@
       <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;COPYDLLHOOK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_X86_;_USING_V110_SDK71_;NDEBUG;_WINDOWS;_USRDLL;COPYDLLHOOK_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -162,6 +162,7 @@
     <ClInclude Include="..\..\OutGoingFileTool\OutGoingFileTool\FIlestruct.h" />
     <ClInclude Include="copyDllHook.h" />
     <ClInclude Include="DebugPrintf.h" />
+    <ClInclude Include="detours_Nt.h" />
     <ClInclude Include="GetParentProID.h" />
     <ClInclude Include="GlobalHook.h" />
     <ClInclude Include="ntdll.h" />

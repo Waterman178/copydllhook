@@ -27,11 +27,13 @@
 #include <bcrypt.h>
 #include <list>
 #include <commdlg.h>
+//#include "detours_Nt.h"
 
 #ifdef x64
 #pragma comment(lib,"detours_x64.lib")
 #else
 #pragma comment(lib,"detours.lib")
+//#pragma comment(lib,"DetoursNT.lib")
 #endif
 
 extern std::list<HANDLE> MAPHAD_list;

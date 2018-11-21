@@ -919,9 +919,14 @@ void __stdcall StartHook()
 		if (m_pfnOriginalZwUnmapViewOfSection == 0x00) { 
 			OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSectionªÒ»° ß∞‹");
 			return; };
-		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+		//orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
 
-		createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
+		/*DetourTransactionBegin();
+		DetourUpdateThread(NtCurrentThread);
+		DetourAttach((PVOID*)&orgZwCreateSection, HookZwCreateSection);
+		DetourTransactionCommit();*/
+
+		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 		//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);
 		/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
 		unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
@@ -973,8 +978,8 @@ void __stdcall EndHook()
 		//EndOneHook(KERNEL32, writeFile, New_WriteFile);
 		//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
-		EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
-		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
+		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
+		//EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
 		
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
