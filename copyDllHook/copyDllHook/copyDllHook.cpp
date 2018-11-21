@@ -419,10 +419,11 @@ static HANDLE WINAPI NewCreateFileMapping(
 		//ÕâÀïÉèÖÃÆ«ÒÆ
 		/*GetSystemInfo(sysinfo);
 		auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;*/
-		WaitForSingleObject(hMutex, INFINITE);
 		MAPHAD_list.push_back(hFile);
-		ReleaseMutex(hMutex);
+		//ReleaseMutex(hMutex);
 		fileMap = createFileMapping(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
+		//WaitForSingleObject(hMutex, INFINITE);
+		//ReleaseMutex(hMutex);
 		fristopen = TRUE;
 		OutputDebugStringEx("**************HOOK:sercret file \r\n");
 		//delete sysinfo;

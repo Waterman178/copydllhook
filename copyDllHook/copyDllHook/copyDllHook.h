@@ -38,8 +38,11 @@
 //#pragma comment(lib,"DetoursNT.lib")
 #endif
 
+
+
 extern std::list<HANDLE> MAPHAD_list;
 extern std::list<HANDLE>::iterator map_ite;
+
 
 //dll¿âµÄºê¶¨Òå
 #define USER32 TEXT("User32.dll")

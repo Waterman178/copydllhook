@@ -116,10 +116,13 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 		exit(0);
 	CDialogEx::OnInitDialog();
 
+	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
+	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
+
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
-	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
+		ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
@@ -338,7 +341,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 	char  Filepullpath[250] = { 0 };
 	GetTempPathA(261, Filepullpath);
-	CString str(_T("C:\\Users\\Administrator\\Desktop\\"));
+	CString str(_T("C:\\Users\\Wrench\\Desktop\\"));
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
 
@@ -366,7 +369,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 			hid = ShExecInfo.hProcess;
 			dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
 			
-			InjectDll(dwId, _T("C:\\Users\\Administrator\\source\\repos\\copydllhook\\OutGoingFileTool\\Release\\copyDllHook.dll"));
+			InjectDll(dwId, _T("C:\\Users\\Wrench\\source\\repos\\copydllhook\\OutGoingFileTool\\Release\\copyDllHook.dll"));
 		}
 
 	}
@@ -506,9 +509,9 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
 	encryptInfo->encryptHead.onlyread = 1;
 	encryptInfo->encryptHead.forbidensaveas = 1;
-	FILE * TEMP = fopen("C:\\Users\\Administrator\\Desktop\\121.txt", "rb+");
-	FILE * TEMP1 = fopen("C:\\Users\\Administrator\\Desktop\\121.rjs", "wb+");
-	_splitpath_s("C:\\Users\\Administrator\\Desktop\\121.txt", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
+	FILE * TEMP = fopen("C:\\Users\\Wrench\\Desktop\\121.txt", "rb+");
+	FILE * TEMP1 = fopen("C:\\Users\\Wrench\\Desktop\\121.rjs", "wb+");
+	_splitpath_s("C:\\Users\\Wrench\\Desktop\\121.txt", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
 	strcat(pBuffer, Ext); //文件名衔接个后缀名
 	fseek(TEMP, 0, SEEK_END);   //指针：移动到文件尾部
 	encryptInfo->encryptHead.length = ftell(TEMP); //获取文件大小
