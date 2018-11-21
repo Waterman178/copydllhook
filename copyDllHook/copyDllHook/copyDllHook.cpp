@@ -12,7 +12,7 @@
 #define FileName "RjiSafe9575"
 #define FILE_SIGN_LEN 11
 
-
+  NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
  std::list<HANDLE> MAPHAD_list;
  std::list<HANDLE>::iterator map_ite;
  BOOL  fristopen = FALSE;
@@ -419,10 +419,12 @@ static HANDLE WINAPI NewCreateFileMapping(
 		//这里设置偏移
 		/*GetSystemInfo(sysinfo);
 		auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;*/
+		WaitForSingleObject(hMutex, INFINITE);
+		MAPHAD_list.push_back(hFile);
+		ReleaseMutex(hMutex);
 		fileMap = createFileMapping(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 		fristopen = TRUE;
 		OutputDebugStringEx("**************HOOK:sercret file \r\n");
-		MAPHAD_list.push_back(fileMap);
 		//delete sysinfo;
 	}
 	else
@@ -899,10 +901,10 @@ void __stdcall StartHook()
 			OutputDebugStringEx("m_pfnOriginalZwQueryInformationFile获取失败");
 			return ; 
 		}
-	/*	m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
+		m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
 		if (m_pfnOriginalZwCreateSection == 0x00) { 
 			OutputDebugStringEx("m_pfnOriginalZwCreateSection获取失败");
-			return;}*/
+			return;}
 		m_pfnOriginalZwClose  = (pfZwClose)FindProcAddress(NTDLL, "ZwClose");
 		if (m_pfnOriginalZwClose == 0x00) { 
 			OutputDebugStringEx("m_pfnOriginalZwClose获取失败");
@@ -919,14 +921,19 @@ void __stdcall StartHook()
 		if (m_pfnOriginalZwUnmapViewOfSection == 0x00) { 
 			OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSection获取失败");
 			return; };
-		//orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
 
+		createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
+		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+
+	/*	if (MH_CreateHook(&m_pfnOriginalZwCreateSection,&HookZwCreateSection,reinterpret_cast<void**>(&orgZwCreateSection))!=MH_OK)
+		{
+			OutputDebugStringEx("orgZwCreateSection获取失败");
+		}*/
 		/*DetourTransactionBegin();
 		DetourUpdateThread(NtCurrentThread);
 		DetourAttach((PVOID*)&orgZwCreateSection, HookZwCreateSection);
 		DetourTransactionCommit();*/
 
-		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 		//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);
 		/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
 		unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
@@ -978,8 +985,9 @@ void __stdcall EndHook()
 		//EndOneHook(KERNEL32, writeFile, New_WriteFile);
 		//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
-		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
-		//EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
+		EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
+		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
+
 		
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);

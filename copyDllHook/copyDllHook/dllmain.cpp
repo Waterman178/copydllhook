@@ -3,6 +3,7 @@
 #include "copyDllHook.h"
 #include "GlobalHook.h"
 bool bhook=false;
+HANDLE hMutex = NULL;
 
 BOOL	 IsOrigProcess(CHAR* pExt)
 {
@@ -34,6 +35,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	    }
 		OutputDebugStringEx("Is a process!\r\n");
 	    bhook = true;
+		hMutex = CreateMutex(NULL, FALSE, NULL);
 		StartHook();
 		break;
 	case DLL_THREAD_ATTACH:

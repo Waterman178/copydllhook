@@ -27,12 +27,14 @@
 #include <bcrypt.h>
 #include <list>
 #include <commdlg.h>
+#include "MinHook.h"
 //#include "detours_Nt.h"
 
 #ifdef x64
 #pragma comment(lib,"detours_x64.lib")
 #else
 #pragma comment(lib,"detours.lib")
+//#pragma comment(lib,"libMinHook-x86-v90-mtd.lib")
 //#pragma comment(lib,"DetoursNT.lib")
 #endif
 
@@ -93,7 +95,7 @@ extern std::list<HANDLE>::iterator map_ite;
 
 //原函数的函数指针声明
 
-static NTSTATUS (NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
+extern   NTSTATUS (NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
 
 static BOOL (WINAPI *openClipboard)(HWND hWndNewOwner);
 static HANDLE (WINAPI *getClipboardData)(UINT uFormat);
@@ -316,6 +318,7 @@ void hexdump(const unsigned char *buf, const int num);//16进制转储
 //DLL，导出函数
 void __stdcall StartHook();
 void __stdcall EndHook();
+extern HANDLE hMutex;
 
 
 

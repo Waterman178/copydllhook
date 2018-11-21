@@ -48,6 +48,9 @@
     <ClInclude Include="detours_Nt.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="MinHook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
