@@ -14,8 +14,7 @@
 
 
 //全局变量
-std::list<HANDLE> MAPHAD_list;
-std::list<HANDLE>::iterator map_ite;
+
 HANDLE  dochFile = (HANDLE)-1;//word的加密文件的句柄
 
 HANDLE hMap = ::OpenFileMapping(FILE_MAP_ALL_ACCESS, 0, _T("processMem_FUCK"));
@@ -70,46 +69,46 @@ void OutputDebugStringEx(const char *strOutputString, ...)
 /***********************************************
 OpenClipboard打开剪切板
 ************************************************/
-static BOOL WINAPI NewOpenClipboard(
-	_In_opt_ HWND hWndNewOwner
-	)
-{
-	if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
-	{
-		return FALSE;
-	}
-	return openClipboard(hWndNewOwner);
-	
-}
+//static BOOL WINAPI NewOpenClipboard(
+//	_In_opt_ HWND hWndNewOwner
+//	)
+//{
+//	if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
+//	{
+//		return FALSE;
+//	}
+//	return openClipboard(hWndNewOwner);
+//	
+//}
 
 /***********************************************
 GetClipboardData()函数获取剪切板的内容
 ************************************************/
-static HANDLE WINAPI NewGetClipboardData(
-	_In_ UINT uFormat
-	)
-{
-	if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
-	{
-		return NULL;
-	}
-	return getClipboardData(uFormat);
-}
+//static HANDLE WINAPI NewGetClipboardData(
+//	_In_ UINT uFormat
+//	)
+//{
+//	if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
+//	{
+//		return NULL;
+//	}
+//	return getClipboardData(uFormat);
+//}
 
 /***********************************************
 OpenPrinter()函数 打印功能
 ************************************************/
-static BOOL WINAPI NewOpenPrinter(__in LPTSTR pPrinterName,
-	__out LPHANDLE phPrinter,
-	__in LPPRINTER_DEFAULTS pDefault
-	)
-{
-	if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
-	{
-		return FALSE;
-	}
-	return openPrinter(pPrinterName, phPrinter, pDefault);
-}
+//static BOOL WINAPI NewOpenPrinter(__in LPTSTR pPrinterName,
+//	__out LPHANDLE phPrinter,
+//	__in LPPRINTER_DEFAULTS pDefault
+//	)
+//{
+//	if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
+//	{
+//		return FALSE;
+//	}
+//	return openPrinter(pPrinterName, phPrinter, pDefault);
+//}
 
 /***********************************************
 showWindow()函数 另存为功能
@@ -327,7 +326,7 @@ static LPVOID WINAPI NewMapViewOfFile(
 		{
 			if (hFileMappingObject == *map_ite)
 			{
-			 // sysinfo = new SYSTEM_INFO;
+			    //sysinfo = new SYSTEM_INFO;
 				//GetSystemInfo(sysinfo);
 				//auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;
 
@@ -880,17 +879,17 @@ void __stdcall StartHook()
 		createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
 		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 		openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
-		m_pfnOriginalZwQueryInformationFile =  (ZwQueryInformationFile)GetProcAddress(NTDLL, "ZwQueryInformationFile");
+		m_pfnOriginalZwQueryInformationFile =   (zwQueryInformationFile)FindProcAddress(NTDLL, "ZwQueryInformationFile");
 		if (m_pfnOriginalZwQueryInformationFile == 0x00) { return ; }
-		m_pfnOriginalZwCreateSection = (ZwCreateSection)GetProcAddress(NTDLL, "ZwCreateSection");
+		m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
 		if (m_pfnOriginalZwCreateSection == 0x00) { return;}
-		m_pfnOriginalZwClose  = (ZwClose)GetProcAddress(NTDLL, "ZwClose");
-		if (m_pfnOriginalZwClose == 0x00) { return 0x00; }
-	    m_pfnOriginalZwMapViewOfSection  = (ZwMapViewOfSection)GetProcAddress(NTDLL, "ZwMapViewOfSection");
+		m_pfnOriginalZwClose  = (pfZwClose)FindProcAddress(NTDLL, "ZwClose");
+		if (m_pfnOriginalZwClose == 0x00) { return; }
+	    m_pfnOriginalZwMapViewOfSection  = (pfZwMapViewOfSection)FindProcAddress(NTDLL, "ZwMapViewOfSection");
 		if (m_pfnOriginalZwMapViewOfSection == 0x00) { return; }
-		m_pfnOriginalRtlInitUnicodeString = (myRtlInitUnicodeString)GetProcAddress(NTDLL, "RtlInitUnicodeString");
+		m_pfnOriginalRtlInitUnicodeString =  (pfmyRtlInitUnicodeString)FindProcAddress(NTDLL, "RtlInitUnicodeString");
 		if (m_pfnOriginalRtlInitUnicodeString == 0x00) { return; };
-		m_pfnOriginalZwUnmapViewOfSection = (ZwUnmapViewOfSection)GetProcAddress(NTDLL, "ZwUnmapViewOfSection");
+		m_pfnOriginalZwUnmapViewOfSection =  (pfZwUnmapViewOfSection)FindProcAddress(NTDLL, "ZwUnmapViewOfSection");
 		if (m_pfnOriginalZwUnmapViewOfSection == 0x00) { return; };
 
 		//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);

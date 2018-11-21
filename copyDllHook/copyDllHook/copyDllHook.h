@@ -1,6 +1,6 @@
 #ifndef __COPYDLLHOOK_H__
 #define __COPYDLLHOOK_H__
-
+#pragma once
 /*
 
 * All rights reserved.
@@ -34,7 +34,8 @@
 #pragma comment(lib,"detours.lib")
 #endif
 
-
+std::list<HANDLE> MAPHAD_list;
+std::list<HANDLE>::iterator map_ite;
 
 //dll库的宏定义
 #define USER32 TEXT("User32.dll")
@@ -88,12 +89,6 @@
 #define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
 #define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
 
-ZwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
-ZwCreateSection    m_pfnOriginalZwCreateSection;
-ZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
-ZwClose m_pfnOriginalZwClose;
-myRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
-ZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
 //原函数的函数指针声明
 
 
@@ -130,10 +125,19 @@ static BOOL (WINAPI *readFileScatter)(HANDLE hFile,FILE_SEGMENT_ELEMENT aSegment
 static DWORD (WINAPI *getFileAttributesExW)( LPCTSTR lpFileName);
 static BOOL (WINAPI *createProcessW)(LPCTSTR lpApplicationName,LPTSTR lpCommandLine,LPSECURITY_ATTRIBUTES lpProcessAttributes,LPSECURITY_ATTRIBUTES lpThreadAttributes,BOOL bInheritHandles,DWORD dwCreationFlags,LPVOID lpEnvironment,LPCTSTR lpCurrentDirectory,LPSTARTUPINFO lpStartupInfo,LPPROCESS_INFORMATION lpProcessInformation);
 static HANDLE (WINAPI *createProcessInternalW)(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
-static NTSTATUS(NTAPI  * zwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
+typedef NTSTATUS(NTAPI  * zwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
+typedef NTSTATUS(NTAPI *myZwCreateSection)(OUT PHANDLE SectionHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL, IN PLARGE_INTEGER MaximumSize OPTIONAL, IN ULONG SectionPageProtection, IN ULONG AllocationAttributes, IN HANDLE FileHandle OPTIONAL);
+typedef NTSTATUS(NTAPI *pfZwMapViewOfSection) (IN HANDLE  SectionHandle, IN HANDLE  ProcessHandle, IN OUT PVOID  *BaseAddress, IN ULONG_PTR  ZeroBits, IN SIZE_T  CommitSize, IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL, IN OUT PSIZE_T  ViewSize, IN SECTION_INHERIT  InheritDisposition, IN ULONG  AllocationType, IN ULONG  Win32Protect);
+typedef NTSTATUS(NTAPI *pfZwClose)(IN HANDLE Handle);
+typedef void (NTAPI * pfmyRtlInitUnicodeString)(PUNICODE_STRING DestinationString, PCWSTR SourceString);
+typedef NTSTATUS(NTAPI *pfZwUnmapViewOfSection)(HANDLE ProcessHandle, PVOID  BaseAddress);
 
-
-
+zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
+myZwCreateSection    m_pfnOriginalZwCreateSection;
+pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
+pfZwClose m_pfnOriginalZwClose;
+pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
+pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
 
 
 static

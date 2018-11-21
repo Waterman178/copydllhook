@@ -1,12 +1,8 @@
 
 #include "stdafx.h"
 #include "copyDllHook.h"
-#include "ntdll.h"
-
-
-
-
-
+#include "ntstatus.h"
+#include <string>
 
 
 NTSTATUS
@@ -26,7 +22,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 	HANDLE RootDirectory = NULL;
 	PVOID SecurityDescriptor = NULL;
 	OBJECT_ATTRIBUTES NewObjectAttributes;
-	FileHandleRelationNode robj;
+	//FileHandleRelationNode robj;
 	PVOID pOldViewBase = NULL;
 	PVOID pNewViewBase = NULL;
 	ACCESS_MASK OldAccess = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE;
@@ -39,11 +35,23 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 	IO_STATUS_BLOCK iostatus;
 	wstring wstrMapName;
 	FILE_STANDARD_INFORMATION fsi;
-	CRc4 rc4Obj;
+	//CRc4 rc4Obj;
 	//FILE_RESULT fileResult = OpenError;
 
-	bRet = m_handleList.Find(robj, FileHandle);
-	if (bRet && robj.m_FileInfo.bReadDecrypt)
+	//bRet = m_handleList.Find(robj, FileHandle);
+
+	if (MAPHAD_list.empty())
+	{
+		for (map_ite = MAPHAD_list.begin(); map_ite != MAPHAD_list.end(); map_ite++)
+		{
+			if (FileHandle == *map_ite)
+			{
+				bRet = FileHandle;
+			}
+		}
+	
+
+	if (bRet /*&& robj.m_FileInfo.bReadDecrypt*/)
 	{
 		//if (DesiredAccess & SECTION_MAP_WRITE)
 		//{
@@ -51,26 +59,26 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 		//    m_handleList.Update(robj);
 		//}
 
-		if (robj.m_FileInfo.bEncryptFile
-			&& (SectionPageProtection & ~PAGE_NOACCESS))
+		if (/*robj.m_FileInfo.bEncryptFile
+			&& */(SectionPageProtection & ~PAGE_NOACCESS))
 		{
-			if (IsAllow(robj) != OpenSucess /*|| (fileResult == OpenOldFileType)*/) // 密级、企业码、加密槽等判断
-			{
-				SetLastError(ERROR_ACCESS_DENIED);
-				*SectionHandle = INVALID_HANDLE_VALUE;
-				//OutputLogMsg(LOGLEVEL_ERROR, L"[%s] ACCESS_DENIED", __FUNCTIONW__);
-				return STATUS_ACCESS_DENIED;
-			}
+			//if (IsAllow(robj) != OpenSucess /*|| (fileResult == OpenOldFileType)*/) // 密级、企业码、加密槽等判断
+			//{
+			//	SetLastError(ERROR_ACCESS_DENIED);
+			//	*SectionHandle = INVALID_HANDLE_VALUE;
+			//	//OutputLogMsg(LOGLEVEL_ERROR, L"[%s] ACCESS_DENIED", __FUNCTIONW__);
+			//	return STATUS_ACCESS_DENIED;
+			//}
 
-			MapSectionNode sectionObj(DesiredAccess, SectionPageProtection, AllocationAttributes, FileHandle);
+			//MapSectionNode sectionObj(DesiredAccess, SectionPageProtection, AllocationAttributes, FileHandle);
 
-			if (m_handleList.Find(sectionObj, hTmpSection))
+			/*if (m_handleList.Find(sectionObj, hTmpSection))
 			{
 				*SectionHandle = hTmpSection;
 				return STATUS_SUCCESS;
 			}
 			else
-			{
+			{*/
 				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 					&iostatus,
 					&fsi,
@@ -79,10 +87,10 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 
 				if (fsi.EndOfFile.QuadPart != 0)
 				{
-					if (fsi.EndOfFile.QuadPart < HeaderLength)
+					/*if (fsi.EndOfFile.QuadPart < HeaderLength)
 					{
 						fsi.EndOfFile.QuadPart = robj.m_FileInfo.liFileSize.QuadPart;
-					}
+					}*/
 					ntStatus = m_pfnOriginalZwCreateSection(
 						__out  &hOldSection,
 						__in  DesiredAccess,
@@ -103,7 +111,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 
 					ntStatus = m_pfnOriginalZwMapViewOfSection(
 						__in hOldSection,
-						__in NtCurrentProcess(),
+						__in NtCurrentProcess,
 						__inout &pOldViewBase,
 						__in 0,
 						__in 0,
@@ -133,7 +141,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 
 						ntStatus = m_pfnOriginalZwMapViewOfSection(
 							__in hOldSection,
-							__in NtCurrentProcess(),
+							__in  NtCurrentProcess,
 							__inout &pOldViewBase,
 							__in 0,
 							__in 0,
@@ -163,8 +171,10 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 					}
 
 					//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][2-5]Handle %d, OldViewBase:%08x", __FUNCTIONW__, hOldSection, pOldViewBase);
+					//随机名？
 
-					CreateObjectAttrib(wstrMapName);
+
+					//CreateObjectAttrib(wstrMapName);
 
 					if (ObjectAttributes != NULL)
 					{
@@ -208,7 +218,7 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 					SizeView = fsi.EndOfFile.LowPart/* + g_nLenOfDGFileHeader*/;
 					ntStatus = m_pfnOriginalZwMapViewOfSection(
 						__in hNewSection,
-						__in NtCurrentProcess(),
+						__in  NtCurrentProcess,
 						__inout &pNewViewBase,
 						__in 0,
 						__in 0,
@@ -228,8 +238,9 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 					}
 
 					//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][4-5]Handle %d, NewViewBase:%08x", __FUNCTIONW__, hNewSection, pNewViewBase);
-
-					if (robj.m_FileInfo.rc4Key == NULL)
+					
+					//换个新的解密吧
+					/*if (robj.m_FileInfo.rc4Key == NULL)
 					{
 						robj.m_FileInfo.rc4Key = new unsigned char[FileBuffer];
 						memset(robj.m_FileInfo.rc4Key, 0, FileBuffer);
@@ -239,7 +250,9 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 						(char*)pNewViewBase + HeaderLength,
 						0,
 						(DWORD)fsi.EndOfFile.LowPart - HeaderLength,
-						robj.m_FileInfo.rc4Key);
+						robj.m_FileInfo.rc4Key);*/
+
+
 
 					if (pOldViewBase != NULL)
 					{
@@ -253,9 +266,9 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 
 					m_pfnOriginalZwClose(hNewSection);
 					*SectionHandle = hOldSection;
-					sectionObj.m_SectionHandle = hOldSection;
-					robj.m_MapSection = sectionObj;
-					m_handleList.Update(robj);
+					//sectionObj.m_SectionHandle = hOldSection;
+					//robj.m_MapSection = sectionObj;
+					//m_handleList.Update(robj);
 					//m_mapSectionList.Add(sectionObj);
 
 					//OutputLogMsg(LOGLEVEL_INFO, L"+[%s][5-5]Handle %d OK", __FUNCTIONW__, *SectionHandle);
@@ -263,10 +276,10 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 					return ntStatus;
 				}
 
-			}
+			//}
 		}
 	}
-
+	}
 	ntStatus = m_pfnOriginalZwCreateSection(
 		__out  SectionHandle,
 		__in  DesiredAccess,
