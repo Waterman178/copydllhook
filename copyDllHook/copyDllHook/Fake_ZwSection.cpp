@@ -41,8 +41,8 @@ HookZwCreateSection(
 	PVOID SecurityDescriptor = NULL;
 	OBJECT_ATTRIBUTES NewObjectAttributes;
 	//FileHandleRelationNode robj;
-	int* pOldViewBase = NULL;
-	int* pNewViewBase = NULL;
+	char* pOldViewBase = NULL;
+	char* pNewViewBase = NULL;
 	ACCESS_MASK OldAccess = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE;
 	SIZE_T SizeView = 0;
 	//LARGE_INTEGER ulFileSize = {0};
@@ -134,6 +134,7 @@ HookZwCreateSection(
 								{
 									fsi.EndOfFile.QuadPart = robj.m_FileInfo.liFileSize.QuadPart;
 								}*/
+								fsi.EndOfFile.QuadPart =
 								ntStatus = orgZwCreateSection(
 									__out  &hOldSection,
 									__in  DesiredAccess,
@@ -292,14 +293,13 @@ HookZwCreateSection(
 									(DWORD)fsi.EndOfFile.LowPart - HeaderLength,
 									robj.m_FileInfo.rc4Key);*/
 									//OutputDebugStringEx("Mapwei:%X", pOldViewBase);
-								OutputDebugStringEx("原来的文件内容为:%s", pNewViewBase);
-									for (int i = 0; i < sizeof(RjFileSrtuct);i++)
+								OutputDebugStringEx("org File content:%s", pNewViewBase);
+								auto FileSize = ((pRjFileSrtuct)pNewViewBase)->length;
+									for (int i = 0; i < FileSize;i++)
 									{
-											pOldViewBase[i] = pNewViewBase[i];
+											pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];
+											pOldViewBase[i] ^= 'a';
 									}
-					
-
-
 					            if (pOldViewBase != NULL)
 					            {
 						            m_pfnOriginalZwUnmapViewOfSection(HANDLE(-1), pOldViewBase);
@@ -316,7 +316,7 @@ HookZwCreateSection(
 								//m_handleList.Update(robj);
 								//MAPHAD_list.Add(sectionObj);
 								Sectionlist.push_back(*SectionObj);
-								OutputDebugStringEx("压入SectionObj成功");
+								//OutputDebugStringEx("push SectionObj Sucesss!");
 								//OutputLogMsg(LOGLEVEL_INFO, L"+[%s][5-5]Handle %d OK", __FUNCTIONW__, *SectionHandle);
 								return ntStatus;
 							}
