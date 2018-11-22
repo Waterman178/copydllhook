@@ -318,15 +318,8 @@ static LPVOID WINAPI NewMapViewOfFile(
 	)
 {
 
-	OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
-
-	LPVOID pMsg; 
-	LPVOID Ret = pMsg;
-	union {
-		 ULONGLONG ul;
-		 DWORD dw[2];
-	}ul2dw;
-	LPSYSTEM_INFO sysinfo;
+	//OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
+	LPVOID pMsg;
 	if (MAPHAD_list.empty())
 	{
 		pMsg  = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
@@ -338,34 +331,9 @@ static LPVOID WINAPI NewMapViewOfFile(
 		{
 			if (hFileMappingObject == *map_ite)
 			{
-			    //sysinfo = new SYSTEM_INFO;
-				//GetSystemInfo(sysinfo);
-				//auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;
-
-				//// 设定大小、偏移量等参数 
-				////__int64 qwFileSize = 0x4000000;
-				//ul2dw.ul = dwAllocationGranularity;
-				//__int64 T = 600 * sinf(dwAllocationGranularity);
-				//DWORD dwBytesInBlock = 1000 * sinf(dwAllocationGranularity);
-
-				//OutputDebugStringEx("获取内存分配粒度:%08x,获取到的高32位:%08x；获取的低32位：%08x", dwAllocationGranularity, dwFileOffsetHigh, dwFileOffsetLow);
-				//OutputDebugStringEx("dw[0]:%08x dw[1]:%08x", ul2dw.dw[0], ul2dw.dw[1]);
+				dwNumberOfBytesToMap -= sizeof(RjFileSrtuct);
 				pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
-			    Ret = pMsg;
-				OutputDebugStringEx("@@@@@@@@HOOK: THIS IS A SECRET FILE!!!!  Ret = %s \r\n", Ret);
-				char *aa = new char[dwNumberOfBytesToMap];
-				int i = 0;
-				for (; i < dwNumberOfBytesToMap ; i++) {
-					aa[i] = ((char*)((int)Ret+1))[i] ^ 'a';
-				}
-	
-				/*for (;i < dwNumberOfBytesToMap - 0x84; i++)
-				{
-					aa[i] = '\0';
-				}*/
-				Ret = aa;
-				//delete sysinfo;
-				return Ret;
+				return pMsg;
 			}
 		}
 		pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
@@ -591,20 +559,19 @@ static DWORD WINAPI NewGetFileSize(
 	HANDLE hFile,
 	LPDWORD lpFileSizeHigh)
 {
-	OutputDebugStringEx(">>>>>>>>>>>>>>>>>>>HOOK : THE Getfilesize Function!!!!\r\n");
-	if (MAPHAD_list.empty())
+	DWORD result = getFileSize(hFile, lpFileSizeHigh);
+	int HeadFlaglength = sizeof(RjFileSrtuct);
+	DWORD readLen;
+	LPVOID fileHead = new char[HeadFlaglength];
+	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+	ReadFile(hFile, fileHead, HeadFlaglength, &readLen, NULL); //用原始的
+	//OutputDebugStringEx("HOOK:  THE NewGetFileSize FUNCTION !!    readHead = %s\r\n", fileHead);
+	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 	{
-		return getFileSize(hFile, lpFileSizeHigh);
+		//OutputDebugStringEx("********  getFileSize ******HOOK:sercret file \r\n");
+		result -= HeadFlaglength;
 	}
-	for (map_ite = MAPHAD_list.begin(); map_ite != MAPHAD_list.end(); map_ite++)
-	{
-		if (hFile == *map_ite)
-		{
-			OutputDebugStringEx("********  NewGetFileSize ******HOOK:sercret file\r\n ");
-			return (getFileSize(hFile, NULL) - sizeof(RjFileSrtuct));
-		}
-	}
-	return getFileSize(hFile, lpFileSizeHigh);
+	return result;
 }
 /***********************************************
 GetSaveFileNameW()函数			A获取关闭文件会话框
@@ -893,7 +860,7 @@ void __stdcall StartHook()
 		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
 		
 		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
-		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+		getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 		//openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
 
 
@@ -992,7 +959,7 @@ void __stdcall EndHook()
 		
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
-		//EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
 		/*EndOneHook(NTDLL, zwClose, New_ZwClose);
 		EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
 		EndOneHook(KERNEL32, closeHandle, NewCloseHandle);

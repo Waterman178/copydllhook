@@ -134,7 +134,7 @@ HookZwCreateSection(
 								{
 									fsi.EndOfFile.QuadPart = robj.m_FileInfo.liFileSize.QuadPart;
 								}*/
-								fsi.EndOfFile.QuadPart =
+								OutputDebugStringEx("获取文件长度:%08x", fsi.EndOfFile.QuadPart);
 								ntStatus = orgZwCreateSection(
 									__out  &hOldSection,
 									__in  DesiredAccess,
@@ -167,7 +167,6 @@ HookZwCreateSection(
 								if (ntStatus == STATUS_ACCESS_DENIED)
 								{
 									m_pfnOriginalZwClose(hOldSection);
-
 									ntStatus = orgZwCreateSection(
 										__out  &hOldSection,
 										__in  OldAccess,
