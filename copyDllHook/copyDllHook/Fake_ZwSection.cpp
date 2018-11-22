@@ -89,13 +89,11 @@ HookZwCreateSection(
 		//ReleaseMutex(hMutex);
 		if (bRet /*&& robj.m_FileInfo.bReadDecrypt*/)
 		{
-			//OutputDebugStringEx("here");
 			if (DesiredAccess & SECTION_MAP_WRITE)
 			{
 			    //robj.m_FileInfo.bWriteFlag = true;
 			    //m_handleList.Update(robj);
 			}
-
 			if (/*robj.m_FileInfo.bEncryptFile
 				&& */(SectionPageProtection & ~PAGE_NOACCESS))
 			{
@@ -106,7 +104,6 @@ HookZwCreateSection(
 				//	//OutputLogMsg(LOGLEVEL_ERROR, L"[%s] ACCESS_DENIED", __FUNCTIONW__);
 				//	return STATUS_ACCESS_DENIED;
 				//}
-
 				//MapSectionNode sectionObj(DesiredAccess, SectionPageProtection, AllocationAttributes, FileHandle);
 				pmySectionObj SectionObj = new mySectionObj();
 				SectionObj->m_DesiredAccess = DesiredAccess;
@@ -115,20 +112,16 @@ HookZwCreateSection(
 				SectionObj->m_FileHandle = FileHandle;
 				 if (!Sectionlist.empty())
 				 {
-				 
 					for (map_Secite = Sectionlist.begin(); map_Secite !=Sectionlist.end(); map_Secite++)
 					{
 						if (map_Secite->m_SectionHandle == hTmpSection)
 						{
-							OutputDebugStringEx("OKKKKKKKKKKKKKKKKKK");
 							*SectionHandle = hTmpSection;
 							return STATUS_SUCCESS;
 						}
 
 					}
 				 }
-		
-							OutputDebugStringEx("开始OB");
 							ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 								&iostatus,
 								&fsi,
@@ -141,7 +134,6 @@ HookZwCreateSection(
 								{
 									fsi.EndOfFile.QuadPart = robj.m_FileInfo.liFileSize.QuadPart;
 								}*/
-								OutputDebugStringEx("第一次OB");
 								ntStatus = orgZwCreateSection(
 									__out  &hOldSection,
 									__in  DesiredAccess,
@@ -154,7 +146,6 @@ HookZwCreateSection(
 								if (!NT_SUCCESS(ntStatus))
 								{
 									//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][1-5]Handle %d, %s 失败0x%08x", __FUNCTIONW__, hOldSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"", ntStatus);
-									OutputDebugStringEx("orgZwCreateSection失败");
 									return ntStatus;
 								}
 
@@ -283,10 +274,6 @@ HookZwCreateSection(
 								if (!NT_SUCCESS(ntStatus) || pNewViewBase == NULL)
 								{
 									m_pfnOriginalZwClose(hNewSection);
-
-									OutputDebugStringEx("失败新映射区");
-									// OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][4-5]Handle %d, NewViewBase:%08x 失败0x%08x", __FUNCTIONW__, hNewSection, pNewViewBase, ntStatus);
-
 									return ntStatus;
 								}
 
@@ -308,23 +295,20 @@ HookZwCreateSection(
 								OutputDebugStringEx("原来的文件内容为:%s", pNewViewBase);
 									for (int i = 0; i < sizeof(RjFileSrtuct);i++)
 									{
-											pOldViewBase[i] = 'a';
+											pOldViewBase[i] = pNewViewBase[i];
 									}
 					
 
 
 					            if (pOldViewBase != NULL)
 					            {
-						            OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSection->pOldViewBase");
 						            m_pfnOriginalZwUnmapViewOfSection(HANDLE(-1), pOldViewBase);
 					            }
 
 								if (pNewViewBase != NULL)
 								{
-									OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSection->pNewViewBase");
 									m_pfnOriginalZwUnmapViewOfSection(HANDLE(-1), pNewViewBase);
 								}
-
 								m_pfnOriginalZwClose(hNewSection);
 								*SectionHandle = hOldSection;
 								SectionObj->m_SectionHandle = hOldSection;
@@ -340,9 +324,6 @@ HookZwCreateSection(
 
 		}
 	}
-
-	//OutputDebugStringEx("队列为空");
-    //OutputDebugStringEx("2222222");
 	ntStatus = orgZwCreateSection(
 		__out  SectionHandle,
 		__in  DesiredAccess,
@@ -351,7 +332,6 @@ HookZwCreateSection(
 		__in  SectionPageProtection,
 		__in  AllocationAttributes,
 		__in_opt  FileHandle);
-	//OutputDebugStringEx("1111111");
 	if (!NT_SUCCESS(ntStatus))
 	{
 		OutputDebugStringEx("失败%08x",ntStatus);

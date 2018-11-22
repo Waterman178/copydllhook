@@ -156,27 +156,27 @@ static BOOL WINAPI NewSetWindowTextW(HWND hwnd, //要改变文本内容的窗口或控件的句
 	LPCTSTR lpString)//指向一个空结束的字符串的指针，该字符串将作为窗口或控件的新文本
 {
 	//OutputDebugStringEx("HOOK  setWindowW: hwnd = %d,nCmdShow = %s", hwnd, lpString);
-	CString otherSave = _T("另存为");
-	if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
-	{
-		//OutputDebugStringEx("测试:return False>>>另存为 ");
-		//CloseWindow(hwnd);
-		SendMessage(hwnd, WM_CLOSE, 0, 0);
-	}
-	otherSave = _T("发布为 PDF 或 XPS");
-	if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
-	{
-		//OutputDebugStringEx("测试:return False>>>另存为 ");
-		//CloseWindow(hwnd);
-		SendMessage(hwnd, WM_CLOSE, 0, 0);
-	}
-	otherSave = _T("保存(&S)");
-	if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
-	{
-		//OutputDebugStringEx("HOOK测试:return False>>>保存 ");
-		//CloseWindow(hwnd);
-		return setWindowTextW(hwnd, NULL);
-	}
+	//CString otherSave = _T("另存为");
+	//if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
+	//{
+	//	//OutputDebugStringEx("测试:return False>>>另存为 ");
+	//	//CloseWindow(hwnd);
+	//	SendMessage(hwnd, WM_CLOSE, 0, 0);
+	//}
+	//otherSave = _T("发布为 PDF 或 XPS");
+	//if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
+	//{
+	//	//OutputDebugStringEx("测试:return False>>>另存为 ");
+	//	//CloseWindow(hwnd);
+	//	SendMessage(hwnd, WM_CLOSE, 0, 0);
+	//}
+	//otherSave = _T("保存(&S)");
+	//if (0 == memcmp(otherSave.GetBuffer(), lpString, lstrlenW(lpString)))
+	//{
+	//	//OutputDebugStringEx("HOOK测试:return False>>>保存 ");
+	//	//CloseWindow(hwnd);
+	//	return setWindowTextW(hwnd, NULL);
+	//}
 	return setWindowTextW(hwnd, lpString);
 }
 
