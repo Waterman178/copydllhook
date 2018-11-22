@@ -58,12 +58,12 @@ HookZwCreateSection(
 			if (FileHandle == *map_ite)
 			{
 				bRet = FileHandle;
-				OutputDebugStringEx("发现目标句柄");
+				//OutputDebugStringEx("发现目标句柄");
 				goto dealSection;
 			}
 			else
 			{
-				OutputDebugStringEx("没有发现");
+				//OutputDebugStringEx("没有发现");
 				ntStatus = orgZwCreateSection(
 					__out  SectionHandle,
 					__in  DesiredAccess,
@@ -180,7 +180,7 @@ HookZwCreateSection(
 										__in ViewShare,
 										__in 0,
 										__in PAGE_READWRITE);
-									OutputDebugStringEx("ord File Section length:%d", SizeView);
+									OutputDebugStringEx("org File Section length:%d", SizeView);
 									if (!NT_SUCCESS(ntStatus))
 									{
 										m_pfnOriginalZwClose(hOldSection);
@@ -232,6 +232,8 @@ HookZwCreateSection(
 									return ntStatus;
 								}
 								SizeView = fsi.EndOfFile.LowPart/* + g_nLenOfDGFileHeader*/;
+
+								OutputDebugStringEx("new File Section length:%d", SizeView);
 								ntStatus = m_pfnOriginalZwMapViewOfSection(
 									__in hNewSection,
 									__in  NtCurrentProcess,
@@ -249,23 +251,26 @@ HookZwCreateSection(
 									m_pfnOriginalZwClose(hNewSection);
 									return ntStatus;
 								}
+								auto FileSize = ((pRjFileSrtuct)pNewViewBase)->length;
 								OutputDebugStringEx("org File length:%d", SizeView);
 								OutputDebugStringEx("org File content:%s", pNewViewBase);
-								/*auto FileSize = ((pRjFileSrtuct)pNewViewBase)->length;
+								OutputDebugStringEx("org File FileSize:%d", FileSize);
+								OutputDebugStringEx("pOldViewBase File content:%d", *(int*)pOldViewBase);
+								//ZeroMemory(pOldViewBase, sizeof(RjFileSrtuct));
 									for (int i = 0; i < FileSize;i++)
 									{
 											pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];
 											pOldViewBase[i] ^= 'a';
-									}*/
-								pOldViewBase[0] = 'a';
+									}
+				
 					            if (pOldViewBase != NULL)
 					            {
-						            m_pfnOriginalZwUnmapViewOfSection(HANDLE(-1), pOldViewBase);
+						            m_pfnOriginalZwUnmapViewOfSection(NtCurrentProcess, pOldViewBase);
 					            }
 
 								if (pNewViewBase != NULL)
 								{
-									m_pfnOriginalZwUnmapViewOfSection(HANDLE(-1), pNewViewBase);
+									m_pfnOriginalZwUnmapViewOfSection(NtCurrentProcess, pNewViewBase);
 								}
 								m_pfnOriginalZwClose(hNewSection);
 								*SectionHandle = hOldSection;

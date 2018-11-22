@@ -15,6 +15,11 @@
   NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
  std::list<HANDLE> MAPHAD_list;
  std::list<HANDLE>::iterator map_ite;
+
+
+ std::list<HANDLE> MAPHADD_list;
+ std::list<HANDLE>::iterator mapp_ite;
+
  BOOL  fristopen = FALSE;
 
 zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
@@ -318,21 +323,24 @@ static LPVOID WINAPI NewMapViewOfFile(
 	)
 {
 
-	//OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
+	OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
+
 	LPVOID pMsg;
-	if (MAPHAD_list.empty())
+	if (MAPHADD_list.empty())
 	{
-		pMsg  = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
+		pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 		return pMsg;
 	}
 	else
 	{
-		for (map_ite = MAPHAD_list.begin(); map_ite != MAPHAD_list.end(); map_ite++)
+		for (mapp_ite = MAPHADD_list.begin(); mapp_ite != MAPHAD_list.end(); mapp_ite++)
 		{
-			if (hFileMappingObject == *map_ite)
+			if (hFileMappingObject == *mapp_ite)
 			{
 				dwNumberOfBytesToMap -= sizeof(RjFileSrtuct);
-				pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, 1);
+				dwNumberOfBytesToMap --;
+				OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile dwNumberOfBytesToMap %d \r\n", dwNumberOfBytesToMap);
+				pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 				return pMsg;
 			}
 		}
@@ -388,8 +396,12 @@ static HANDLE WINAPI NewCreateFileMapping(
 		/*GetSystemInfo(sysinfo);
 		auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;*/
 		MAPHAD_list.push_back(hFile);
+
+
 		//ReleaseMutex(hMutex);
+		OutputDebugStringEx("dwMaximumSizeHigh:%d dwMaximumSizeLow:%d \r\n", dwMaximumSizeHigh, dwMaximumSizeLow);
 		fileMap = createFileMapping(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
+		MAPHADD_list.push_back(fileMap);
 		//WaitForSingleObject(hMutex, INFINITE);
 		//ReleaseMutex(hMutex);
 		fristopen = TRUE;
@@ -823,6 +835,7 @@ BOOL  HOOKGetFileAttributesExW(
 	WIN32_FILE_ATTRIBUTE_DATA       *          lpFileInformation
 ) {
 	OutputDebugStringEx("  .............. HOOKGetFileAttributesExW ");
+	OutputDebugStringEx("HOOKGetFileAttributesExW open File:%ws fail", lpFileName);
 	BOOL ret = FALSE;
 	auto  FileHandle = CreateFileW(lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (FileHandle=NULL)
@@ -886,13 +899,8 @@ void __stdcall StartHook()
 		//createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 		//readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);
 		//writeFile = WRITEFILE StartOneHook(KERNEL32, "WriteFile", New_WriteFile);
-		//mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
-		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
-		
-		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
-		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
-		//openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
-	    //getFileAttributesExW = GetFileAttributesExW StartOneHook(KERNEL32, "GetFileAttributesExW", HOOKGetFileAttributesExW);
+
+	   // getFileAttributesExW = GetFileAttributesExW StartOneHook(KERNEL32, "GetFileAttributesExW", HOOKGetFileAttributesExW);
 	    
 		m_pfnOriginalZwQueryInformationFile =   (zwQueryInformationFile)FindProcAddress(NTDLL, "ZwQueryInformationFile");
 		if (m_pfnOriginalZwQueryInformationFile == 0x00) {
@@ -922,6 +930,12 @@ void __stdcall StartHook()
 
 		createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+		//mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
+		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
+
+		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
+		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+		//openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
 
 	/*	if (MH_CreateHook(&m_pfnOriginalZwCreateSection,&HookZwCreateSection,reinterpret_cast<void**>(&orgZwCreateSection))!=MH_OK)
 		{
@@ -987,9 +1001,9 @@ void __stdcall EndHook()
 		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
 
 		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
-		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
+		EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
-		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+		//EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
 		/*EndOneHook(NTDLL, zwClose, New_ZwClose);
 		EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
 		EndOneHook(KERNEL32, closeHandle, NewCloseHandle);
