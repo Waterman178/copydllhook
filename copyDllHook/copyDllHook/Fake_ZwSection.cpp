@@ -228,67 +228,67 @@ HookZwCreateSection(
 
 								//CreateObjectAttrib(wstrMapName);
 
-								//if (ObjectAttributes != NULL)
-								//{
-								//	if (ObjectAttributes->Attributes)
-								//	{
-								//		Attributes = ObjectAttributes->Attributes;
-								//		SecurityDescriptor = ObjectAttributes->SecurityDescriptor;
-								//	}
-								//	if (ObjectAttributes->RootDirectory)
-								//	{
-								//		RootDirectory = ObjectAttributes->RootDirectory;
-								//	}
-								//}
-								//m_pfnOriginalRtlInitUnicodeString(&secName, wstrMapName.c_str());
+								if (ObjectAttributes != NULL)
+								{
+									if (ObjectAttributes->Attributes)
+									{
+										Attributes = ObjectAttributes->Attributes;
+										SecurityDescriptor = ObjectAttributes->SecurityDescriptor;
+									}
+									if (ObjectAttributes->RootDirectory)
+									{
+										RootDirectory = ObjectAttributes->RootDirectory;
+									}
+								}
+								m_pfnOriginalRtlInitUnicodeString(&secName, wstrMapName.c_str());
 
-								//InitializeObjectAttributes(&NewObjectAttributes,
-								//	&secName,
-								//	Attributes,
-								//	RootDirectory,
-								//	SecurityDescriptor);
+								InitializeObjectAttributes(&NewObjectAttributes,
+									&secName,
+									Attributes,
+									RootDirectory,
+									SecurityDescriptor);
 
-								//// 根据handle创建Section
-								//ntStatus = orgZwCreateSection(
-								//	__out  &hNewSection,
-								//	__in  DesiredAccess,
-								//	__in_opt(ObjectAttributes != NULL) ? &NewObjectAttributes : ObjectAttributes, // guid
-								//	__in_opt &fsi.EndOfFile,
-								//	__in  SectionPageProtection,
-								//	__in  SEC_COMMIT,
-								//	__in_opt  FileHandle);
+								// 根据handle创建Section
+								ntStatus = orgZwCreateSection(
+									__out  &hNewSection,
+									__in  DesiredAccess,
+									__in_opt(ObjectAttributes != NULL) ? &NewObjectAttributes : ObjectAttributes, // guid
+									__in_opt &fsi.EndOfFile,
+									__in  SectionPageProtection,
+									__in  SEC_COMMIT,
+									__in_opt  FileHandle);
 
-								//if (!NT_SUCCESS(ntStatus))
-								//{
-								//	//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][3-5]Handle %d, %s 失败0x%08x", __FUNCTIONW__, hNewSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"", ntStatus);
+								if (!NT_SUCCESS(ntStatus))
+								{
+									//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][3-5]Handle %d, %s 失败0x%08x", __FUNCTIONW__, hNewSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"", ntStatus);
+									OutputDebugStringEx("原先的映射失败");
+									return ntStatus;
+								}
 
-								//	return ntStatus;
-								//}
+								//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][3-5]Handle %d, %s", __FUNCTIONW__, hNewSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"");
 
-								////OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][3-5]Handle %d, %s", __FUNCTIONW__, hNewSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"");
+								SizeView = fsi.EndOfFile.LowPart/* + g_nLenOfDGFileHeader*/;
+								ntStatus = m_pfnOriginalZwMapViewOfSection(
+									__in hNewSection,
+									__in  NtCurrentProcess,
+									__inout(PVOID*)&pNewViewBase,
+									__in 0,
+									__in 0,
+									__inout_opt 0,
+									__inout &SizeView,
+									__in ViewShare,
+									__in 0,
+									__in SectionPageProtection/*PAGE_READONLY*/);
 
-								//SizeView = fsi.EndOfFile.LowPart/* + g_nLenOfDGFileHeader*/;
-								//ntStatus = m_pfnOriginalZwMapViewOfSection(
-								//	__in hNewSection,
-								//	__in  NtCurrentProcess,
-								//	__inout(PVOID*)&pNewViewBase,
-								//	__in 0,
-								//	__in 0,
-								//	__inout_opt 0,
-								//	__inout &SizeView,
-								//	__in ViewShare,
-								//	__in 0,
-								//	__in SectionPageProtection/*PAGE_READONLY*/);
+								if (!NT_SUCCESS(ntStatus) || pNewViewBase == NULL)
+								{
+									m_pfnOriginalZwClose(hNewSection);
 
-								//if (!NT_SUCCESS(ntStatus) || pNewViewBase == NULL)
-								//{
-								//	m_pfnOriginalZwClose(hNewSection);
+									OutputDebugStringEx("失败新映射区");
+									// OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][4-5]Handle %d, NewViewBase:%08x 失败0x%08x", __FUNCTIONW__, hNewSection, pNewViewBase, ntStatus);
 
-								//	OutputDebugStringEx("失败新映射区");
-								//	// OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][4-5]Handle %d, NewViewBase:%08x 失败0x%08x", __FUNCTIONW__, hNewSection, pNewViewBase, ntStatus);
-
-								//	return ntStatus;
-								//}
+									return ntStatus;
+								}
 
 								//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][4-5]Handle %d, NewViewBase:%08x", __FUNCTIONW__, hNewSection, pNewViewBase);
 
@@ -305,12 +305,12 @@ HookZwCreateSection(
 									(DWORD)fsi.EndOfFile.LowPart - HeaderLength,
 									robj.m_FileInfo.rc4Key);*/
 									//OutputDebugStringEx("Mapwei:%X", pOldViewBase);
-									/*	for (int i = 0; i < sizeof(RjFileSrtuct);i++)
-										{
-											pNewViewBase[sizeof(RjFileSrtuct) + 1];
-											pOldViewBase[i] = pNewViewBase[sizeof(RjFileSrtuct) + 1];
-										}
-					*/
+								OutputDebugStringEx("原来的文件内容为:%s", pNewViewBase);
+									for (int i = 0; i < sizeof(RjFileSrtuct);i++)
+									{
+											pOldViewBase[i] = 'a';
+									}
+					
 
 
 					            if (pOldViewBase != NULL)
@@ -325,7 +325,7 @@ HookZwCreateSection(
 									m_pfnOriginalZwUnmapViewOfSection(HANDLE(-1), pNewViewBase);
 								}
 
-								//m_pfnOriginalZwClose(hNewSection);
+								m_pfnOriginalZwClose(hNewSection);
 								*SectionHandle = hOldSection;
 								SectionObj->m_SectionHandle = hOldSection;
 								//robj.m_MapSection = sectionObj;
@@ -336,11 +336,6 @@ HookZwCreateSection(
 								//OutputLogMsg(LOGLEVEL_INFO, L"+[%s][5-5]Handle %d OK", __FUNCTIONW__, *SectionHandle);
 								return ntStatus;
 							}
-
-						
-					
-				
-
 			}
 
 		}
