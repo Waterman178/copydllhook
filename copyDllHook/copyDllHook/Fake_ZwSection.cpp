@@ -3,7 +3,6 @@
 #include "copyDllHook.h"
 #include "ntstatus.h"
 #include <string>
-
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 
 typedef struct _mySectionObj {
@@ -13,15 +12,8 @@ typedef struct _mySectionObj {
 		ULONG m_SectionPageProtection;
 		HANDLE m_FileHandle;
 }mySectionObj,*pmySectionObj;
-
-
  std::list<mySectionObj> Sectionlist;
  std::list<mySectionObj>::iterator map_Secite;
-
-
-  
-
-
 NTSTATUS
 NTAPI
 HookZwCreateSection(
@@ -53,16 +45,14 @@ HookZwCreateSection(
 	IO_STATUS_BLOCK iostatus;
 	std::wstring wstrMapName = L"Liujialin";
 	FILE_STANDARD_INFORMATION fsi;
-
-
+	LARGE_INTEGER maxSize;
+	maxSize.HighPart = 0;
+	maxSize.LowPart = 9;
 	//CRc4 rc4Obj;
 	//FILE_RESULT fileResult = OpenError;
-
 	//bRet = m_handleList.Find(robj, FileHandle);
-	//OutputDebugStringEx("开始");
 	if (!MAPHAD_list.empty())
 	{
-		//WaitForSingleObject(hMutex, INFINITE);
 		for (map_ite = MAPHAD_list.begin(); map_ite != MAPHAD_list.end(); map_ite++)
 		{
 			if (FileHandle == *map_ite)
@@ -86,7 +76,7 @@ HookZwCreateSection(
 			}
 		}
 		dealSection:
-		//ReleaseMutex(hMutex);
+
 		if (bRet /*&& robj.m_FileInfo.bReadDecrypt*/)
 		{
 			if (DesiredAccess & SECTION_MAP_WRITE)
@@ -134,7 +124,8 @@ HookZwCreateSection(
 								{
 									fsi.EndOfFile.QuadPart = robj.m_FileInfo.liFileSize.QuadPart;
 								}*/
-								OutputDebugStringEx("获取文件长度:%08x", fsi.EndOfFile.QuadPart);
+								//OutputDebugStringEx("获取文件长度:%08x", fsi.EndOfFile.QuadPart);
+						
 								ntStatus = orgZwCreateSection(
 									__out  &hOldSection,
 									__in  DesiredAccess,
@@ -146,11 +137,8 @@ HookZwCreateSection(
 
 								if (!NT_SUCCESS(ntStatus))
 								{
-									//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][1-5]Handle %d, %s 失败0x%08x", __FUNCTIONW__, hOldSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"", ntStatus);
 									return ntStatus;
 								}
-
-								//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][1-5]Handle %d, %s, EndOfFile %I64d", __FUNCTIONW__, hOldSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"", fsi.EndOfFile.QuadPart);
 								OutputDebugStringEx("第一次m_pfnOriginalZwMapViewOfSection");
 								ntStatus = m_pfnOriginalZwMapViewOfSection(
 									__in hOldSection,
@@ -179,7 +167,6 @@ HookZwCreateSection(
 									if (!NT_SUCCESS(ntStatus))
 									{
 										OutputDebugStringEx("m_pfnOriginalZwMapViewOfSection -->orgZwCreateSection失败");
-										//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][1-5]Handle %d, %s 失败0x%08x", __FUNCTIONW__, hOldSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"", ntStatus);
 									}
 									OutputDebugStringEx("第二次m_pfnOriginalZwMapViewOfSection");
 									ntStatus = m_pfnOriginalZwMapViewOfSection(
@@ -193,13 +180,10 @@ HookZwCreateSection(
 										__in ViewShare,
 										__in 0,
 										__in PAGE_READWRITE);
-
+									OutputDebugStringEx("ord File Section length:%d", SizeView);
 									if (!NT_SUCCESS(ntStatus))
 									{
 										m_pfnOriginalZwClose(hOldSection);
-
-										//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][2-5]Handle %d, OldViewBase:%08x 失败0x%08x", __FUNCTIONW__, hOldSection, pOldViewBase, ntStatus);
-
 										OutputDebugStringEx("m_pfnOriginalZwMapViewOfSection失败");
 										return ntStatus;
 									}
@@ -207,15 +191,8 @@ HookZwCreateSection(
 								else if (!NT_SUCCESS(ntStatus))
 								{
 									m_pfnOriginalZwClose(hOldSection);
-
-									//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][2-5]Handle %d, OldViewBase:%08x 失败0x%08x", __FUNCTIONW__, hOldSection, pOldViewBase, ntStatus);
-
 									return ntStatus;
 								}
-
-								//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][2-5]Handle %d, OldViewBase:%08x", __FUNCTIONW__, hOldSection, pOldViewBase);
-								//随机名？
-
 
 								//CreateObjectAttrib(wstrMapName);
 
@@ -251,13 +228,9 @@ HookZwCreateSection(
 
 								if (!NT_SUCCESS(ntStatus))
 								{
-									//OutputLogMsg(LOGLEVEL_ERROR, L"\t\t-[%s][3-5]Handle %d, %s 失败0x%08x", __FUNCTIONW__, hNewSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"", ntStatus);
 									OutputDebugStringEx("原先的映射失败");
 									return ntStatus;
 								}
-
-								//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][3-5]Handle %d, %s", __FUNCTIONW__, hNewSection, (ObjectAttributes != NULL)? ((ObjectAttributes->ObjectName != NULL)? ObjectAttributes->ObjectName->Buffer: L""): L"");
-
 								SizeView = fsi.EndOfFile.LowPart/* + g_nLenOfDGFileHeader*/;
 								ntStatus = m_pfnOriginalZwMapViewOfSection(
 									__in hNewSection,
@@ -276,29 +249,15 @@ HookZwCreateSection(
 									m_pfnOriginalZwClose(hNewSection);
 									return ntStatus;
 								}
-
-								//OutputLogMsg(LOGLEVEL_INFO, L"\t\t-[%s][4-5]Handle %d, NewViewBase:%08x", __FUNCTIONW__, hNewSection, pNewViewBase);
-
-								//换个新的解密吧
-								/*if (robj.m_FileInfo.rc4Key == NULL)
-								{
-									robj.m_FileInfo.rc4Key = new unsigned char[FileBuffer];
-									memset(robj.m_FileInfo.rc4Key, 0, FileBuffer);
-								}
-
-								rc4Obj.DecryptMemoryRc4K(pOldViewBase,
-									(char*)pNewViewBase + HeaderLength,
-									0,
-									(DWORD)fsi.EndOfFile.LowPart - HeaderLength,
-									robj.m_FileInfo.rc4Key);*/
-									//OutputDebugStringEx("Mapwei:%X", pOldViewBase);
+								OutputDebugStringEx("org File length:%d", SizeView);
 								OutputDebugStringEx("org File content:%s", pNewViewBase);
-								auto FileSize = ((pRjFileSrtuct)pNewViewBase)->length;
+								/*auto FileSize = ((pRjFileSrtuct)pNewViewBase)->length;
 									for (int i = 0; i < FileSize;i++)
 									{
 											pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];
 											pOldViewBase[i] ^= 'a';
-									}
+									}*/
+								pOldViewBase[0] = 'a';
 					            if (pOldViewBase != NULL)
 					            {
 						            m_pfnOriginalZwUnmapViewOfSection(HANDLE(-1), pOldViewBase);

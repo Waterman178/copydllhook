@@ -91,6 +91,8 @@ extern std::list<HANDLE>::iterator map_ite;
 #define PROCESSINTERNALW (HANDLE (WINAPI *)(HANDLE , LPCTSTR , LPTSTR , LPSECURITY_ATTRIBUTES , LPSECURITY_ATTRIBUTES , BOOL , DWORD , LPVOID , LPCTSTR , LPSTARTUPINFOA , LPPROCESS_INFORMATION , PHANDLE ))
 //#define ZwQueryInformationFile (NTSTATUS (NTAPI*))(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass)
 #define ZwCreateSection (NTSTATUS(NTAPI*)( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)) 
+#define  GetFileAttributesExW  (BOOL(WINAPI*) (LPCWSTR lpFileName,GET_FILEEX_INFO_LEVELS fInfoLevelId,WIN32_FILE_ATTRIBUTE_DATA *lpFileInformation))
+
 //#define ZwMapViewOfSection (NTSTATUS (NTAPI*)) (IN HANDLE  SectionHandle,IN HANDLE  ProcessHandle,IN OUT PVOID  *BaseAddress,IN ULONG_PTR  ZeroBits,IN SIZE_T  CommitSize,IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL,IN OUT PSIZE_T  ViewSize,IN SECTION_INHERIT  InheritDisposition,IN ULONG  AllocationType,IN ULONG  Win32Protect)
 //#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
 //#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
@@ -129,7 +131,7 @@ static BOOL (WINAPI *getSaveFileNameW)(LPOPENFILENAME lpofn);
 static DWORD (WINAPI *getFileAttributesW)(LPCTSTR lpFileName);
 static BOOL (WINAPI *readFileEx)(HANDLE hFile,LPVOID lpBuffer,DWORD nNumberOfBytesToRead,LPOVERLAPPED lpOverlapped,LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 static BOOL (WINAPI *readFileScatter)(HANDLE hFile,FILE_SEGMENT_ELEMENT aSegmentArray[],DWORD nNumberOfBytesToRead,LPDWORD lpReserved,LPOVERLAPPED lpOverlapped);
-static DWORD (WINAPI *getFileAttributesExW)( LPCTSTR lpFileName);
+//static DWORD (WINAPI *getFileAttributesExW)( LPCTSTR lpFileName);
 static BOOL (WINAPI *createProcessW)(LPCTSTR lpApplicationName,LPTSTR lpCommandLine,LPSECURITY_ATTRIBUTES lpProcessAttributes,LPSECURITY_ATTRIBUTES lpThreadAttributes,BOOL bInheritHandles,DWORD dwCreationFlags,LPVOID lpEnvironment,LPCTSTR lpCurrentDirectory,LPSTARTUPINFO lpStartupInfo,LPPROCESS_INFORMATION lpProcessInformation);
 static HANDLE (WINAPI *createProcessInternalW)(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
 typedef NTSTATUS(NTAPI  * zwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
@@ -145,6 +147,11 @@ extern pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
 extern pfZwClose m_pfnOriginalZwClose;
 extern pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
 extern pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
+
+
+static BOOL  (WINAPI* getFileAttributesExW)(LPCWSTR lpFileName,
+	GET_FILEEX_INFO_LEVELS fInfoLevelId,
+	WIN32_FILE_ATTRIBUTE_DATA* lpFileInformation);
 
 
 static
@@ -268,9 +275,9 @@ static BOOL WINAPI NewReadFileScatter(
 	_Reserved_ LPDWORD              lpReserved,
 	_Inout_    LPOVERLAPPED         lpOverlapped
 	);
-static DWORD WINAPI NewGetFileAttributesExW(
-	__in LPCTSTR lpFileName
-	);
+//static DWORD WINAPI NewGetFileAttributesExW(
+//	__in LPCTSTR lpFileName
+//	);
 
 
 //用createProcess实现被动注入
@@ -299,7 +306,8 @@ NewCreateFileMappingA(
 	__in_opt LPCSTR lpName
 );
 static HANDLE WINAPI NewCreateProcessInternal(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
- 
+
+
 
 NTSTATUS
 NTAPI

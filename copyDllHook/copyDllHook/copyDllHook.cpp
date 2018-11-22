@@ -332,7 +332,7 @@ static LPVOID WINAPI NewMapViewOfFile(
 			if (hFileMappingObject == *map_ite)
 			{
 				dwNumberOfBytesToMap -= sizeof(RjFileSrtuct);
-				pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
+				pMsg = mapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, 1);
 				return pMsg;
 			}
 		}
@@ -505,14 +505,14 @@ static BOOL WINAPI NewReadFileScatter(
 /***********************************************
 GetFileAttributesExW()函数			读取文件属性
 ************************************************/
-static DWORD WINAPI NewGetFileAttributesExW(
-	__in LPCTSTR lpFileName
-	)
-{
-	OutputDebugStringEx("HOOK:  THE NewGetFileAttributesExW FUNCTION !!\r\n");
-	DWORD result = getFileAttributesExW(lpFileName);
-	return result;
-}
+//static DWORD WINAPI NewGetFileAttributesExW(
+//	__in LPCTSTR lpFileName
+//	)
+//{
+//	OutputDebugStringEx("HOOK:  THE NewGetFileAttributesExW FUNCTION !!\r\n");
+//	DWORD result = getFileAttributesExW(lpFileName);
+//	return result;
+//}
 /***********************************************
 GetFileSizeEx()函数			功能
 ************************************************/
@@ -817,6 +817,36 @@ int rc4(char *pSecret, int SecretLen, char *pMessage, int MessageLen, char *pOut
 	}
 	return 0;
 }
+BOOL  HOOKGetFileAttributesExW(
+	LPCWSTR                lpFileName,
+	GET_FILEEX_INFO_LEVELS fInfoLevelId,
+	WIN32_FILE_ATTRIBUTE_DATA       *          lpFileInformation
+) {
+	OutputDebugStringEx("  .............. HOOKGetFileAttributesExW ");
+	BOOL ret = FALSE;
+	auto  FileHandle = CreateFileW(lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (FileHandle=NULL)
+	{
+		OutputDebugStringEx("HOOKGetFileAttributesExW open File:%ws fail", lpFileName);
+	}
+	int HeadFlaglength = sizeof(RjFileSrtuct);
+	DWORD readLen;
+	LPVOID fileHead = new char[HeadFlaglength];
+	SetFilePointer(FileHandle, 0, NULL, FILE_BEGIN);
+	ReadFile(FileHandle, fileHead, HeadFlaglength, &readLen, NULL); //用原始的
+	//OutputDebugStringEx("HOOK:  THE NewGetFileSize FUNCTION !!    readHead = %s\r\n", fileHead);
+	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
+	{
+		OutputDebugStringEx("HOOKGetFileAttributesExW find org File lpFileInformation->nFileSizeLow:%d", lpFileInformation->nFileSizeLow);
+		ret = getFileAttributesExW(lpFileName, fInfoLevelId, lpFileInformation);
+		lpFileInformation->nFileSizeLow -= HeadFlaglength;
+	}
+	else {
+		ret = getFileAttributesExW(lpFileName, fInfoLevelId, lpFileInformation);
+	}
+	return ret;
+
+}
 void hexdump(const unsigned char *buf, const int num)
 {
 	char *temp = new char[num * 3 + 20];
@@ -860,10 +890,10 @@ void __stdcall StartHook()
 		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
 		
 		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
-		getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 		//openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
-
-
+	    //getFileAttributesExW = GetFileAttributesExW StartOneHook(KERNEL32, "GetFileAttributesExW", HOOKGetFileAttributesExW);
+	    
 		m_pfnOriginalZwQueryInformationFile =   (zwQueryInformationFile)FindProcAddress(NTDLL, "ZwQueryInformationFile");
 		if (m_pfnOriginalZwQueryInformationFile == 0x00) {
 			OutputDebugStringEx("m_pfnOriginalZwQueryInformationFile获取失败");
@@ -956,7 +986,7 @@ void __stdcall EndHook()
 		EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
 		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
 
-		
+		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
 		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
@@ -987,6 +1017,7 @@ void __stdcall EndHook()
 	//	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
 	//}
 }
+
 
 
 
