@@ -92,7 +92,7 @@ extern std::list<HANDLE>::iterator map_ite;
 //#define ZwQueryInformationFile (NTSTATUS (NTAPI*))(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass)
 #define ZwCreateSection (NTSTATUS(NTAPI*)( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)) 
 #define  GetFileAttributesExW  (BOOL(WINAPI*) (LPCWSTR lpFileName,GET_FILEEX_INFO_LEVELS fInfoLevelId,WIN32_FILE_ATTRIBUTE_DATA *lpFileInformation))
-
+#define  GetFileInformationByHandle (BOOL (WINAPI *)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation))
 //#define ZwMapViewOfSection (NTSTATUS (NTAPI*)) (IN HANDLE  SectionHandle,IN HANDLE  ProcessHandle,IN OUT PVOID  *BaseAddress,IN ULONG_PTR  ZeroBits,IN SIZE_T  CommitSize,IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL,IN OUT PSIZE_T  ViewSize,IN SECTION_INHERIT  InheritDisposition,IN ULONG  AllocationType,IN ULONG  Win32Protect)
 //#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
 //#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
@@ -140,6 +140,7 @@ typedef NTSTATUS(NTAPI *pfZwMapViewOfSection) (IN HANDLE  SectionHandle, IN HAND
 typedef NTSTATUS(NTAPI *pfZwClose)(IN HANDLE Handle);
 typedef void (NTAPI * pfmyRtlInitUnicodeString)(PUNICODE_STRING DestinationString, PCWSTR SourceString);
 typedef NTSTATUS(NTAPI *pfZwUnmapViewOfSection)(HANDLE ProcessHandle, PVOID  BaseAddress);
+static BOOL (WINAPI * pfGetFileInformationByHandle)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
 
 extern zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
 extern myZwCreateSection    m_pfnOriginalZwCreateSection;
@@ -243,6 +244,8 @@ static DWORD WINAPI NewSetFilePointer(
 	_In_        LONG   lDistanceToMove,
 	_Inout_opt_ PLONG  lpDistanceToMoveHigh,
 	_In_        DWORD  dwMoveMethod);
+
+
 static BOOL WINAPI NewGetFileInformationByHandle(
 	_In_  HANDLE                       hFile,
 	_Out_ LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
