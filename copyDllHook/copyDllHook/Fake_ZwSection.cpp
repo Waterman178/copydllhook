@@ -57,8 +57,9 @@ HookZwCreateSection(
 		{
 			if (FileHandle == *map_ite)
 			{
+
 				bRet = FileHandle;
-				//OutputDebugStringEx("发现目标句柄");
+				//OutputDebugStringEx("发现目标句柄:%d", FileHandle);
 				goto dealSection;
 			}
 			else
@@ -107,6 +108,7 @@ HookZwCreateSection(
 						if (map_Secite->m_SectionHandle == hTmpSection)
 						{
 							*SectionHandle = hTmpSection;
+							//OutputDebugStringEx("找到临时的hTmpSection");
 							return STATUS_SUCCESS;
 						}
 
@@ -120,9 +122,9 @@ HookZwCreateSection(
 
 							if (fsi.EndOfFile.QuadPart != 0)
 							{
-								/*if (fsi.EndOfFile.QuadPart < HeaderLength)
+								/*if (fsi.EndOfFile.QuadPart < sizeof(RjFileSrtuct))
 								{
-									fsi.EndOfFile.QuadPart = robj.m_FileInfo.liFileSize.QuadPart;
+									fsi.EndOfFile.QuadPart = maxSize.QuadPart;
 								}*/
 								//OutputDebugStringEx("获取文件长度:%08x", fsi.EndOfFile.QuadPart);
 						
@@ -130,7 +132,7 @@ HookZwCreateSection(
 									__out  &hOldSection,
 									__in  DesiredAccess,
 									__in_opt  ObjectAttributes,
-									__in_opt  &fsi.EndOfFile,
+									__in_opt  &fsi.AllocationSize,
 									__in  PAGE_READWRITE,
 									__in  SEC_COMMIT,
 									__in_opt  0);
@@ -139,7 +141,7 @@ HookZwCreateSection(
 								{
 									return ntStatus;
 								}
-								OutputDebugStringEx("第一次m_pfnOriginalZwMapViewOfSection");
+								//OutputDebugStringEx("第一次m_pfnOriginalZwMapViewOfSection");
 								ntStatus = m_pfnOriginalZwMapViewOfSection(
 									__in hOldSection,
 									__in NtCurrentProcess,
@@ -159,16 +161,16 @@ HookZwCreateSection(
 										__out  &hOldSection,
 										__in  OldAccess,
 										__in_opt  ObjectAttributes,
-										__in_opt  &fsi.EndOfFile,
+										__in_opt  &fsi.AllocationSize,
 										__in  PAGE_READWRITE,
 										__in  SEC_COMMIT,
 										__in_opt  0);
 
 									if (!NT_SUCCESS(ntStatus))
 									{
-										OutputDebugStringEx("m_pfnOriginalZwMapViewOfSection -->orgZwCreateSection失败");
+										//OutputDebugStringEx("m_pfnOriginalZwMapViewOfSection -->orgZwCreateSection失败");
 									}
-									OutputDebugStringEx("第二次m_pfnOriginalZwMapViewOfSection");
+									//OutputDebugStringEx("第二次m_pfnOriginalZwMapViewOfSection");
 									ntStatus = m_pfnOriginalZwMapViewOfSection(
 										__in hOldSection,
 										__in  NtCurrentProcess,
@@ -180,11 +182,11 @@ HookZwCreateSection(
 										__in ViewShare,
 										__in 0,
 										__in PAGE_READWRITE);
-									OutputDebugStringEx("org File Section length:%d", SizeView);
+									//OutputDebugStringEx("org File Section length:%d", SizeView);
 									if (!NT_SUCCESS(ntStatus))
 									{
 										m_pfnOriginalZwClose(hOldSection);
-										OutputDebugStringEx("m_pfnOriginalZwMapViewOfSection失败");
+										//OutputDebugStringEx("m_pfnOriginalZwMapViewOfSection失败");
 										return ntStatus;
 									}
 								}
@@ -228,12 +230,12 @@ HookZwCreateSection(
 
 								if (!NT_SUCCESS(ntStatus))
 								{
-									OutputDebugStringEx("原先的映射失败");
+									//OutputDebugStringEx("原先的映射失败");
 									return ntStatus;
 								}
 								SizeView = fsi.EndOfFile.LowPart/* + g_nLenOfDGFileHeader*/;
 
-								OutputDebugStringEx("new File Section length:%d", SizeView);
+								//OutputDebugStringEx("new File Section length:%d", SizeView);
 								ntStatus = m_pfnOriginalZwMapViewOfSection(
 									__in hNewSection,
 									__in  NtCurrentProcess,
@@ -252,17 +254,20 @@ HookZwCreateSection(
 									return ntStatus;
 								}
 								auto FileSize = ((pRjFileSrtuct)pNewViewBase)->length;
-								OutputDebugStringEx("org File length:%d", SizeView);
-								OutputDebugStringEx("org File content:%s", pNewViewBase);
-								OutputDebugStringEx("org File FileSize:%d", FileSize);
-								OutputDebugStringEx("pOldViewBase File content:%d", *(int*)pOldViewBase);
+								//OutputDebugStringEx("org File length:%d", SizeView);
+								//OutputDebugStringEx("org File content:%s", pNewViewBase);
+								//OutputDebugStringEx("org File FileSize:%d", FileSize);
+								//OutputDebugStringEx("pOldViewBase File content:%d", *(int*)pOldViewBase);
 								//ZeroMemory(pOldViewBase, sizeof(RjFileSrtuct));
-									for (int i = 0; i < FileSize;i++)
+									/*for (int i = 0; i < FileSize;i++)
 									{
 											pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];
 											pOldViewBase[i] ^= 'a';
 									}
-				
+				*/
+
+								memcpy(pOldViewBase, pNewViewBase+sizeof(RjFileSrtuct) + 1, FileSize);
+
 					            if (pOldViewBase != NULL)
 					            {
 						            m_pfnOriginalZwUnmapViewOfSection(NtCurrentProcess, pOldViewBase);
@@ -297,7 +302,7 @@ HookZwCreateSection(
 		__in_opt  FileHandle);
 	if (!NT_SUCCESS(ntStatus))
 	{
-		OutputDebugStringEx("失败%08x",ntStatus);
+		//OutputDebugStringEx("失败%08x",ntStatus);
 	}
 	return ntStatus;
 }
