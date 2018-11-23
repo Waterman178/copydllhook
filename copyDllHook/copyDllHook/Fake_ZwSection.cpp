@@ -259,14 +259,14 @@ HookZwCreateSection(
 								//OutputDebugStringEx("org File FileSize:%d", FileSize);
 								//OutputDebugStringEx("pOldViewBase File content:%d", *(int*)pOldViewBase);
 								//ZeroMemory(pOldViewBase, sizeof(RjFileSrtuct));
-									/*for (int i = 0; i < FileSize;i++)
+								    for (int i = 0; i < FileSize;i++)
 									{
 											pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];
 											pOldViewBase[i] ^= 'a';
 									}
-				*/
+				
 
-								memcpy(pOldViewBase, pNewViewBase+sizeof(RjFileSrtuct) + 1, FileSize);
+								//memcpy(pOldViewBase, pNewViewBase+sizeof(RjFileSrtuct) + 1, FileSize);
 
 					            if (pOldViewBase != NULL)
 					            {
