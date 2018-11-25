@@ -1,25 +1,8 @@
 #include "stdafx.h"
-#include"ntdll.h"
+#include "ntdll.h"
+#include "FIlestruct.h"
 
 
-(__stdcall *PIO_APC_ROUTINE) (
-	void* ApcContext,
-	PIO_STATUS_BLOCK IoStatusBlock,
-	long Reserved
-	);
-
-typedef struct _FileInfo {
-	BOOLEAN bReadDecrypt;
-	BOOLEAN bEncryptFile;
-	PLARGE_INTEGER liFileSize;
-}FileInfo, *pFileInfo;
-
-
-
-
-typedef struct _FileHandleRelationNode {
-	FileInfo m_FileInfo;
-}FileHandleRelationNode, *pFileHandleRelationNode;
 
 
 NTSTATUS
