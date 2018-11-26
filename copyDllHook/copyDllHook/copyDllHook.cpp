@@ -13,6 +13,7 @@
 #define FILE_SIGN_LEN 11
 
   NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
+  NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
  std::list<HANDLE> MAPHAD_list;
  std::list<HANDLE>::iterator map_ite;
 
@@ -943,6 +944,7 @@ void __stdcall StartHook()
 			OutputDebugStringEx("m_pfnOriginalZwReadFileªÒ»° ß∞‹");
 			return;
 		}
+
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 
 		//readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);

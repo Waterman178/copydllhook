@@ -172,19 +172,9 @@ typedef void (NTAPI * pfmyRtlInitUnicodeString)(PUNICODE_STRING DestinationStrin
 typedef NTSTATUS(NTAPI *pfZwUnmapViewOfSection)(HANDLE ProcessHandle, PVOID  BaseAddress);
 static BOOL (WINAPI * pfGetFileInformationByHandle)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
 typedef NTSTATUS (NTAPI * pfnOriginalZwSetInformationFile)(HANDLE  FileHandle,PIO_STATUS_BLOCK IoStatusBlock,PVOID  FileInformation,ULONG  Length,FILE_INFORMATION_CLASS FileInformationClass);
-static
-NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (
-	HANDLE           FileHandle,
-	HANDLE           Event,
-	PIO_APC_ROUTINE  ApcRoutine,
-	PVOID            ApcContext,
-	PIO_STATUS_BLOCK IoStatusBlock,
-	PVOID            Buffer,
-	ULONG            Length,
-	PLARGE_INTEGER   ByteOffset,
-	PULONG           Key
-	);
 
+
+extern NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID  Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key);
 
 
 

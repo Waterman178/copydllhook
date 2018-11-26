@@ -3,11 +3,6 @@
 #include "ntstatus.h"
 #include <string>
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
-
-
-
-
-
 NTSTATUS
 WINAPI HookZwReadFile(
 	IN HANDLE  FileHandle,
@@ -34,7 +29,7 @@ WINAPI HookZwReadFile(
 	BOOL bOverRideRet = FALSE;
 	OVERLAPPED pOverlapped;
 	DWORD dwReaded = 0;
-	auto HeaderLength = sizeof(RjFileSrtuct);
+	auto HeaderLength = sizeof(RjFileSrtuct) + 1;
 	//bRet = !m_handleList.Empty() && m_handleList.Find(FileHandle);
 	bRet = !m_handleList.empty();
 	if (bRet)
@@ -80,6 +75,7 @@ WINAPI HookZwReadFile(
 			// 异步
 			if (ByteOffset != NULL)
 			{
+
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
 			}
@@ -192,10 +188,11 @@ WINAPI HookZwReadFile(
 						lCurrentOffset.QuadPart - HeaderLength,
 						IoStatusBlock->Information,
 						pRobj->m_FileInfo.rc4Key);*/
-				for (int i = 0; i < (lCurrentOffset.QuadPart - HeaderLength); i++)
+
+				/*for (int i = 0; i < (lCurrentOffset.QuadPart - HeaderLength); i++)
 				{
-					((LONGLONG*)*(LONGLONG*)(&Buffer))[i] ^= 'a';
-				}
+					((LONGLONG*)*(LONGLONG*)(&Buffer))[i+ HeaderLength] ^= 'a';
+				}*/
 
 
 				// 异步情况
@@ -210,7 +207,7 @@ WINAPI HookZwReadFile(
 
 	}
 	//EXIT:
-	MessageBox(NULL, "1111", "dsadsa", MH_OK);
+	//MessageBox(NULL, "1111", "dsadsa", MH_OK);
 
 	ntStatus = m_pfnOriginalZwReadFile(FileHandle,
 		Event,
@@ -222,9 +219,9 @@ WINAPI HookZwReadFile(
 		ByteOffset,
 		Key);
 
-	/*if (pRobj!=NULL)
+	if (pRobj!=NULL)
 	{
 		delete pRobj;
-	}*/
+	}
 	return ntStatus;
 }
