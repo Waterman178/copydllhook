@@ -65,10 +65,10 @@
     <ClCompile Include="GlobalHook.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="zwreadFile.cpp">
+    <ClCompile Include="Fake_ZwSection.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Fake_ZwSection.cpp">
+    <ClCompile Include="Fake_ZwReadFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

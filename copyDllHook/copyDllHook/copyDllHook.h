@@ -44,6 +44,35 @@ extern std::list<HANDLE> MAPHAD_list;
 extern std::list<HANDLE>::iterator map_ite;
 
 
+
+
+typedef struct _FileInfo {
+	BOOLEAN bReadDecrypt;
+	BOOLEAN bEncryptFile;
+	LARGE_INTEGER liFileSize;
+}FileInfo, *pFileInfo;
+
+
+
+
+typedef struct _FileHandleRelationNode {
+	FileInfo m_FileInfo;
+	HANDLE  FileHandle;
+}FileHandleRelationNode, *pFileHandleRelationNode;
+
+
+
+
+extern std::list<FileHandleRelationNode> m_handleList;
+extern std::list<FileHandleRelationNode>::iterator handleListNode;
+
+
+
+
+
+
+
+
 //dll库的宏定义
 #define USER32 TEXT("User32.dll")
 #define WINSPOOL TEXT("WINSPOOL.DRV")
@@ -98,6 +127,7 @@ extern std::list<HANDLE>::iterator map_ite;
 //#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
 //#define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
 
+#define   ZwReadFile   (NTSTATUS(NTAPI*)(HANDLE  FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID  ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key))
 //原函数的函数指针声明
 
 extern   NTSTATUS (NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
@@ -141,6 +171,22 @@ typedef NTSTATUS(NTAPI *pfZwClose)(IN HANDLE Handle);
 typedef void (NTAPI * pfmyRtlInitUnicodeString)(PUNICODE_STRING DestinationString, PCWSTR SourceString);
 typedef NTSTATUS(NTAPI *pfZwUnmapViewOfSection)(HANDLE ProcessHandle, PVOID  BaseAddress);
 static BOOL (WINAPI * pfGetFileInformationByHandle)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
+typedef NTSTATUS (NTAPI * pfnOriginalZwSetInformationFile)(HANDLE  FileHandle,PIO_STATUS_BLOCK IoStatusBlock,PVOID  FileInformation,ULONG  Length,FILE_INFORMATION_CLASS FileInformationClass);
+static
+NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (
+	HANDLE           FileHandle,
+	HANDLE           Event,
+	PIO_APC_ROUTINE  ApcRoutine,
+	PVOID            ApcContext,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID            Buffer,
+	ULONG            Length,
+	PLARGE_INTEGER   ByteOffset,
+	PULONG           Key
+	);
+
+
+
 
 extern zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
 extern myZwCreateSection    m_pfnOriginalZwCreateSection;
@@ -148,6 +194,10 @@ extern pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
 extern pfZwClose m_pfnOriginalZwClose;
 extern pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
 extern pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
+extern pfnOriginalZwSetInformationFile m_pfnOriginalZwSetInformationFile;
+
+
+
 
 
 static BOOL  (WINAPI* getFileAttributesExW)(LPCWSTR lpFileName,
@@ -311,6 +361,19 @@ NewCreateFileMappingA(
 static HANDLE WINAPI NewCreateProcessInternal(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
 
 
+NTSTATUS
+WINAPI HookZwReadFile(
+	IN HANDLE  FileHandle,
+	IN HANDLE  Event  OPTIONAL,
+	IN PIO_APC_ROUTINE  ApcRoutine  OPTIONAL,
+	IN PVOID  ApcContext  OPTIONAL,
+	OUT PIO_STATUS_BLOCK  IoStatusBlock,
+	OUT PVOID  Buffer,
+	IN ULONG  Length,
+	IN PLARGE_INTEGER  ByteOffset  OPTIONAL,
+	IN PULONG  Key  OPTIONAL
+);
+
 
 NTSTATUS
 NTAPI
@@ -327,6 +390,9 @@ PVOID StartOneHook(LPCTSTR dllName, LPCSTR funcName, PVOID newFunc);
 void EndOneHook(LPCTSTR dllName, PVOID oldFunc, PVOID newFunc);
 int rc4(char *pSecret, int SecretLen, char *pMessage, int MessageLen, char *pOut);//rc4  加密解密算法
 void hexdump(const unsigned char *buf, const int num);//16进制转储
+
+
+
 
 
 //DLL，导出函数

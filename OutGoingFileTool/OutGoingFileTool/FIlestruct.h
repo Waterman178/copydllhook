@@ -35,17 +35,8 @@ typedef struct  _rjFileInfo {
 
 
 
-typedef struct _FileInfo {
-	BOOLEAN bReadDecrypt;
-	BOOLEAN bEncryptFile;
-	PLARGE_INTEGER liFileSize;
-}FileInfo, *pFileInfo;
 
 
 
 
-typedef struct _FileHandleRelationNode {
-	FileInfo m_FileInfo;
-	HANDLE  FileHandle;
-}FileHandleRelationNode, *pFileHandleRelationNode;
 

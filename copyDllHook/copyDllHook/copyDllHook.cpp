@@ -20,6 +20,10 @@
  std::list<HANDLE> MAPHADD_list;
  std::list<HANDLE>::iterator mapp_ite;
 
+
+  std::list<FileHandleRelationNode> m_handleList;
+  std::list<FileHandleRelationNode>::iterator handleListNode;
+
  BOOL  fristopen = FALSE;
 
 zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
@@ -28,6 +32,7 @@ pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
 pfZwClose m_pfnOriginalZwClose;
 pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
 pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
+pfnOriginalZwSetInformationFile m_pfnOriginalZwSetInformationFile;
 
 
 //全局变量
@@ -205,7 +210,7 @@ static HANDLE WINAPI NewCreateFileW(
 	_In_opt_ HANDLE                hTemplateFile)
 {
 	HANDLE keyHan = nullptr;
-	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".txt")!=NULL ) {
+	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".docx")!=NULL ) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		if (keyHan != INVALID_HANDLE_VALUE) {
@@ -225,7 +230,13 @@ static HANDLE WINAPI NewCreateFileW(
 			{
 				HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 				//SetFilePointer(ret, sizeof(RjFileSrtuct), NULL, FILE_BEGIN);
-				MAPHAD_list.push_back(ret);
+				//MAPHAD_list.push_back(ret);
+
+				auto pRobj = new FileHandleRelationNode;
+				pRobj->FileHandle = ret;
+				pRobj->m_FileInfo.bReadDecrypt = TRUE;
+				pRobj->m_FileInfo.bEncryptFile = TRUE;
+				m_handleList.push_back(*pRobj);
 				delete fileHead;
 				return ret;
 				/*OutputDebugStringEx("**************HOOK:sercret file\r\n ");*/
@@ -926,7 +937,14 @@ void __stdcall StartHook()
 	setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
 	setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
 	setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
+
+		m_pfnOriginalZwReadFile = ZwReadFile StartOneHook(NTDLL, "ZwReadFile", HookZwReadFile);
+		if (m_pfnOriginalZwReadFile == 0x00) {
+			OutputDebugStringEx("m_pfnOriginalZwReadFile获取失败");
+			return;
+		}
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
+
 		//readfile = READFILE StartOneHook(KERNEL32, "ReadFile", NewReadfile);
 		//writeFile = WRITEFILE StartOneHook(KERNEL32, "WriteFile", New_WriteFile);
 
@@ -957,16 +975,29 @@ void __stdcall StartHook()
 		if (m_pfnOriginalZwUnmapViewOfSection == 0x00) { 
 			OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSection获取失败");
 			return; };
+		m_pfnOriginalZwSetInformationFile = (pfnOriginalZwSetInformationFile)FindProcAddress(NTDLL, "ZwSetInformationFile");
+		if (m_pfnOriginalZwSetInformationFile == 0x00) {
+			OutputDebugStringEx("m_pfnOriginalZwSetInformationFile获取失败");
+			return;}
 
 		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
-		pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
-		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
-		//MessageBox(NULL, "1111", "dsadsa", MH_OK);
+		//pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
+		//orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+	
+
+
+		getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+
+
+
+
+
+		
 	   // mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
 		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
 
 		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
-		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+		
 		//openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
 
 	/*	if (MH_CreateHook(&m_pfnOriginalZwCreateSection,&HookZwCreateSection,reinterpret_cast<void**>(&orgZwCreateSection))!=MH_OK)
@@ -1031,12 +1062,13 @@ void __stdcall EndHook()
 		//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
 		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
 		EndOneHook(KERNEL32, pfGetFileInformationByHandle, hookGetFileInformationByHandle);
-		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
+		//EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
+		EndOneHook(NTDLL, m_pfnOriginalZwReadFile, HookZwReadFile);
 
 		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
-		//EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
 		/*EndOneHook(NTDLL, zwClose, New_ZwClose);
 		EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
 		EndOneHook(KERNEL32, closeHandle, NewCloseHandle);
