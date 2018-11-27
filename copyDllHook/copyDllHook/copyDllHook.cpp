@@ -214,7 +214,7 @@ static HANDLE WINAPI NewCreateFileW(
 	BOOL bReadDecrypt = FALSE;
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".docx")!=NULL ) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
+		/*OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		if (!m_handleList.empty())
 		{
 			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
@@ -225,7 +225,7 @@ static HANDLE WINAPI NewCreateFileW(
 					return keyHan;
 				}
 			}
-		}
+		}*/
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN];

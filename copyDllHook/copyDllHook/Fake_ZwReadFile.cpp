@@ -82,18 +82,18 @@ WINAPI HookZwReadFile(
 
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
-				OutputDebugStringEx("异步\r\n");
+				//OutputDebugStringEx("异步\r\n");
 			}
 			else if (ByteOffset == NULL) // 同步
 			{
-				OutputDebugStringEx("同步\r\n");
+				//OutputDebugStringEx("同步\r\n");
 				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 					&iostatus,
 					&fpi,    // current pos
 					sizeof(FILE_POSITION_INFORMATION),
 					FilePositionInformation);
 
-				/*if ((lOldOffset.QuadPart > pRobj->m_FileInfo.liFileSize.QuadPart))
+				if ((lOldOffset.QuadPart > pRobj->m_FileInfo.liFileSize.QuadPart))
 				{
 					delete pRobj;
 
@@ -106,7 +106,7 @@ WINAPI HookZwReadFile(
 						Length,
 						ByteOffset,
 						Key);
-				}*/
+				}
 				if (fpi.CurrentByteOffset.QuadPart < HeaderLength)
 				{
 					fpi.CurrentByteOffset.QuadPart += HeaderLength;
