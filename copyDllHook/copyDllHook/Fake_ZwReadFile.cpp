@@ -3,6 +3,9 @@
 #include "ntstatus.h"
 #include <string>
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
+
+
+
 NTSTATUS
 WINAPI HookZwReadFile(
 	IN HANDLE  FileHandle,
@@ -31,6 +34,7 @@ WINAPI HookZwReadFile(
 	DWORD dwReaded = 0;
 	auto HeaderLength = sizeof(RjFileSrtuct) + 1;
 	//bRet = !m_handleList.Empty() && m_handleList.Find(FileHandle);
+	//OutputDebugStringEx("长度为:%s", HeaderLength);
 	bRet = !m_handleList.empty();
 	if (bRet)
 	{
@@ -44,7 +48,7 @@ WINAPI HookZwReadFile(
 			}
 			else
 			{
-				pRobj->m_FileInfo.bReadDecrypt = FALSE;
+				//pRobj->m_FileInfo.bReadDecrypt = FALSE;
 			}
 		}
 		//m_handleList.Find(*pRobj, FileHandle);
@@ -78,16 +82,18 @@ WINAPI HookZwReadFile(
 
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
+				OutputDebugStringEx("异步\r\n");
 			}
 			else if (ByteOffset == NULL) // 同步
 			{
+				OutputDebugStringEx("同步\r\n");
 				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 					&iostatus,
 					&fpi,    // current pos
 					sizeof(FILE_POSITION_INFORMATION),
 					FilePositionInformation);
 
-				if ((lOldOffset.QuadPart > pRobj->m_FileInfo.liFileSize.QuadPart))
+				/*if ((lOldOffset.QuadPart > pRobj->m_FileInfo.liFileSize.QuadPart))
 				{
 					delete pRobj;
 
@@ -100,7 +106,7 @@ WINAPI HookZwReadFile(
 						Length,
 						ByteOffset,
 						Key);
-				}
+				}*/
 				if (fpi.CurrentByteOffset.QuadPart < HeaderLength)
 				{
 					fpi.CurrentByteOffset.QuadPart += HeaderLength;
@@ -171,6 +177,7 @@ WINAPI HookZwReadFile(
 
 			if (NT_SUCCESS(ntStatus) && NT_SUCCESS(IoStatusBlock->u.Status))
 			{
+				//OutputDebugStringEx("内容为：%s lCurrentOffset.QuadPart为：%d", Buffer, lCurrentOffset.QuadPart);
 				//解密内存
 				/*rc4Obj.DecryptMemory(Buffer,
 				Buffer,
@@ -188,12 +195,19 @@ WINAPI HookZwReadFile(
 						lCurrentOffset.QuadPart - HeaderLength,
 						IoStatusBlock->Information,
 						pRobj->m_FileInfo.rc4Key);*/
+				//OutputDebugStringEx("lCurrentOffset：%08x", lCurrentOffset.QuadPart);
+				
+			    //MessageBox(NULL, "1111", "dsadsa", MH_OK);
 
-				/*for (int i = 0; i < (lCurrentOffset.QuadPart - HeaderLength); i++)
-				{
-					((LONGLONG*)*(LONGLONG*)(&Buffer))[i+ HeaderLength] ^= 'a';
-				}*/
 
+					/*for (int i = 0; i < lCurrentOffset.QuadPart - HeaderLength; i++)
+					{
+						reinterpret_cast<char*>(Buffer)[i] ^= 'a';
+					}*/
+
+
+			
+				//OutputDebugStringEx("内容为：%s lCurrentOffset.QuadPart为：%d", Buffer, lCurrentOffset.QuadPart);
 
 				// 异步情况
 				if (ByteOffset != NULL)  // 恢复位置

@@ -178,6 +178,21 @@ extern NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle,HANDLE  Eve
 
 
 
+extern
+
+NTSTATUS
+WINAPI HookZwReadFile(
+	IN HANDLE  FileHandle,
+	IN HANDLE  Event  OPTIONAL,
+	IN PIO_APC_ROUTINE  ApcRoutine  OPTIONAL,
+	IN PVOID  ApcContext  OPTIONAL,
+	OUT PIO_STATUS_BLOCK  IoStatusBlock,
+	OUT PVOID  Buffer,
+	IN ULONG  Length,
+	IN PLARGE_INTEGER  ByteOffset  OPTIONAL,
+	IN PULONG  Key  OPTIONAL
+);
+
 extern zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
 extern myZwCreateSection    m_pfnOriginalZwCreateSection;
 extern pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
