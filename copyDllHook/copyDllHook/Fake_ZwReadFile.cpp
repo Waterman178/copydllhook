@@ -119,6 +119,7 @@ WINAPI HookZwReadFile(
 				}
 
 				lCurrentOffset.QuadPart = fpi.CurrentByteOffset.QuadPart;
+				OutputDebugStringEx("fpi.CurrentByteOffset.QuadPart£º%08x\r\n", fpi.CurrentByteOffset.QuadPart);
 
 			}
 
@@ -199,11 +200,11 @@ WINAPI HookZwReadFile(
 				
 			    //MessageBox(NULL, "1111", "dsadsa", MH_OK);
 
-
-					/*for (int i = 0; i < lCurrentOffset.QuadPart - HeaderLength; i++)
+			
+					for (int i = 0; i < IoStatusBlock->Information; i++)
 					{
 						reinterpret_cast<char*>(Buffer)[i] ^= 'a';
-					}*/
+					}
 
 
 			
