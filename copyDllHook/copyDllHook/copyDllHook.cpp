@@ -214,18 +214,18 @@ static HANDLE WINAPI NewCreateFileW(
 	BOOL bReadDecrypt = FALSE;
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".docx")!=NULL ) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		/*OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
+		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		if (!m_handleList.empty())
 		{
 			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
 			{
 				if (handleListNode->FileHandle == keyHan)
 				{
-					handleListNode->m_FileInfo.bReadDecrypt = FALSE;
+					handleListNode->m_FileInfo.bReadDecrypt = TRUE;
 					return keyHan;
 				}
 			}
-		}*/
+		}
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN];
@@ -237,10 +237,9 @@ static HANDLE WINAPI NewCreateFileW(
 			ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
 			SetFilePointer(keyHan, 0, NULL, FILE_BEGIN);
 			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
-			//closeHandle(keyHan);
-			CLOSEHANDLE(keyHan);
 			if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 			{
+				CLOSEHANDLE(keyHan);
 				HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 				//SetFilePointer(ret, sizeof(RjFileSrtuct), NULL, FILE_BEGIN);
 				//MAPHAD_list.push_back(ret);
@@ -262,17 +261,15 @@ static HANDLE WINAPI NewCreateFileW(
 
 				//dwDesiredAccess &= ~GENERIC_WRITE;
 			}
-			//else if (bReadDecrypt == TRUE)
-			//{
-			//	OutputDebugStringEx("ÎÞÐè½âÃÜ\r\n ");
-			//	//handleListNode->m_FileInfo.bReadDecrypt = FALSE;
-			//	return keyHan;
-			//}
+			else
+			{
+				HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+				//handleListNode->m_FileInfo.bReadDecrypt = FALSE;
+				return ret;
+			}
 		}
 	}
 	HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-
-	
 	//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW: %s  ,  %d\r\n", lpFileName, ret);
 	return ret;
 }

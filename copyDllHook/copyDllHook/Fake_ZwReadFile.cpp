@@ -39,6 +39,7 @@ WINAPI HookZwReadFile(
 	if (bRet)
 	{
 		pRobj = new FileHandleRelationNode;
+		pRobj->m_FileInfo.bReadDecrypt = FALSE;
 		for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
 		{
 			if (handleListNode->FileHandle == FileHandle)
@@ -49,6 +50,7 @@ WINAPI HookZwReadFile(
 			else
 			{
 				//pRobj->m_FileInfo.bReadDecrypt = FALSE;
+				bRet = FALSE;
 			}
 		}
 		//m_handleList.Find(*pRobj, FileHandle);
