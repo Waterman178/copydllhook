@@ -1,2 +1,2 @@
 # copydllhook
-我会完善ReadFile读解密的，争取一个礼拜搞好office系列。
+已经搞定wps，这种office办公文档了
