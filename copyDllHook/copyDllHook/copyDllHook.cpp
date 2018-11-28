@@ -7,6 +7,7 @@
 #include "GetParentProID.h"
 #include "GlobalHook.h"
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
+#include <mutex>   
 
 #define FILE_SIGN "DSKFJLSKDF"
 #define FileName "RjiSafe9575"
@@ -212,30 +213,34 @@ static HANDLE WINAPI NewCreateFileW(
 {
 	HANDLE keyHan = nullptr;
 	BOOL bReadDecrypt = FALSE;
+	std::mutex mutexObj;
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".docx")!=NULL ) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
+		mutexObj.lock();
 		if (!m_handleList.empty())
 		{
 			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
 			{
 				if (handleListNode->FileHandle == keyHan)
 				{
-					handleListNode->m_FileInfo.bReadDecrypt = TRUE;
+					//handleListNode->m_FileInfo.bReadDecrypt = TRUE;
 					return keyHan;
 				}
 			}
 		}
+		mutexObj.unlock();
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
-			LPVOID fileHead = new char[FILE_SIGN_LEN];
+			LPVOID fileHead = new char[FILE_SIGN_LEN+1];
+			ZeroMemory(fileHead, FILE_SIGN_LEN + 1);
 			int currentPointer = 0;
-			OutputDebugStringEx("ReadFile Begin");
-			currentPointer = SetFilePointer(keyHan, 0, NULL, FILE_BEGIN);
+			//OutputDebugStringEx("ReadFile Begin");
+			//currentPointer = SetFilePointer(keyHan, 0, NULL, FILE_BEGIN);
 			//setFilePointer(keyHan, -FILE_SIGN_LEN, NULL, FILE_END);
-			OutputDebugStringEx(">>>>>>>>readfile<<<<<<<<\r\n");
+			//OutputDebugStringEx(">>>>>>>>readfile<<<<<<<<\r\n");
 			ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-			SetFilePointer(keyHan, 0, NULL, FILE_BEGIN);
+			//SetFilePointer(keyHan, 0, NULL, FILE_BEGIN);
 			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
 			if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 			{
@@ -248,7 +253,11 @@ static HANDLE WINAPI NewCreateFileW(
 				pRobj->FileHandle = ret;
 				pRobj->m_FileInfo.bReadDecrypt = TRUE;
 				pRobj->m_FileInfo.bEncryptFile = TRUE;
+				//pRobj->m_FileInfo.liFileSize.QuadPart = 10993;
+				mutexObj.lock();
 				m_handleList.push_back(*pRobj);
+				//MAPHAD_list.push_back(ret);
+				mutexObj.unlock();
 				delete fileHead;
 				return ret;
 				/*OutputDebugStringEx("**************HOOK:sercret file\r\n ");*/
@@ -263,6 +272,7 @@ static HANDLE WINAPI NewCreateFileW(
 			}
 			else
 			{
+				CLOSEHANDLE(keyHan);
 				HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 				//handleListNode->m_FileInfo.bReadDecrypt = FALSE;
 				return ret;
@@ -608,19 +618,37 @@ static DWORD WINAPI NewGetFileSize(
 	HANDLE hFile,
 	LPDWORD lpFileSizeHigh)
 {
-	DWORD result = getFileSize(hFile, lpFileSizeHigh);
-	int HeadFlaglength = sizeof(RjFileSrtuct)+1;
-	DWORD readLen;
-	LPVOID fileHead = new char[HeadFlaglength];
-	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-	ReadFile(hFile, fileHead, HeadFlaglength, &readLen, NULL); //用原始的
-	//OutputDebugStringEx("HOOK:  THE NewGetFileSize FUNCTION !!    readHead = %s\r\n", fileHead);
-	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
+	
+	//int HeadFlaglength = sizeof(RjFileSrtuct)+1;
+	//DWORD readLen;
+	//LPVOID fileHead = new char[HeadFlaglength];
+	//ZeroMemory(fileHead, HeadFlaglength);
+	//SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+	//ReadFile(hFile, fileHead, FILE_SIGN_LEN, &readLen, NULL); //用原始的
+	////OutputDebugStringEx("HOOK:  THE NewGetFileSize FUNCTION !!    readHead = %s\r\n", fileHead);
+	//if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
+	//{
+	//	//OutputDebugStringEx("********  getFileSize ******HOOK:sercret file \r\n");
+	//	result -= HeadFlaglength;
+	//}
+	//delete fileHead;
+	bool bRet;
+	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
+	bRet = !m_handleList.empty();
+	if (bRet)
 	{
-		//OutputDebugStringEx("********  getFileSize ******HOOK:sercret file \r\n");
-		result -= HeadFlaglength;
+		//mutexObj.lock();
+		for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
+		{
+			if (handleListNode->FileHandle == hFile)
+			{
+				DWORD result = getFileSize(hFile, lpFileSizeHigh);
+				result -= HeadFlaglength;
+				return result;
+			}
+		}
 	}
-	return result;
+	return getFileSize(hFile, lpFileSizeHigh);
 }
 /***********************************************
 GetSaveFileNameW()函数			A获取关闭文件会话框
@@ -879,7 +907,7 @@ BOOL  HOOKGetFileAttributesExW(
 	{
 		OutputDebugStringEx("HOOKGetFileAttributesExW open File:%ws fail", lpFileName);
 	}
-	int HeadFlaglength = sizeof(RjFileSrtuct);
+	int HeadFlaglength = sizeof(RjFileSrtuct)+1;
 	DWORD readLen;
 	LPVOID fileHead = new char[HeadFlaglength];
 	SetFilePointer(FileHandle, 0, NULL, FILE_BEGIN);
@@ -995,16 +1023,16 @@ void __stdcall StartHook()
 		if (m_pfnOriginalZwSetInformationFile == 0x00) {
 			OutputDebugStringEx("m_pfnOriginalZwSetInformationFile获取失败");
 			return;}
-
-		MessageBox(NULL, "1111", "dsadsa", MH_OK);
-
+		getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+		
 		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 		//pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 		//orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+		MessageBox(NULL, "1111", "dsadsa", MH_OK);
+
+
+
 	
-
-
-		//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 
 
 
@@ -1073,7 +1101,7 @@ void __stdcall EndHook()
 		EndOneHook(USER32, setWindowPos, NewSetWindowPos);
 		EndOneHook(USER32, setWindowTextW, NewSetWindowTextW);
 		EndOneHook(USER32, setWindowTextA, NewSetWindowTextA);*/
-		EndOneHook(KERNEL32, createFileW, NewCreateFileW);
+
 		//EndOneHook(KERNEL32, readfile, NewReadfile);
 		//EndOneHook(KERNEL32, writeFile, New_WriteFile);
 		//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
@@ -1081,12 +1109,13 @@ void __stdcall EndHook()
 		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
 		//EndOneHook(KERNEL32, pfGetFileInformationByHandle, hookGetFileInformationByHandle);
 		//EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
+	    EndOneHook(KERNEL32, createFileW, NewCreateFileW);
 		EndOneHook(NTDLL, m_pfnOriginalZwReadFile, HookZwReadFile);
-
+		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
 		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
-		//EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+		
 		/*EndOneHook(NTDLL, zwClose, New_ZwClose);
 		EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
 		EndOneHook(KERNEL32, closeHandle, NewCloseHandle);

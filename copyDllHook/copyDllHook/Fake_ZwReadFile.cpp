@@ -3,7 +3,7 @@
 #include "ntstatus.h"
 #include <string>
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
-
+#include <mutex>   
 
 
 NTSTATUS
@@ -20,6 +20,7 @@ WINAPI HookZwReadFile(
 )
 {
 	NTSTATUS ntStatus = STATUS_SUCCESS;
+	std::mutex mutexObj;
 	FileHandleRelationNode* pRobj = NULL;
 	FILE_POSITION_INFORMATION fpi;
 	IO_STATUS_BLOCK iostatus;
@@ -40,6 +41,7 @@ WINAPI HookZwReadFile(
 	{
 		pRobj = new FileHandleRelationNode;
 		pRobj->m_FileInfo.bReadDecrypt = FALSE;
+		mutexObj.lock();
 		for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
 		{
 			if (handleListNode->FileHandle == FileHandle)
@@ -50,9 +52,10 @@ WINAPI HookZwReadFile(
 			else
 			{
 				//pRobj->m_FileInfo.bReadDecrypt = FALSE;
-				bRet = FALSE;
+				//bRet = FALSE;
 			}
 		}
+		mutexObj.unlock();
 		//m_handleList.Find(*pRobj, FileHandle);
 	}
 
@@ -61,8 +64,9 @@ WINAPI HookZwReadFile(
 		//
 		// 不需要解密，提示
 		//
-		delete pRobj;
 
+		delete pRobj;
+		OutputDebugStringEx("不需要解密\r\n");
 		return m_pfnOriginalZwReadFile(FileHandle,
 			Event,
 			ApcRoutine,
@@ -84,18 +88,18 @@ WINAPI HookZwReadFile(
 
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
-				//OutputDebugStringEx("异步\r\n");
+				OutputDebugStringEx("异步\r\n");
 			}
 			else if (ByteOffset == NULL) // 同步
 			{
-				//OutputDebugStringEx("同步\r\n");
+				OutputDebugStringEx("同步\r\n");
 				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 					&iostatus,
 					&fpi,    // current pos
 					sizeof(FILE_POSITION_INFORMATION),
 					FilePositionInformation);
 
-				if ((lOldOffset.QuadPart > pRobj->m_FileInfo.liFileSize.QuadPart))
+				/*if ((lOldOffset.QuadPart > pRobj->m_FileInfo.liFileSize.QuadPart))
 				{
 					delete pRobj;
 
@@ -108,7 +112,7 @@ WINAPI HookZwReadFile(
 						Length,
 						ByteOffset,
 						Key);
-				}
+				}*/
 				if (fpi.CurrentByteOffset.QuadPart < HeaderLength)
 				{
 					fpi.CurrentByteOffset.QuadPart += HeaderLength;
@@ -121,7 +125,7 @@ WINAPI HookZwReadFile(
 				}
 
 				lCurrentOffset.QuadPart = fpi.CurrentByteOffset.QuadPart;
-				OutputDebugStringEx("fpi.CurrentByteOffset.QuadPart：%08x\r\n", fpi.CurrentByteOffset.QuadPart);
+				//OutputDebugStringEx("fpi.CurrentByteOffset.QuadPart：%08x\r\n", fpi.CurrentByteOffset.QuadPart);
 
 			}
 
@@ -203,7 +207,7 @@ WINAPI HookZwReadFile(
 			    //MessageBox(NULL, "1111", "dsadsa", MH_OK);
 
 			
-					for (int i = 0; i < IoStatusBlock->Information; i++)
+					for (int i = 0; i < IoStatusBlock->Information ; i++)
 					{
 						reinterpret_cast<char*>(Buffer)[i] ^= 'a';
 					}

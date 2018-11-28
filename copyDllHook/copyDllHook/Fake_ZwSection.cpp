@@ -59,7 +59,7 @@ HookZwCreateSection(
 			{
 
 				bRet = FileHandle;
-				//OutputDebugStringEx("发现目标句柄:%d", FileHandle);
+				OutputDebugStringEx("发现目标句柄:%d", FileHandle);
 				goto dealSection;
 			}
 			else
