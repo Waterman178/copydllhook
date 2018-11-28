@@ -162,7 +162,6 @@
     <ClInclude Include="..\..\OutGoingFileTool\OutGoingFileTool\FIlestruct.h" />
     <ClInclude Include="copyDllHook.h" />
     <ClInclude Include="DebugPrintf.h" />
-    <ClInclude Include="detours_Nt.h" />
     <ClInclude Include="GetParentProID.h" />
     <ClInclude Include="GlobalHook.h" />
     <ClInclude Include="MinHook.h" />
