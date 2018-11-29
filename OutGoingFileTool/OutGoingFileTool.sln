@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OutGoingFileTool", "OutGoingFileTool\OutGoingFileTool.vcxproj", "{DC5A36B5-375F-4DC9-8462-237C1B59439D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "copyDllHook", "..\copyDllHook\copyDllHook\copyDllHook.vcxproj", "{62597ED6-F9EF-4C6D-8FBC-D5851FD66FC9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CryptTool", "CryptTool\CryptTool.vcxproj", "{3033B797-B492-4BCA-93E2-732B25A384C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,8 +33,19 @@ Global
 		{62597ED6-F9EF-4C6D-8FBC-D5851FD66FC9}.Release|Win32.Build.0 = Release|Win32
 		{62597ED6-F9EF-4C6D-8FBC-D5851FD66FC9}.Release|x64.ActiveCfg = Release|x64
 		{62597ED6-F9EF-4C6D-8FBC-D5851FD66FC9}.Release|x64.Build.0 = Release|x64
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Debug|Win32.Build.0 = Debug|Win32
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Debug|x64.ActiveCfg = Debug|x64
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Debug|x64.Build.0 = Debug|x64
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Release|Win32.ActiveCfg = Release|Win32
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Release|Win32.Build.0 = Release|Win32
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Release|x64.ActiveCfg = Release|x64
+		{3033B797-B492-4BCA-93E2-732B25A384C0}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3C02E5D8-7713-4042-B670-65FB4F07D196}
 	EndGlobalSection
 EndGlobal
