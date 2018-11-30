@@ -51,11 +51,11 @@ HookZwCreateSection(
 	//CRc4 rc4Obj;
 	//FILE_RESULT fileResult = OpenError;
 	//bRet = m_handleList.Find(robj, FileHandle);
-	if (!MAPHAD_list.empty())
+	if (!m_handleList.empty())
 	{
-		for (map_ite = MAPHAD_list.begin(); map_ite != MAPHAD_list.end(); map_ite++)
+		for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
 		{
-			if (FileHandle == *map_ite)
+			if (FileHandle == handleListNode->FileHandle)
 			{
 
 				bRet = FileHandle;
@@ -64,7 +64,7 @@ HookZwCreateSection(
 			}
 			else
 			{
-				//OutputDebugStringEx("没有发现");
+				OutputDebugStringEx("没有发现");
 				ntStatus = orgZwCreateSection(
 					__out  SectionHandle,
 					__in  DesiredAccess,

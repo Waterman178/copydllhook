@@ -182,7 +182,7 @@ static HANDLE WINAPI NewCreateFileW(
 	HANDLE keyHan = nullptr;
 	BOOL bReadDecrypt = FALSE;
 	std::mutex mutexObj;
-	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".docx")!=NULL ) {
+	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".txt")!=NULL ) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		mutexObj.lock();
