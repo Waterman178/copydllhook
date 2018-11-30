@@ -184,7 +184,7 @@ static HANDLE WINAPI NewCreateFileW(
 	std::mutex mutexObj;
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".txt")!=NULL ) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
+		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		mutexObj.lock();
 		if (!m_handleList.empty())
 		{
@@ -196,7 +196,7 @@ static HANDLE WINAPI NewCreateFileW(
 				}
 			}
 		}
-		mutexObj.unlock();
+	   mutexObj.unlock();
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN+1];
@@ -958,6 +958,7 @@ void __stdcall StartHook()
 		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 		pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+		::MessageBox(NULL, "1111", "dsadsa", MH_OK);
 	    // mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
 		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
 		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
