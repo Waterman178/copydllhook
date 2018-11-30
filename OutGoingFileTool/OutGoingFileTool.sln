@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OutGoingFileTool", "OutGoin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "copyDllHook", "..\copyDllHook\copyDllHook\copyDllHook.vcxproj", "{62597ED6-F9EF-4C6D-8FBC-D5851FD66FC9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CryptTool", "CryptTool\CryptTool.vcxproj", "{3033B797-B492-4BCA-93E2-732B25A384C0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CryptTool", "..\CryptTool\CryptTool.vcxproj", "{3033B797-B492-4BCA-93E2-732B25A384C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -109,6 +109,7 @@ END_MESSAGE_MAP()
 
 // COutGoingFileToolDlg 消息处理程序
 
+
 BOOL COutGoingFileToolDlg::OnInitDialog()
 {
 	int Ret = ::MessageBox(NULL, _T("请关闭正在打开的文档，并在查看保密文件后及时关闭此程序，以免造成误加密"), _T("提示"), MB_YESNO | MB_ICONEXCLAMATION);
