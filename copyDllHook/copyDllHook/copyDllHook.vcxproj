@@ -164,7 +164,6 @@
     <ClInclude Include="DebugPrintf.h" />
     <ClInclude Include="GetParentProID.h" />
     <ClInclude Include="GlobalHook.h" />
-    <ClInclude Include="MinHook.h" />
     <ClInclude Include="ntdll.h" />
     <ClInclude Include="ntstatus.h" />
     <ClInclude Include="stdafx.h" />

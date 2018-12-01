@@ -342,7 +342,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 	char  Filepullpath[250] = { 0 };
 	GetTempPathA(261, Filepullpath);
-	CString str(_T("C:\\Users\\Administrator\\Desktop\\"));
+	CString str(_T(Filepullpath));
 	CString strLangName;//Ñ¡ÔñÓïÑÔµÄÃû³Æ×Ö·û´®
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
 	if (-1 != pNMListView->iItem)
