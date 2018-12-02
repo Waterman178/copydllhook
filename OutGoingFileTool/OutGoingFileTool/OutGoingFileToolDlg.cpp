@@ -369,7 +369,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 			dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
 			//SetFileAttributes(str, FILE_ATTRIBUTE_READONLY);
 
-			InjectDll(dwId, _T("C:\\Users\\Administrator\\Desktop\\copyDllHook.dll"));
+			InjectDll(dwId, _T("C:\\Users\\Wrench\\Desktop\\a\\copyDllHook.dll"));
 		}
 
 	}

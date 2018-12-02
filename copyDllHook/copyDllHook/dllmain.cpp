@@ -35,7 +35,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	    }
 		OutputDebugStringEx("Is a process!\r\n");
 	    bhook = true;
-		hMutex = CreateMutex(NULL, FALSE, NULL);
+		//hMutex = CreateMutex(NULL, FALSE, NULL);
 		StartHook();
 		break;
 	case DLL_THREAD_ATTACH:

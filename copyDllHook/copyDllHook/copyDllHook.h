@@ -27,7 +27,6 @@
 #include <bcrypt.h>
 #include <list>
 #include <commdlg.h>
-#include "MinHook.h"
 //#include "detours_Nt.h"
 
 #ifdef x64
