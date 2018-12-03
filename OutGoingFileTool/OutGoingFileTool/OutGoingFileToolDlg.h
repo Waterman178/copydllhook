@@ -47,6 +47,7 @@ public:
 	PVOID LoadDllFunc(LPCTSTR lpFileName, LPCSTR lpProcName);
 	int CompressFile(const char* comSavewhere, const char* needCom);//压缩文件
 	int UncompreFile(const char* uncomTowhere, const char* needUncom);//解压文件
+	CString GetWorkDir();
 	//char* CString2char(CString str);
 private:
 	void(WINAPI *InstallHook)();

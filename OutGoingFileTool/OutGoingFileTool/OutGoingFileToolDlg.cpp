@@ -14,7 +14,27 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+void OutputDebugStringEx(const char *strOutputString, ...)
 
+{
+
+	va_list vlArgs = NULL;
+
+	va_start(vlArgs, strOutputString);
+
+	size_t nLen = _vscprintf(strOutputString, vlArgs) + 1;
+
+	char *strBuffer = new char[nLen];
+
+	_vsnprintf_s(strBuffer, nLen, nLen, strOutputString, vlArgs);
+
+	va_end(vlArgs);
+
+	OutputDebugStringA(strBuffer);
+
+	delete[] strBuffer;
+
+}
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -345,6 +365,9 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	CString str(_T(Filepullpath));
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
+	auto orgdll = GetWorkDir();
+	orgdll.Replace("\\", "\\\\");
+	orgdll += _T("copyDllHook.dll");
 	if (-1 != pNMListView->iItem)
 	{
 		//获取被选择列表的第一个子项的文本
@@ -368,11 +391,23 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 			hid = ShExecInfo.hProcess;
 			dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
 			//SetFileAttributes(str, FILE_ATTRIBUTE_READONLY);
-
-			InjectDll(dwId, _T("C:\\Users\\Wrench\\Desktop\\a\\copyDllHook.dll"));
+			OutputDebugStringEx("orgdll_path:%ws", orgdll.AllocSysString());
+			if (InjectDll(dwId, orgdll.GetBuffer())==-1)
+			{
+				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+			}
+			
 		}
-
 	}
+}
+
+
+CString COutGoingFileToolDlg::GetWorkDir()
+{
+	char buf[MAX_PATH];
+	_fullpath(buf, ".\\", MAX_PATH);
+	CString csFullPath(buf);
+	return csFullPath;
 }
 int COutGoingFileToolDlg::InjectDll(DWORD dwProcessId, PTCHAR szDllName)
 {
@@ -500,7 +535,6 @@ int COutGoingFileToolDlg::UncompreFile(const char* uncomTowhere, const char* nee
 void COutGoingFileToolDlg::OnBnClickedButton2()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	char decryptbuffer[260];
 	char   Ext[250];
 	char  pBuffer[250];
 
@@ -518,13 +552,14 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
 	encryptInfo->encryptHead.Count = 1000; //文件使用次数
 
-	int iflag = 0;
+	size_t iflag = 0;
 	size_t len = sizeof(RjFileSrtuct);
 	//从结构体头开始复制，已经是1字节对齐了
 	while (iflag <= len)
 	{
 		fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的编程设计者容易理解，也没用原始指针。
 		iflag++;
+		fflush(TEMP1);
 	}
 	char*  buf = new char[encryptInfo->encryptHead.length];
 	ZeroMemory(buf, (int)encryptInfo->encryptHead.length);
