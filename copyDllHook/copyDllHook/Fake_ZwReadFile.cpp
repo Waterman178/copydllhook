@@ -66,7 +66,7 @@ WINAPI HookZwReadFile(
 		//
 
 		delete pRobj;
-		OutputDebugStringEx("不需要解密\r\n");
+		//OutputDebugStringEx("不需要解密\r\n");
 		return m_pfnOriginalZwReadFile(FileHandle,
 			Event,
 			ApcRoutine,
@@ -88,11 +88,11 @@ WINAPI HookZwReadFile(
 
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
-				OutputDebugStringEx("异步\r\n");
+				//OutputDebugStringEx("异步\r\n");
 			}
 			else if (ByteOffset == NULL) // 同步
 			{
-				OutputDebugStringEx("同步\r\n");
+				//OutputDebugStringEx("同步\r\n");
 				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 					&iostatus,
 					&fpi,    // current pos

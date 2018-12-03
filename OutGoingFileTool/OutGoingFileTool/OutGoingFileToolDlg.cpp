@@ -386,12 +386,13 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		ShExecInfo.nShow = SW_SHOW;
 		ShExecInfo.hInstApp = NULL;
 		DWORD dwId = 0L;
+		//SetFileAttributes(str, FILE_ATTRIBUTE_READONLY);
 		if (ShellExecuteEx(&ShExecInfo))
 		{
 			hid = ShExecInfo.hProcess;
 			dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
-			//SetFileAttributes(str, FILE_ATTRIBUTE_READONLY);
-			OutputDebugStringEx("orgdll_path:%ws", orgdll.AllocSysString());
+			
+			//OutputDebugStringEx("orgdll_path:%ws", orgdll.AllocSysString());
 			if (InjectDll(dwId, orgdll.GetBuffer())==-1)
 			{
 				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);

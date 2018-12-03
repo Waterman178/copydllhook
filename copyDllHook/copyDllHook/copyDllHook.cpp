@@ -208,7 +208,7 @@ static HANDLE WINAPI NewCreateFileW(
 			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
 			if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 			{
-				CLOSEHANDLE(keyHan);
+				pfCloseHandle(keyHan);
 				HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 				auto pRobj = new FileHandleRelationNode;
 				pRobj->FileHandle = ret;
@@ -222,7 +222,7 @@ static HANDLE WINAPI NewCreateFileW(
 			}
 			else
 			{
-				CLOSEHANDLE(keyHan);
+				pfCloseHandle(keyHan);
 				HANDLE ret = createFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 				return ret;
 			}
@@ -600,7 +600,28 @@ static BOOL WINAPI New_GetSaveFileNameW(
 static BOOL WINAPI NewCloseHandle(HANDLE hObject)
 {
 	//OutputDebugStringEx("HOOK:  THE CLOSEHANDLE FUNCTION !!!!  handle = %d", hObject);
-	return closeHandle(hObject);
+	std::mutex mutexObj;
+	bool bRet;
+	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
+	bRet = !m_handleList.empty();
+	if (bRet)
+	{
+		mutexObj.lock();
+		for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end();)
+		{
+			if (handleListNode->FileHandle == hObject)
+			{
+				handleListNode = m_handleList.erase(handleListNode);
+				return pfCloseHandle(hObject);
+			}
+			else
+			{
+				handleListNode++;
+			}
+		}
+		mutexObj.unlock();
+	}
+	return pfCloseHandle(hObject);
 }
 /***********************************************
 UnmapViewOfFile()函数			停止内存映射功能
@@ -960,6 +981,8 @@ void __stdcall StartHook()
 		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 		pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
+	
 		//::MessageBox(NULL, "1111", "dsadsa", MH_OK);
 	    // mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
 		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
@@ -976,7 +999,7 @@ void __stdcall StartHook()
 		//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);
 		/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
 		unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
-		closeHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
+		
 		ntClose = NTCLOSE StartOneHook(NTDLL, "NtClose", NewNtClose);
 		setFilePointer = SETFILEPOINTER StartOneHook(KERNELBASE, "SetFilePointer", NewSetFilePointer);
 		getFileInformationByHandle = GETFILEINFBYHANDLE StartOneHook(KERNELBASE, "GetFileInformationByHandle", NewGetFileInformationByHandle);
@@ -1019,17 +1042,19 @@ void __stdcall EndHook()
 		//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
 		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
+	   
 		EndOneHook(KERNEL32, pfGetFileInformationByHandle, hookGetFileInformationByHandle);
 		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
 	    EndOneHook(KERNEL32, createFileW, NewCreateFileW);
 		EndOneHook(NTDLL, m_pfnOriginalZwReadFile, HookZwReadFile);
 		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+		EndOneHook(KERNEL32, pfCloseHandle, NewCloseHandle);
 		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
 		/*EndOneHook(NTDLL, zwClose, New_ZwClose);
 		EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
-		EndOneHook(KERNEL32, closeHandle, NewCloseHandle);
+		
 		EndOneHook(NTDLL, ntClose, NewNtClose);
 		EndOneHook(KERNELBASE, setFilePointer, NewSetFilePointer);
 		EndOneHook(KERNELBASE, getFileInformationByHandle, NewGetFileInformationByHandle);

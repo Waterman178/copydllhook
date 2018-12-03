@@ -59,12 +59,12 @@ HookZwCreateSection(
 			{
 
 				bRet = FileHandle;
-				OutputDebugStringEx("发现目标句柄:%d", FileHandle);
+				//OutputDebugStringEx("发现目标句柄:%d", FileHandle);
 				goto dealSection;
 			}
 			else
 			{
-				OutputDebugStringEx("没有发现");
+				//OutputDebugStringEx("没有发现");
 				ntStatus = orgZwCreateSection(
 					__out  SectionHandle,
 					__in  DesiredAccess,

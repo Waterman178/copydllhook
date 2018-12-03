@@ -149,7 +149,7 @@ static HANDLE (WINAPI *createFileMapping)(HANDLE hFile,LPSECURITY_ATTRIBUTES lpA
 static HANDLE (WINAPI *openFileMappingW)(DWORD   dwDesiredAccess,BOOL bInheritHandle,LPCTSTR lpName);
 static NTSTATUS (WINAPI *zwClose)(HANDLE Handle);
 static BOOL (WINAPI *unmapViewOfFile)(LPCVOID lpBaseAddress);
-static BOOL (WINAPI *closeHandle)(HANDLE hObject);
+static BOOL (WINAPI *pfCloseHandle)(HANDLE hObject);
 static NTSTATUS (NTAPI *ntClose)(HANDLE);
 static DWORD (WINAPI *setFilePointer)(HANDLE hFile,LONG   lDistanceToMove,PLONG  lpDistanceToMoveHigh,DWORD  dwMoveMethod);
 static BOOL (WINAPI *getFileInformationByHandle)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
