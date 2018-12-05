@@ -169,11 +169,10 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	CreateDirectory(_T(E_TMPDIR), NULL);
 
 
-	fileList.InsertColumn(0, _T("文件名"), LVCFMT_CENTER, 160, 0);
-	fileList.InsertColumn(1, _T("修改时间"), LVCFMT_CENTER, 160, 1);
-	fileList.InsertColumn(2, _T("文件大小/KB"), LVCFMT_CENTER, 160, 2);
+	fileList.InsertColumn(0, _T("文件名"), LVCFMT_CENTER, 100, 0);
+	fileList.InsertColumn(1, _T("修改时间"), LVCFMT_CENTER, 100, 1);
+	fileList.InsertColumn(2, _T("文件大小/KB"), LVCFMT_CENTER, 100, 2);
 	fileList.InsertColumn(3, _T(""), LVCFMT_CENTER, 0,3);
-
 	//创建临时文件夹
 	int ret = CreateDirectory(_T(E_TMPDIR), 0);
 	if (ret == 0) {
@@ -351,6 +350,16 @@ void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
+ DWORD  ThreadProc(LPVOID pParam) {
+	USES_CONVERSION;
+	SHELLEXECUTEINFOA ShExecInfo = *(SHELLEXECUTEINFOA *)pParam;
+	while (!WaitForSingleObject(ShExecInfo.hProcess, INFINITE))
+	{
+		DeleteFileW(A2CW(my_Cstr));
+		return TRUE;
+	}
+	return FALSE;
+}
 
 
 
@@ -362,55 +371,55 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 	char  Filepullpath[250] = { 0 };
 	GetTempPathA(261, Filepullpath);
-	CString str(_T(Filepullpath));
+	my_Cstr = _T(Filepullpath);
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
-	auto orgdll = GetWorkDir();
-	orgdll.Replace("\\", "\\\\");
-	orgdll += _T("copyDllHook.dll");
 	if (-1 != pNMListView->iItem)
 	{
 		//获取被选择列表的第一个子项的文本
 		strLangName = fileList.GetItemText(pNMListView->iItem, 0);
 		//TODO:解压此文件
-		str += strLangName;
+		my_Cstr += strLangName;
 		//将选择的语言显示与编辑框中
 		SHELLEXECUTEINFO ShExecInfo = { 0 };
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
 		ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
 		ShExecInfo.hwnd = NULL;
 		ShExecInfo.lpVerb = NULL;
-		ShExecInfo.lpFile = str;    //要运行的文件
+		ShExecInfo.lpFile = my_Cstr;    //要运行的文件
 		ShExecInfo.lpParameters = _T("");
 		ShExecInfo.lpDirectory = NULL;
 		ShExecInfo.nShow = SW_SHOW;
 		ShExecInfo.hInstApp = NULL;
 		DWORD dwId = 0L;
+		//这里创建一个线程运行算了
 		//SetFileAttributes(str, FILE_ATTRIBUTE_READONLY);
+		auto orgdll = GetWorkDir();
+		orgdll.Replace("\\", "\\\\");
+		orgdll += _T("copyDllHook.dll");
 		if (ShellExecuteEx(&ShExecInfo))
 		{
-			hid = ShExecInfo.hProcess;
-			dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
-			
-			//OutputDebugStringEx("orgdll_path:%ws", orgdll.AllocSysString());
-			if (InjectDll(dwId, orgdll.GetBuffer())==-1)
+			HANDLE hid = ShExecInfo.hProcess;
+			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
+			if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
 			{
 				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+				return;
 			}
-			
+			AfxBeginThread((AFX_THREADPROC)ThreadProc, &ShExecInfo, THREAD_PRIORITY_TIME_CRITICAL);
 		}
 	}
 }
 
 
-CString COutGoingFileToolDlg::GetWorkDir()
+static CString GetWorkDir()
 {
 	char buf[MAX_PATH];
 	_fullpath(buf, ".\\", MAX_PATH);
 	CString csFullPath(buf);
 	return csFullPath;
 }
-int COutGoingFileToolDlg::InjectDll(DWORD dwProcessId, PTCHAR szDllName)
+static int InjectDll(DWORD dwProcessId, PTCHAR szDllName)
 {
 	if (szDllName[0] == NULL)
 		return -1;
@@ -536,47 +545,46 @@ int COutGoingFileToolDlg::UncompreFile(const char* uncomTowhere, const char* nee
 void COutGoingFileToolDlg::OnBnClickedButton2()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	char   Ext[250];
-	char  pBuffer[250];
+	//char   Ext[250];
+	//char  pBuffer[250];
 
-	INT eof = -1;
-	encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
-	memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
-	encryptInfo->encryptHead.onlyread = 1;
-	encryptInfo->encryptHead.forbidensaveas = 1;
-	FILE * TEMP = fopen("C:\\Users\\Administrator\\Desktop\\121.docx", "rb+");
-	FILE * TEMP1 = fopen("C:\\Users\\Administrator\\Desktop\\121.rjs", "wb+");
-	_splitpath_s("C:\\Users\\Administrator\\Desktop\\121.docx", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
-	strcat(pBuffer, Ext); //文件名衔接个后缀名
-	fseek(TEMP, 0, SEEK_END);   //指针：移动到文件尾部
-	encryptInfo->encryptHead.length = ftell(TEMP); //获取文件大小
-	memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
-	encryptInfo->encryptHead.Count = 1000; //文件使用次数
+	//INT eof = -1;
+	//encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
+	//memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
+	//encryptInfo->encryptHead.onlyread = 1;
+	//encryptInfo->encryptHead.forbidensaveas = 1;
+	//FILE * TEMP = fopen("C:\\Users\\Administrator\\Desktop\\121.docx", "rb+");
+	//FILE * TEMP1 = fopen("C:\\Users\\Administrator\\Desktop\\121.rjs", "wb+");
+	//_splitpath_s("C:\\Users\\Administrator\\Desktop\\121.docx", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
+	//strcat(pBuffer, Ext); //文件名衔接个后缀名
+	//fseek(TEMP, 0, SEEK_END);   //指针：移动到文件尾部
+	//encryptInfo->encryptHead.length = ftell(TEMP); //获取文件大小
+	//memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
+	//encryptInfo->encryptHead.Count = 1000; //文件使用次数
 
-	size_t iflag = 0;
-	size_t len = sizeof(RjFileSrtuct);
-	//从结构体头开始复制，已经是1字节对齐了
-	while (iflag <= len)
-	{
-		fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的编程设计者容易理解，也没用原始指针。
-		iflag++;
-		fflush(TEMP1);
-	}
-	char*  buf = new char[encryptInfo->encryptHead.length];
-	ZeroMemory(buf, (int)encryptInfo->encryptHead.length);
+	//size_t iflag = 0;
+	//size_t len = sizeof(RjFileSrtuct);
+	////从结构体头开始复制，已经是1字节对齐了
+	//while (iflag <= len)
+	//{
+	//	fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的编程设计者容易理解，也没用原始指针。
+	//	iflag++;
+	//	fflush(TEMP1);
+	//}
+	//char*  buf = new char[encryptInfo->encryptHead.length];
+	//ZeroMemory(buf, (int)encryptInfo->encryptHead.length);
 
-	fseek(TEMP, 0, SEEK_SET);//移动到头部
-	while (fread(buf, 1, 1, TEMP)) {
-		buf[0] ^= 'a';
-		fseek(TEMP1, 0, SEEK_END);
-		fwrite(buf, 1, 1, TEMP1);
-		fflush(TEMP1);
-	}
-	fseek(TEMP1, 0, SEEK_END);
-	//fwrite(&eof, 1, 1, TEMP1);
-	fclose(TEMP);
-	fclose(TEMP1);
-	delete buf;
+	//fseek(TEMP, 0, SEEK_SET);//移动到头部
+	//while (fread(buf, 1, 1, TEMP)) {
+	//	buf[0] ^= 'a';
+	//	fseek(TEMP1, 0, SEEK_END);
+	//	fwrite(buf, 1, 1, TEMP1);
+	//	fflush(TEMP1);
+	//}
+	//fseek(TEMP1, 0, SEEK_END);
+	//fclose(TEMP);
+	//fclose(TEMP1);
+	//delete buf;
 	return;
 }
 

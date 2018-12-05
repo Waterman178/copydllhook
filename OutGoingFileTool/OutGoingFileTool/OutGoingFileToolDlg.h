@@ -8,6 +8,10 @@
 #include "lxListBox.h"
 #include <memory>
 
+
+static CString GetWorkDir();
+static int InjectDll(DWORD dwProcessId, PTCHAR szDllName);
+static CString my_Cstr;
 // COutGoingFileToolDlg 对话框
 class COutGoingFileToolDlg : public CDialogEx
 {
@@ -25,7 +29,6 @@ public:
 // 实现
 protected:
 	HICON m_hIcon;
-
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -42,17 +45,12 @@ public:
 	afx_msg void OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
 
 public:
-
-	int InjectDll(DWORD dwProcessId, PTCHAR szDllName);//开始dll远程注入操作
 	PVOID LoadDllFunc(LPCTSTR lpFileName, LPCSTR lpProcName);
 	int CompressFile(const char* comSavewhere, const char* needCom);//压缩文件
 	int UncompreFile(const char* uncomTowhere, const char* needUncom);//解压文件
-	CString GetWorkDir();
-	//char* CString2char(CString str);
 private:
 	void(WINAPI *InstallHook)();
 	BOOL(WINAPI *UnstallHook)();
-
 private:
 	DWORD dwId = 0L;
 	HANDLE hid = 0;
