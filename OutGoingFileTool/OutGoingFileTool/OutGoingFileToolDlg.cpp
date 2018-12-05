@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <TlHelp32.h>
 
-
+UPDATASTATIC updata;
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -124,6 +124,7 @@ BEGIN_MESSAGE_MAP(COutGoingFileToolDlg, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &COutGoingFileToolDlg::OnNMDblclkList1)
 	ON_BN_CLICKED(IDC_BUTTON2, &COutGoingFileToolDlg::OnBnClickedButton2)
 	ON_NOTIFY(HDN_ENDDRAG, 0, &COutGoingFileToolDlg::OnHdnEnddragList1)
+	ON_MESSAGE(WM_UPDATE_STATIC, &COutGoingFileToolDlg::OnUpdateStatic)
 END_MESSAGE_MAP()
 
 
@@ -204,6 +205,18 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
+
+
+LRESULT COutGoingFileToolDlg::OnUpdateStatic(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam == 0) {
+		fileList.DeleteItem(0);
+	}
+	else {
+		fileList.DeleteItem(wParam);
+	}
+	return 0;
+}
 void COutGoingFileToolDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
@@ -253,7 +266,6 @@ HCURSOR COutGoingFileToolDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
-
 //void COutGoingFileToolDlg::OnBnClickedOpenFile()
 //{
 //
@@ -330,16 +342,13 @@ HCURSOR COutGoingFileToolDlg::OnQueryDragIcon()
 //	
 //}
 
-
 void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
-
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
-
 	if (-1 != pNMListView->iItem)
 	{
 		//获取被选择列表的第一个子项的文本
@@ -352,18 +361,16 @@ void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 
  DWORD  ThreadProc(LPVOID pParam) {
 	USES_CONVERSION;
-	SHELLEXECUTEINFOA ShExecInfo = *(SHELLEXECUTEINFOA *)pParam;
+	SHELLEXECUTEINFOA ShExecInfo = *((*(UPDATASTATIC *)pParam).pShExecInfo);
+	COutGoingFileToolDlg *pDlg = (COutGoingFileToolDlg*)(((UPDATASTATIC *)pParam)->Dlgthis);
 	while (!WaitForSingleObject(ShExecInfo.hProcess, INFINITE))
 	{
 		DeleteFileW(A2CW(my_Cstr));
+		::PostMessage(pDlg->m_hWnd, WM_UPDATE_STATIC, 0, 0);
 		return TRUE;
 	}
 	return FALSE;
 }
-
-
-
-
 void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
@@ -406,12 +413,12 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
 				return;
 			}
-			AfxBeginThread((AFX_THREADPROC)ThreadProc, &ShExecInfo, THREAD_PRIORITY_TIME_CRITICAL);
+			updata.Dlgthis = (CHAR*)this;
+			updata.pShExecInfo = &ShExecInfo;
+			AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
 		}
 	}
 }
-
-
 static CString GetWorkDir()
 {
 	char buf[MAX_PATH];
@@ -540,14 +547,11 @@ int COutGoingFileToolDlg::UncompreFile(const char* uncomTowhere, const char* nee
 //	WideCharToMultiByte(0, 0, src.GetBuffer(),nlength, m_date,nbytes,NULL,NULL);
 //	return m_date;
 //}
-
-
 void COutGoingFileToolDlg::OnBnClickedButton2()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	//char   Ext[250];
 	//char  pBuffer[250];
-
 	//INT eof = -1;
 	//encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
 	//memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
@@ -561,7 +565,6 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	//encryptInfo->encryptHead.length = ftell(TEMP); //获取文件大小
 	//memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
 	//encryptInfo->encryptHead.Count = 1000; //文件使用次数
-
 	//size_t iflag = 0;
 	//size_t len = sizeof(RjFileSrtuct);
 	////从结构体头开始复制，已经是1字节对齐了
@@ -573,7 +576,6 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	//}
 	//char*  buf = new char[encryptInfo->encryptHead.length];
 	//ZeroMemory(buf, (int)encryptInfo->encryptHead.length);
-
 	//fseek(TEMP, 0, SEEK_SET);//移动到头部
 	//while (fread(buf, 1, 1, TEMP)) {
 	//	buf[0] ^= 'a';
@@ -587,10 +589,6 @@ void COutGoingFileToolDlg::OnBnClickedButton2()
 	//delete buf;
 	return;
 }
-
-
-
-
 void COutGoingFileToolDlg::OnHdnEnddragList1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	

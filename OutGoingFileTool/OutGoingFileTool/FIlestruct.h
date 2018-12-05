@@ -33,7 +33,11 @@ typedef struct  _rjFileInfo {
 }rjFileInfo,*prjFileInfo;
 
 
-
+typedef struct _UPDATASTATIC
+{
+	char * Dlgthis;
+	SHELLEXECUTEINFO* pShExecInfo;
+}UPDATASTATIC,*PUPDATASTATIC;
 
 
 

@@ -7,6 +7,9 @@
 #include "FIlestruct.h"
 #include "lxListBox.h"
 #include <memory>
+#define   WM_UPDATE_STATIC  (WM_USER + 0x100)
+
+
 
 
 static CString GetWorkDir();
@@ -34,6 +37,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg LRESULT OnUpdateStatic(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:
 	//afx_msg void OnBnClickedOpenFile();
