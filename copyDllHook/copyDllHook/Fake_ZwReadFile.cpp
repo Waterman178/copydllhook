@@ -202,18 +202,18 @@ WINAPI HookZwReadFile(
 						lCurrentOffset.QuadPart - HeaderLength,
 						IoStatusBlock->Information,
 						pRobj->m_FileInfo.rc4Key);*/
-				//OutputDebugStringEx("lCurrentOffset：%08x", lCurrentOffset.QuadPart);
-				
-			    //MessageBox(NULL, "1111", "dsadsa", MH_OK);
+						//OutputDebugStringEx("lCurrentOffset：%08x", lCurrentOffset.QuadPart);
 
-			
-					for (int i = 0; i < IoStatusBlock->Information ; i++)
-					{
-						reinterpret_cast<char*>(Buffer)[i] ^= 'a';
-					}
+						//MessageBox(NULL, "1111", "dsadsa", MH_OK);
 
 
-			
+				for (int i = 0; i < IoStatusBlock->Information; i++)
+				{
+					reinterpret_cast<char*>(Buffer)[i] ^= 'a';
+				}
+
+
+
 				//OutputDebugStringEx("内容为：%s lCurrentOffset.QuadPart为：%d", Buffer, lCurrentOffset.QuadPart);
 
 				// 异步情况
@@ -240,7 +240,7 @@ WINAPI HookZwReadFile(
 		ByteOffset,
 		Key);
 
-	if (pRobj!=NULL)
+	if (pRobj != NULL)
 	{
 		delete pRobj;
 	}

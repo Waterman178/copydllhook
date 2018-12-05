@@ -12,7 +12,6 @@
 #define FILE_SIGN "DSKFJLSKDF"
 #define FileName "RjiSafe9575"
 #define FILE_SIGN_LEN 11
-
 NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
 NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
 std::list<HANDLE> MAPHAD_list;
@@ -22,7 +21,6 @@ std::list<HANDLE>::iterator mapp_ite;
 std::list<FileHandleRelationNode> m_handleList;
 std::list<FileHandleRelationNode>::iterator handleListNode;
 BOOL  fristopen = FALSE;
-
 zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
 myZwCreateSection    m_pfnOriginalZwCreateSection;
 pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
@@ -30,32 +28,41 @@ pfZwClose m_pfnOriginalZwClose;
 pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
 pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
 pfnOriginalZwSetInformationFile m_pfnOriginalZwSetInformationFile;
-
-
 //全局变量
 HANDLE  dochFile = (HANDLE)-1;//word的加密文件的句柄
-HANDLE hMap = ::OpenFileMapping(FILE_MAP_ALL_ACCESS, 0, _T("processMem_FUCK"));
-PVOID pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-void OutputDebugStringEx(const char *strOutputString, ...)
+HANDLE  hMap = ::OpenFileMapping(FILE_MAP_ALL_ACCESS, 0, _T("processMem_FUCK"));
+PVOID   pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 
+BOOL IsOrigfileExt(WCHAR* pExt)
 {
-
+	WCHAR			p1[] = L".docx";
+	WCHAR			p2[] = L".doc";
+	WCHAR			p3[] = L".pdf";
+	WCHAR			p4[] = L".xls";
+	WCHAR			p5[] = L".xlsx";
+	WCHAR			p6[] = L".txt";
+	WCHAR			p7[] = L".ppt";
+	WCHAR			p8[] = L".pptx";
+	WCHAR			p9[] = L".jpg";
+	WCHAR		    p10[]= L".png";
+	WCHAR		    p11[]= L".mp4";
+	WCHAR		    p12[]= L".mp3";
+	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL ||
+		wcswcs(pExt, p3) != NULL || wcswcs(pExt, p4) != NULL || wcswcs(pExt, p5) != NULL
+		|| wcswcs(pExt, p6) != NULL || wcswcs(pExt, p7) != NULL || wcswcs(pExt, p8) != NULL
+		|| wcswcs(pExt, p9) != NULL || wcswcs(pExt, p10) != NULL || wcswcs(pExt, p11) != NULL
+		|| wcswcs(pExt, p12) != NULL );
+}
+void OutputDebugStringEx(const char *strOutputString, ...)
+{
 	va_list vlArgs = NULL;
-
 	va_start(vlArgs, strOutputString);
-
 	size_t nLen = _vscprintf(strOutputString, vlArgs) + 1;
-
 	char *strBuffer = new char[nLen];
-
 	_vsnprintf_s(strBuffer, nLen, nLen, strOutputString, vlArgs);
-
 	va_end(vlArgs);
-
 	OutputDebugStringA(strBuffer);
-
 	delete[] strBuffer;
-
 }
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>被HOOK的函数的新功能<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 /***********************************************
@@ -182,7 +189,8 @@ static HANDLE WINAPI NewCreateFileW(
 	HANDLE keyHan = nullptr;
 	BOOL bReadDecrypt = FALSE;
 	std::mutex mutexObj;
-	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".docx")!=NULL ) {
+
+	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && IsOrigfileExt((WCHAR*)lpFileName)!=NULL) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		mutexObj.lock();

@@ -10,7 +10,11 @@
 #define   WM_UPDATE_STATIC  (WM_USER + 0x100)
 
 
-
+typedef struct _UPDATASTATIC
+{
+	char * Dlgthis;
+	SHELLEXECUTEINFO* pShExecInfo;
+}UPDATASTATIC, *PUPDATASTATIC;
 
 static CString GetWorkDir();
 static int InjectDll(DWORD dwProcessId, PTCHAR szDllName);
