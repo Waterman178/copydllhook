@@ -47,8 +47,8 @@ BOOL IsOrigfileExt(WCHAR* pExt)
 	WCHAR		    p10[]= L".png";
 	WCHAR		    p11[]= L".mp4";
 	WCHAR		    p12[]= L".mp3";
-	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL || wcswcs(pExt, p3) != NULL
-		|| wcswcs(pExt, p4) != NULL || wcswcs(pExt, p5) != NULL
+	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL ||
+		wcswcs(pExt, p3) != NULL || wcswcs(pExt, p4) != NULL || wcswcs(pExt, p5) != NULL
 		|| wcswcs(pExt, p6) != NULL || wcswcs(pExt, p7) != NULL || wcswcs(pExt, p8) != NULL
 		|| wcswcs(pExt, p9) != NULL || wcswcs(pExt, p10) != NULL || wcswcs(pExt, p11) != NULL
 		|| wcswcs(pExt, p12) != NULL );
@@ -535,26 +535,21 @@ static BOOL WINAPI NewGetFileSizeEx(
 	_In_  HANDLE         hFile,
 	_Out_ PLARGE_INTEGER lpFileSize)
 {
-	std::mutex mutexObj;
-	bool bRet;
-	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
-	bRet = !m_handleList.empty();
-	if (bRet)
-	{
-		mutexObj.lock();
-		for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
-		{
-			if (handleListNode->FileHandle == hFile)
-			{
-				DWORD result = getFileSizeEx(hFile, lpFileSize);
-				OutputDebugStringEx("发现文件句柄\r\n");
-				result -= HeadFlaglength;
-				return result;
-			}
-		}
-		mutexObj.unlock();
+	BOOL result = getFileSizeEx(hFile, lpFileSize);
+	int HeadFlaglength = sizeof(RjFileSrtuct);
+	DWORD readLen;
+	LPVOID fileHead = new char[HeadFlaglength];
+	SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+	ReadFile(hFile, fileHead, HeadFlaglength, &readLen, NULL); //用原始的
+	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!    readHead = %s\r\n", fileHead);
+	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
+	{		
+		OutputDebugStringEx("********  getFileSizeEx ******HOOK:sercret file \r\n");	
+		lpFileSize->QuadPart -= HeadFlaglength;
 	}
-	return  getFileSizeEx(hFile, lpFileSize);
+	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!  %ld\r\n ", lpFileSize->QuadPart);
+	delete fileHead;
+	return result;
 }
 /***********************************************
 SetFilePointerEx()函数			功能
@@ -995,7 +990,7 @@ void __stdcall StartHook()
 		pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
 		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
-		getFileSizeEx = GETFILESIZEEX StartOneHook(KERNEL32, "GetFileSizeEx", NewGetFileSizeEx);
+	
 		//::MessageBox(NULL, "1111", "dsadsa", MH_OK);
 	    // mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
 		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
@@ -1012,10 +1007,11 @@ void __stdcall StartHook()
 		//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);
 		/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
 		unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
+		
 		ntClose = NTCLOSE StartOneHook(NTDLL, "NtClose", NewNtClose);
 		setFilePointer = SETFILEPOINTER StartOneHook(KERNELBASE, "SetFilePointer", NewSetFilePointer);
 		getFileInformationByHandle = GETFILEINFBYHANDLE StartOneHook(KERNELBASE, "GetFileInformationByHandle", NewGetFileInformationByHandle);
-		
+		getFileSizeEx = GETFILESIZEEX StartOneHook(KERNEL32, "GetFileSizeEx", NewGetFileSizeEx);
 		setFilePointerEx = SETFILEPOINTER_EX StartOneHook(KERNEL32, "SetFilePointerEx", NewSetFilePointerEx);
 		getSaveFileNameW = GETSAVEFILENAMEW StartOneHook(COMDLG32, "GetSaveFileNameA", New_GetSaveFileNameW);
 		getFileAttributesW = GETFILEATTRIBUTESW StartOneHook(KERNELBASE, "GetFileAttributesW", NewGetFileAttributesW);
@@ -1054,13 +1050,13 @@ void __stdcall EndHook()
 		//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
 		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
+	   
 		EndOneHook(KERNEL32, pfGetFileInformationByHandle, hookGetFileInformationByHandle);
 		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
 	    EndOneHook(KERNEL32, createFileW, NewCreateFileW);
 		EndOneHook(NTDLL, m_pfnOriginalZwReadFile, HookZwReadFile);
 		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
 		EndOneHook(KERNEL32, pfCloseHandle, NewCloseHandle);
-		EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
 		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
