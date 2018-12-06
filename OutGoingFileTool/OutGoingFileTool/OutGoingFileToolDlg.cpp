@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <TlHelp32.h>
 
-
-
 UPDATASTATIC updata;
 #ifdef _DEBUG
 #define new DEBUG_NEW
