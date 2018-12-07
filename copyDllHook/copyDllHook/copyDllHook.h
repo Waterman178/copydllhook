@@ -121,16 +121,31 @@ extern std::list<FileHandleRelationNode>::iterator handleListNode;
 #define ZwCreateSection (NTSTATUS(NTAPI*)( OUT PHANDLE SectionHandle,IN ACCESS_MASK DesiredAccess,IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,IN PLARGE_INTEGER MaximumSize OPTIONAL,IN ULONG SectionPageProtection,IN ULONG AllocationAttributes,IN HANDLE FileHandle OPTIONAL)) 
 #define  GetFileAttributesExW  (BOOL(WINAPI*) (LPCWSTR lpFileName,GET_FILEEX_INFO_LEVELS fInfoLevelId,WIN32_FILE_ATTRIBUTE_DATA *lpFileInformation))
 #define  GetFileInformationByHandle (BOOL (WINAPI *)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation))
+#define  ZwQueryInformationFile (NTSTATUS(NTAPI*)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass)) 
 //#define ZwMapViewOfSection (NTSTATUS (NTAPI*)) (IN HANDLE  SectionHandle,IN HANDLE  ProcessHandle,IN OUT PVOID  *BaseAddress,IN ULONG_PTR  ZeroBits,IN SIZE_T  CommitSize,IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL,IN OUT PSIZE_T  ViewSize,IN SECTION_INHERIT  InheritDisposition,IN ULONG  AllocationType,IN ULONG  Win32Protect)
 //#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
 //#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
 //#define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
+#define  ZwQueryDirectoryFile  (NTSTATUS(NTAPI*)(    \
+_In_     HANDLE                 FileHandle,\
+_In_opt_ HANDLE                 Event,\
+_In_opt_ PIO_APC_ROUTINE        ApcRoutine,\
+_In_opt_ PVOID                  ApcContext,\
+_Out_    PIO_STATUS_BLOCK       IoStatusBlock,\
+_Out_    PVOID                  FileInformation,\
+_In_     ULONG                  Length,\
+_In_     FILE_INFORMATION_CLASS FileInformationClass,\
+_In_     BOOLEAN                ReturnSingleEntry,\
+_In_opt_ PUNICODE_STRING        FileName0,\
+_In_     BOOLEAN                RestartScan\
+))
+
 
 #define   ZwReadFile   (NTSTATUS(NTAPI*)(HANDLE  FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID  ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key))
 //原函数的函数指针声明
 
 extern   NTSTATUS (NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
-
+extern   NTSTATUS(NTAPI  * m_pfnOriginalZwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
 static BOOL (WINAPI *openClipboard)(HWND hWndNewOwner);
 static HANDLE (WINAPI *getClipboardData)(UINT uFormat);
 static BOOL (WINAPI *openPrinter)( LPTSTR pPrinterName,LPHANDLE phPrinter,LPPRINTER_DEFAULTS pDefault);
@@ -163,7 +178,7 @@ static BOOL (WINAPI *readFileScatter)(HANDLE hFile,FILE_SEGMENT_ELEMENT aSegment
 //static DWORD (WINAPI *getFileAttributesExW)( LPCTSTR lpFileName);
 static BOOL (WINAPI *createProcessW)(LPCTSTR lpApplicationName,LPTSTR lpCommandLine,LPSECURITY_ATTRIBUTES lpProcessAttributes,LPSECURITY_ATTRIBUTES lpThreadAttributes,BOOL bInheritHandles,DWORD dwCreationFlags,LPVOID lpEnvironment,LPCTSTR lpCurrentDirectory,LPSTARTUPINFO lpStartupInfo,LPPROCESS_INFORMATION lpProcessInformation);
 static HANDLE (WINAPI *createProcessInternalW)(HANDLE hToken, LPCTSTR lpApplicationName, LPTSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCTSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hNewToken);
-typedef NTSTATUS(NTAPI  * zwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
+//typedef NTSTATUS(NTAPI  * m_pfnOriginalZwSetInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
 typedef NTSTATUS(NTAPI *myZwCreateSection)(OUT PHANDLE SectionHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL, IN PLARGE_INTEGER MaximumSize OPTIONAL, IN ULONG SectionPageProtection, IN ULONG AllocationAttributes, IN HANDLE FileHandle OPTIONAL);
 typedef NTSTATUS(NTAPI *pfZwMapViewOfSection) (IN HANDLE  SectionHandle, IN HANDLE  ProcessHandle, IN OUT PVOID  *BaseAddress, IN ULONG_PTR  ZeroBits, IN SIZE_T  CommitSize, IN OUT PLARGE_INTEGER  SectionOffset  OPTIONAL, IN OUT PSIZE_T  ViewSize, IN SECTION_INHERIT  InheritDisposition, IN ULONG  AllocationType, IN ULONG  Win32Protect);
 typedef NTSTATUS(NTAPI *pfZwClose)(IN HANDLE Handle);
@@ -172,14 +187,25 @@ typedef NTSTATUS(NTAPI *pfZwUnmapViewOfSection)(HANDLE ProcessHandle, PVOID  Bas
 static BOOL (WINAPI * pfGetFileInformationByHandle)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
 typedef NTSTATUS (NTAPI * pfnOriginalZwSetInformationFile)(HANDLE  FileHandle,PIO_STATUS_BLOCK IoStatusBlock,PVOID  FileInformation,ULONG  Length,FILE_INFORMATION_CLASS FileInformationClass);
 
+//static NTSTATUS(NTAPI  * m_pfnOriginalZwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
 
 extern NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID  Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key);
+extern NTSTATUS(NTAPI  * m_pfnOriginalZwQueryDirectoryFile)(
+	_In_     HANDLE                 FileHandle,
+	_In_opt_ HANDLE                 Event,
+	_In_opt_ PIO_APC_ROUTINE        ApcRoutine,
+	_In_opt_ PVOID                  ApcContext,
+	_Out_    PIO_STATUS_BLOCK       IoStatusBlock,
+	_Out_    PVOID                  FileInformation,
+	_In_     ULONG                  Length,
+	_In_     FILE_INFORMATION_CLASS FileInformationClass,
+	_In_     BOOLEAN                ReturnSingleEntry,
+	_In_opt_ PUNICODE_STRING        FileName0,
+	_In_     BOOLEAN                RestartScan
+	);
 
 
-
-extern
-
-NTSTATUS
+extern NTSTATUS
 WINAPI HookZwReadFile(
 	IN HANDLE  FileHandle,
 	IN HANDLE  Event  OPTIONAL,
@@ -192,7 +218,7 @@ WINAPI HookZwReadFile(
 	IN PULONG  Key  OPTIONAL
 );
 
-extern zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
+//extern zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
 extern myZwCreateSection    m_pfnOriginalZwCreateSection;
 extern pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
 extern pfZwClose m_pfnOriginalZwClose;
@@ -388,6 +414,24 @@ HookZwCreateSection(__out PHANDLE SectionHandle,
 	__in ULONG SectionPageProtection,
 	__in ULONG AllocationAttributes,
 	__in_opt HANDLE FileHandle);
+NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
+	PIO_STATUS_BLOCK       IoStatusBlock,
+	PVOID                  FileInformation,
+	ULONG                  Length,
+	FILE_INFORMATION_CLASS FileInformationClass);
+NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
+	_In_     HANDLE                 FileHandle,
+	_In_opt_ HANDLE                 Event,
+	_In_opt_ PIO_APC_ROUTINE        ApcRoutine,
+	_In_opt_ PVOID                  ApcContext,
+	_Out_    PIO_STATUS_BLOCK       IoStatusBlock,
+	_Out_    PVOID                  FileInformation,
+	_In_     ULONG                  Length,
+	_In_     FILE_INFORMATION_CLASS FileInformationClass,
+	_In_     BOOLEAN                ReturnSingleEntry,
+	_In_opt_ PUNICODE_STRING        FileName0,
+	_In_     BOOLEAN                RestartScan
+);
 //HOOK功能集函数
 PVOID FindProcAddress(_In_ LPCTSTR lpFileName, LPCSTR lpProcName);
 PVOID StartOneHook(LPCTSTR dllName, LPCSTR funcName, PVOID newFunc);

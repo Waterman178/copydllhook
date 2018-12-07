@@ -25,16 +25,16 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		GetModuleFileNameA(NULL, cIniFileName, sizeof(cIniFileName));
+		//GetModuleFileNameA(NULL, cIniFileName, sizeof(cIniFileName));
 
-		OutputDebugStringEx("%s\r\n", cIniFileName);
-	    if (IsOrigProcess(cIniFileName)==NULL)
-	    {
-            OutputDebugStringEx("Discovery process!\r\n");
-            return 1;
-	    }
-		OutputDebugStringEx("Is a process!\r\n");
-	    bhook = true;
+		//OutputDebugStringEx("%s\r\n", cIniFileName);
+	 //   if (IsOrigProcess(cIniFileName)==NULL)
+	 //   {
+  //          OutputDebugStringEx("Discovery process!\r\n");
+  //          return 1;
+	 //   }
+		//OutputDebugStringEx("Is a process!\r\n");
+	 //   bhook = true;
 		//hMutex = CreateMutex(NULL, FALSE, NULL);
 		StartHook();
 		break;

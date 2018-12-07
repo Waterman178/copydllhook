@@ -10,6 +10,14 @@
 #include <stdio.h>
 #include <TlHelp32.h>
 
+
+typedef struct _UPDATASTATIC
+{
+	char * Dlgthis;
+	SHELLEXECUTEINFO* pShExecInfo;
+}UPDATASTATIC, *PUPDATASTATIC;
+
+
 UPDATASTATIC updata;
 #ifdef _DEBUG
 #define new DEBUG_NEW

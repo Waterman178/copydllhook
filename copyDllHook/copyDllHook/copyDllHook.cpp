@@ -13,8 +13,44 @@
 #define FileName "RjiSafe9575"
 #define FILE_SIGN_LEN 11
 
+BOOL IsOrigfileExt(WCHAR* pExt)
+{
+	WCHAR			p1[] = L".docx";
+	WCHAR			p2[] = L".doc";
+	WCHAR			p3[] = L".pdf";
+	WCHAR			p4[] = L".xls";
+	WCHAR			p5[] = L".xlsx";
+	WCHAR			p6[] = L".txt";
+	WCHAR			p7[] = L".ppt";
+	WCHAR			p8[] = L".pptx";
+	WCHAR			p9[] = L".jpg";
+	WCHAR		    p10[] = L".png";
+	WCHAR		    p11[] = L".mp4";
+	WCHAR		    p12[] = L".mp3";
+	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL ||
+		wcswcs(pExt, p3) != NULL || wcswcs(pExt, p4) != NULL || wcswcs(pExt, p5) != NULL
+		|| wcswcs(pExt, p6) != NULL || wcswcs(pExt, p7) != NULL || wcswcs(pExt, p8) != NULL
+		|| wcswcs(pExt, p9) != NULL || wcswcs(pExt, p10) != NULL || wcswcs(pExt, p11) != NULL
+		|| wcswcs(pExt, p12) != NULL);
+}
+
+
+NTSTATUS(NTAPI  * m_pfnOriginalZwQueryDirectoryFile)(
+	_In_     HANDLE                 FileHandle,
+	_In_opt_ HANDLE                 Event,
+	_In_opt_ PIO_APC_ROUTINE        ApcRoutine,
+	_In_opt_ PVOID                  ApcContext,
+	_Out_    PIO_STATUS_BLOCK       IoStatusBlock,
+	_Out_    PVOID                  FileInformation,
+	_In_     ULONG                  Length,
+	_In_     FILE_INFORMATION_CLASS FileInformationClass,
+	_In_     BOOLEAN                ReturnSingleEntry,
+	_In_opt_ PUNICODE_STRING        FileName0,
+	_In_     BOOLEAN                RestartScan
+	);
+NTSTATUS(NTAPI  * m_pfnOriginalZwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
 NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
-NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
+NTSTATUS(NTAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
 std::list<HANDLE> MAPHAD_list;
 std::list<HANDLE>::iterator map_ite;
 std::list<HANDLE> MAPHADD_list;
@@ -23,7 +59,7 @@ std::list<FileHandleRelationNode> m_handleList;
 std::list<FileHandleRelationNode>::iterator handleListNode;
 BOOL  fristopen = FALSE;
 
-zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
+//zwQueryInformationFile ;
 myZwCreateSection    m_pfnOriginalZwCreateSection;
 pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
 pfZwClose m_pfnOriginalZwClose;
@@ -182,7 +218,7 @@ static HANDLE WINAPI NewCreateFileW(
 	HANDLE keyHan = nullptr;
 	BOOL bReadDecrypt = FALSE;
 	std::mutex mutexObj;
-	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && wcswcs((wchar_t*)lpFileName,L".docx")!=NULL ) {
+	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && IsOrigfileExt((WCHAR*)lpFileName)!=NULL) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		mutexObj.lock();
@@ -936,27 +972,11 @@ Description: 开始所有的HOOK
 ************************************************/
 void __stdcall StartHook()
 {
-	/*openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
-	openPrinter = OPENPRINTER StartOneHook(WINSPOOL, "OpenPrinterW", NewOpenPrinter);
-	showWindow = SHOWWINDOW StartOneHook(USER32, "ShowWindow", NewShowWindow);
-	setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
-	setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
-	setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
-	/*m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
-	if (m_pfnOriginalZwCreateSection == 0x00) {
-	OutputDebugStringEx("m_pfnOriginalZwCreateSection获取失败");
-	return;}*/
-		m_pfnOriginalZwReadFile = ZwReadFile StartOneHook(NTDLL, "ZwReadFile", HookZwReadFile);
-		if (m_pfnOriginalZwReadFile == 0x00) {
-			OutputDebugStringEx("m_pfnOriginalZwReadFile获取失败");
-			return;
-		}
-		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
-		m_pfnOriginalZwQueryInformationFile =   (zwQueryInformationFile)FindProcAddress(NTDLL, "ZwQueryInformationFile");
-		if (m_pfnOriginalZwQueryInformationFile == 0x00) {
-			OutputDebugStringEx("m_pfnOriginalZwQueryInformationFile获取失败");
-			return ; 
-		}
+	m_pfnOriginalZwReadFile = ZwReadFile StartOneHook(NTDLL, "ZwReadFile", HookZwReadFile);
+	if (m_pfnOriginalZwReadFile == 0x00) {
+		OutputDebugStringEx("m_pfnOriginalZwReadFile获取失败");
+		return;
+	}
 		m_pfnOriginalZwClose  = (pfZwClose)FindProcAddress(NTDLL, "ZwClose");
 		if (m_pfnOriginalZwClose == 0x00) { 
 			OutputDebugStringEx("m_pfnOriginalZwClose获取失败");
@@ -977,13 +997,15 @@ void __stdcall StartHook()
 		if (m_pfnOriginalZwSetInformationFile == 0x00) {
 			OutputDebugStringEx("m_pfnOriginalZwSetInformationFile获取失败");
 			return;}
-		getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
-		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
-		pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
 		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
-	
-		//::MessageBox(NULL, "1111", "dsadsa", MH_OK);
+		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
+		m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
+		//m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
+		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
+			//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
+		//pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 	    // mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
 		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
 		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
@@ -1021,6 +1043,16 @@ void __stdcall StartHook()
 	//	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
 	//	createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
 	//}
+			/*openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
+	openPrinter = OPENPRINTER StartOneHook(WINSPOOL, "OpenPrinterW", NewOpenPrinter);
+	showWindow = SHOWWINDOW StartOneHook(USER32, "ShowWindow", NewShowWindow);
+	setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
+	setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
+	setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
+	/*m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
+	if (m_pfnOriginalZwCreateSection == 0x00) {
+	OutputDebugStringEx("m_pfnOriginalZwCreateSection获取失败");
+	return;}*/
 }
 /***********************************************
 Function: StartHook
