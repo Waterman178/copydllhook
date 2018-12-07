@@ -1000,10 +1000,10 @@ void __stdcall StartHook()
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
 		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
-		m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
+	    m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
 		//m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
 		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
-			//getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+	    getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 		//pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 	    // mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
