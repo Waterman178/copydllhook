@@ -5,7 +5,7 @@
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 #include <mutex>
 typedef struct _FILE_END_OF_FILE_INFORMATION {
-  LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER EndOfFile;
 } FILE_END_OF_FILE_INFORMATION, *PFILE_END_OF_FILE_INFORMATION;
 
 typedef struct _FILE_INTERNAL_INFORMATION {
@@ -121,7 +121,7 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 		Length,
 		FileInformationClass);
 	if (!NT_SUCCESS(ntStatus))
-		 return ntStatus;
+		return ntStatus;
 	if (FileInformationClass == FileStandardInformation)
 	{
 		bRet = !m_handleList.empty();
@@ -134,7 +134,7 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 				{
 					fsi = *(FILE_STANDARD_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileStandardInformation获取的文件长度:%d", fsi.EndOfFile.QuadPart);
-					if (fsi.EndOfFile.QuadPart>= HeadFlaglength)
+					if (fsi.EndOfFile.QuadPart >= HeadFlaglength)
 						((FILE_STANDARD_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
 				}
 			}
