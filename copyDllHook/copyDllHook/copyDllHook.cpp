@@ -724,11 +724,11 @@ static BOOL WINAPI NewCreateProcessW(
 	_Out_       LPPROCESS_INFORMATION lpProcessInformation
 	)
 {
-	OutputDebugStringEx("???????????HOOK: THE NewCreateProcessW FUNCTION !!!!\r\n");
+	OutputDebugStringEx(" THE NewCreateProcessW FUNCTION !!!!\r\n");
 	BOOL result;
 	result = createProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 
-	//InjectDll(lpProcessInformation->dwProcessId, _T("E:\\外发工具\\HookProject_test\\fileHook\\OutGoingFileTool\\Debug\\copyDllHook.dll"));
+	//InjectDll(lpProcessInformation->dwProcessId, _T("C:\\Users\\Wrench\\Desktop\\1111\\copyDllHook.dll"));
 		
 	return result;
 }
@@ -753,8 +753,7 @@ static HANDLE WINAPI NewCreateProcessInternal(
 	HANDLE result;
 	result = createProcessInternalW(hToken, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles,
 							dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, hNewToken);
-	InjectDll(lpProcessInformation->dwProcessId, _T("E:\\外发工具\\HookProject_test\\fileHook\\OutGoingFileTool\\Debug\\copyDllHook.dll\r\n"));
-
+	InjectDll(lpProcessInformation->dwProcessId, _T("C:\\Users\\Wrench\\Desktop\\1111\\copyDllHook.dll"));
 	return result;
 }
 
@@ -998,9 +997,11 @@ void __stdcall StartHook()
 			OutputDebugStringEx("m_pfnOriginalZwSetInformationFile获取失败");
 			return;}
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+		//createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
 		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 	    m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
+		createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
 		//m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
 		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 	   // getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
@@ -1033,7 +1034,7 @@ void __stdcall StartHook()
 		readFileScatter = READFILESCATTER StartOneHook(KERNEL32, "ReadFileScatter", NewReadFileScatter);
 		getFileAttributesExW = GETFILEATTRIBUTESEXW StartOneHook(KERNEL32, "GetFileAttributesEx", NewGetFileAttributesExW);
 		createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
-		createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);*/
+		*/
 		//listenParentProcess(GetCurrentProcessId());
 	//}
 	//else
