@@ -1,2 +1,2 @@
 # copydllhook
-已经搞定wps，这种office办公文档了
+The application layer transparent data encryption.  support wps ，MS Office，notepad software ，I think so software also supports it!
