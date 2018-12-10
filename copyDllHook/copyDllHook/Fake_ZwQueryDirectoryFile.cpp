@@ -164,12 +164,12 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 {
 	NTSTATUS status;
 	IO_STATUS_BLOCK iostatus = { 0 };
-	NTSTATUS ntStatus = 0;
+	//NTSTATUS ntStatus = 0;
 	FILE_STANDARD_INFORMATION fsi = { 0 };
 	std::mutex mutexObj;
 	bool bRet;
 	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
-	OutputDebugStringEx("Fake_ZwQueryDirectoryFile::获取的文件长度:%d", fsi.EndOfFile.QuadPart);
+	//OutputDebugStringEx("Fake_ZwQueryDirectoryFile::获取的文件长度:%d", fsi.EndOfFile.QuadPart);
 	//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 	status = m_pfnOriginalZwQueryDirectoryFile(FileHandle,
 		Event,
@@ -182,9 +182,9 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 		ReturnSingleEntry,
 		FileName0,
 		RestartScan);
-	if (!NT_SUCCESS(ntStatus))
-		return ntStatus;
-	/*if (FileInformationClass == FileStandardInformation)
+	if (!NT_SUCCESS(status))
+		return status;
+	if (FileInformationClass == FileStandardInformation)
 	{
 		bRet = !m_handleList.empty();
 		if (bRet)
@@ -387,6 +387,5 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 			mutexObj.unlock();
 		}
 	}
-*/
-	return ntStatus;
+	return status;
 }

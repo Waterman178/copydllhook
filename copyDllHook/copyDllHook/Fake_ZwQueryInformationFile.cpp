@@ -160,7 +160,7 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 	ULONG                  Length,
 	FILE_INFORMATION_CLASS FileInformationClass)
 {
-	NTSTATUS status;
+	NTSTATUS status = 0;
 	IO_STATUS_BLOCK iostatus = { 0 };
 	NTSTATUS ntStatus = 0;
 	FILE_STANDARD_INFORMATION fsi = { 0 };
@@ -172,8 +172,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 		FileInformation,
 		Length,
 		FileInformationClass);
-	if (!NT_SUCCESS(ntStatus))
-		return ntStatus;
+	if (!NT_SUCCESS(status))
+		return status;
 	if (FileInformationClass == FileStandardInformation)
 	{
 		bRet = !m_handleList.empty();
@@ -378,5 +378,5 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 		}
 	}
 
-	return ntStatus;
+	return status;
 }
