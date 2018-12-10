@@ -85,13 +85,22 @@ COutGoingFileToolDlg::COutGoingFileToolDlg(CWnd* pParent /*=NULL*/)
 }
 COutGoingFileToolDlg::~COutGoingFileToolDlg()
 {
+	/*USES_CONVERSION;
+	if (!my_Cstr.IsEmpty())
+	{
+		DeleteFileW(A2CW(my_Cstr));
+		my_Cstr.Empty();
+	}*/
 	//卸载键盘的PRINT SCREEN 按键的控制
 	//UnstallHook = (BOOL (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookKeyBord");
 	//UnstallHook();
 
 	////卸载全局消息钩子
-	//UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookMsg");
-	//UnstallHook();
+	/*UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookMsg");
+	UnstallHook();
+	UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "EndHookMsg");
+	UnstallHook();*/
+
 	//关闭已打开的文件
 	//::SendMessage(, WM_SYSCOMMAND, SC_CLOSE, 0);
 //	TerminateProcess(hid,0);
@@ -198,8 +207,8 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 		sizeof(int),
 		_T("processMem_FUCK"));*/
 	// 映射对象的一个视图，得到指向共享内存的指针，设置里面的数据
-	/*pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	*(int*)pBuffer = GetCurrentProcessId();*/
+//	pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	//*(int*)pBuffer = GetCurrentProcessId();
 	
 	////键盘的PRINT SCREEN 按键的控制
 	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookKeyBord");
@@ -207,6 +216,8 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	//
 	////全局消息钩子
 	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookMsg");
+	//InstallHook();
+	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "StartHookMsg");
 	//InstallHook();
 	//LoadLibraryA("copyDllHook.dll");
 
@@ -385,7 +396,8 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
 	char  Filepullpath[250] = { 0 };
-	GetTempPathA(261, Filepullpath);
+	memcpy(Filepullpath, GetWorkDir().GetBuffer(), 250);
+	//GetTempPathA(261, Filepullpath);
 	my_Cstr = _T(Filepullpath);
 	CString strLangName;//选择语言的名称字符串
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
@@ -416,7 +428,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		{
 			HANDLE hid = ShExecInfo.hProcess;
 			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
-			if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
+		  	if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
 			{
 				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
 				return;
@@ -427,7 +439,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		}
 	}
 }
-static CString GetWorkDir()
+ CString GetWorkDir()
 {
 	char buf[MAX_PATH];
 	_fullpath(buf, ".\\", MAX_PATH);

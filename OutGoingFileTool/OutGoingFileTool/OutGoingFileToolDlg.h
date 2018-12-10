@@ -12,7 +12,7 @@
 
 
 
-static CString GetWorkDir();
+
 static int InjectDll(DWORD dwProcessId, PTCHAR szDllName);
 static CString my_Cstr;
 // COutGoingFileToolDlg ¶Ô»°¿ò

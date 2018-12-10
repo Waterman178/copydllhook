@@ -20,6 +20,20 @@ typedef struct _FILE_ACCESS_INFORMATION {
 	ACCESS_MASK AccessFlags;
 } FILE_ACCESS_INFORMATION, *PFILE_ACCESS_INFORMATION;
 
+typedef struct _FILE_DIRECTORY_INFORMATION {
+	ULONG         NextEntryOffset;
+	ULONG         FileIndex;
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER AllocationSize;
+	ULONG         FileAttributes;
+	ULONG         FileNameLength;
+	WCHAR         FileName666[1];
+} FILE_DIRECTORY_INFORMATION, *PFILE_DIRECTORY_INFORMATION;
+
 
 
 typedef struct _FILE_MODE_INFORMATION {
@@ -64,6 +78,22 @@ typedef struct _FILE_BOTH_DIR_INFORMATION {
 	WCHAR         FileName33[1];
 } FILE_BOTH_DIR_INFORMATION, *PFILE_BOTH_DIR_INFORMATION;
 
+typedef struct _FILE_ID_FULL_DIR_INFORMATION {
+	ULONG         NextEntryOffset;
+	ULONG         FileIndex;
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER AllocationSize;
+	ULONG         FileAttributes;
+	ULONG         FileNameLength;
+	ULONG         EaSize;
+	LARGE_INTEGER FileId;
+	WCHAR         FileNam2e1[1];
+} FILE_ID_FULL_DIR_INFORMATION, *PFILE_ID_FULL_DIR_INFORMATION;
+
 typedef struct _FILE_FULL_DIR_INFORMATION {
 	ULONG         NextEntryOffset;
 	ULONG         FileIndex;
@@ -96,6 +126,26 @@ typedef struct _FILE_ID_GLOBAL_TX_DIR_INFORMATION {
 	ULONG         TxInfoFlags;
 	WCHAR         FileName22[1];
 } FILE_ID_GLOBAL_TX_DIR_INFORMATION, *PFILE_ID_GLOBAL_TX_DIR_INFORMATION;
+
+
+
+typedef struct _FILE_ID_BOTH_DIR_INFORMATION {
+	ULONG         NextEntryOffset;
+	ULONG         FileIndex;
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER AllocationSize;
+	ULONG         FileAttributes;
+	ULONG         FileNameLength;
+	ULONG         EaSize;
+	CCHAR         ShortNameLength;
+	WCHAR         ShortName[12];
+	LARGE_INTEGER FileId;
+	WCHAR         FileNam335e[1];
+} FILE_ID_BOTH_DIR_INFORMATION, *PFILE_ID_BOTH_DIR_INFORMATION;
 
 
 
@@ -208,6 +258,101 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_ID_GLOBAL_TX_DIR_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileIdGlobalTxDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_BOTH_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+				}
+			}
+			mutexObj.unlock();
+		}
+	}
+	if (FileInformationClass == FileIdFullDirectoryInformation)
+	{
+		bRet = !m_handleList.empty();
+		if (bRet)
+		{
+			mutexObj.lock();
+			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
+			{
+				if (handleListNode->FileHandle == FileHandle)
+				{
+					auto fsiGlobalTxDirectory = *(FILE_ID_FULL_DIR_INFORMATION*)FileInformation;
+					OutputDebugStringEx("FileIdFullDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
+					((FILE_ID_FULL_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+				}
+			}
+			mutexObj.unlock();
+		}
+	}
+	if (FileInformationClass == FileNetworkOpenInformation)
+	{
+		bRet = !m_handleList.empty();
+		if (bRet)
+		{
+			mutexObj.lock();
+			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
+			{
+				if (handleListNode->FileHandle == FileHandle)
+				{
+					auto fsiGlobalTxDirectory = *(FILE_NETWORK_OPEN_INFORMATION*)FileInformation;
+					OutputDebugStringEx("FileNetworkOpenInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
+					((FILE_NETWORK_OPEN_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+				}
+			}
+			mutexObj.unlock();
+		}
+	}
+	if (FileInformationClass == FileIdBothDirectoryInformation)
+	{
+		bRet = !m_handleList.empty();
+		if (bRet)
+		{
+			mutexObj.lock();
+			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
+			{
+				if (handleListNode->FileHandle == FileHandle)
+				{
+					auto fsiGlobalTxDirectory = *(FILE_ID_BOTH_DIR_INFORMATION*)FileInformation;
+					OutputDebugStringEx("FileIdBothDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
+					((FILE_ID_BOTH_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+				}
+			}
+			mutexObj.unlock();
+		}
+	}
+	if (FileInformationClass == FilePositionInformation)
+	{
+		bRet = !m_handleList.empty();
+		if (bRet)
+		{
+			mutexObj.lock();
+			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
+			{
+				if (handleListNode->FileHandle == FileHandle)
+				{
+					auto fsiGlobalTxDirectory = *(FILE_POSITION_INFORMATION*)FileInformation;
+					OutputDebugStringEx("FilePositionInformation获取的文件长度:%d", fsiGlobalTxDirectory.CurrentByteOffset.QuadPart);
+					if (fsiGlobalTxDirectory.CurrentByteOffset.QuadPart >= HeadFlaglength)
+					{
+						OutputDebugStringEx("改长度大于文件头");
+						((FILE_POSITION_INFORMATION*)FileInformation)->CurrentByteOffset.QuadPart += HeadFlaglength;
+					}
+					    
+				}
+			}
+			mutexObj.unlock();
+		}
+	}
+	if (FileInformationClass == FileDirectoryInformation)
+	{
+		bRet = !m_handleList.empty();
+		if (bRet)
+		{
+			mutexObj.lock();
+			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
+			{
+				if (handleListNode->FileHandle == FileHandle)
+				{
+					auto fsiGlobalTxDirectory = *(FILE_DIRECTORY_INFORMATION*)FileInformation;
+					OutputDebugStringEx("FileDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
+					((FILE_DIRECTORY_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
 				}
 			}
 			mutexObj.unlock();

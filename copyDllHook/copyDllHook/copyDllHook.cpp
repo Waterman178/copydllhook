@@ -24,7 +24,7 @@ BOOL IsOrigfileExt(WCHAR* pExt)
 	WCHAR			p7[] = L".ppt";
 	WCHAR			p8[] = L".pptx";
 	WCHAR			p9[] = L".jpg";
-	WCHAR		    p10[] = L".png";
+	WCHAR		    p10[] = L".dsadsadsadsd";
 	WCHAR		    p11[] = L".mp4";
 	WCHAR		    p12[] = L".mp3";
 	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL ||
@@ -238,10 +238,10 @@ static HANDLE WINAPI NewCreateFileW(
 			LPVOID fileHead = new char[FILE_SIGN_LEN+1];
 			ZeroMemory(fileHead, FILE_SIGN_LEN + 1);
 			int currentPointer = 0;
-			SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
+			//SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
 			ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
-			SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
-			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
+			//SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
+			//OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
 			if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 			{
 				pfCloseHandle(keyHan);
@@ -1001,7 +1001,7 @@ void __stdcall StartHook()
 		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 	    m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
-		createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
+		//createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
 		//m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
 		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 	   // getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);

@@ -14,6 +14,31 @@ typedef struct _mySectionObj {
 }mySectionObj,*pmySectionObj;
  std::list<mySectionObj> Sectionlist;
  std::list<mySectionObj>::iterator map_Secite;
+
+
+ //CreateObjectAttrib(std::wstring wstrMapName) {
+
+	//	 srand(time(NULL));
+	//	 int i;
+	//	 for (i = 0; i < len; ++i)
+	//	 {
+	//		 switch ((rand() % 3))
+	//		 {
+	//		 case 1:
+	//			 str[i] = 'A' + rand() % 26;
+	//			 break;
+	//		 case 2:
+	//			 str[i] = 'a' + rand() % 26;
+	//			 break;
+	//		 default:
+	//			 str[i] = '0' + rand() % 10;
+	//			 break;
+	//		 }
+	//	 }
+	//	 str[++i] = '\0';
+
+	//	 _tcscpy(strTemp2, strTemp.c_str());
+ //}
 NTSTATUS
 NTAPI
 HookZwCreateSection(
@@ -43,7 +68,7 @@ HookZwCreateSection(
 	HANDLE hTmpSection = INVALID_HANDLE_VALUE;
 	//char cArrDGKey[HeaderKeyLength] = {0}; //解密key
 	IO_STATUS_BLOCK iostatus;
-	std::wstring wstrMapName = L"Liujialin";
+	std::wstring wstrMapName = L"123456s";
 	FILE_STANDARD_INFORMATION fsi;
 	LARGE_INTEGER maxSize;
 	maxSize.HighPart = 0;
@@ -59,7 +84,7 @@ HookZwCreateSection(
 			{
 
 				bRet = FileHandle;
-				//OutputDebugStringEx("发现目标句柄:%d", FileHandle);
+				OutputDebugStringEx("发现目标句柄:%d", FileHandle);
 				goto dealSection;
 			}
 			else
@@ -196,7 +221,7 @@ HookZwCreateSection(
 									return ntStatus;
 								}
 
-								//CreateObjectAttrib(wstrMapName);
+								
 
 								if (ObjectAttributes != NULL)
 								{
@@ -222,7 +247,7 @@ HookZwCreateSection(
 								ntStatus = orgZwCreateSection(
 									__out  &hNewSection,
 									__in  DesiredAccess,
-									__in_opt(ObjectAttributes != NULL) ? &NewObjectAttributes : ObjectAttributes, // guid
+									__in_opt/*(ObjectAttributes != NULL) ? &NewObjectAttributes :*/ ObjectAttributes, // guid
 									__in_opt &fsi.EndOfFile,
 									__in  SectionPageProtection,
 									__in  SEC_COMMIT,
