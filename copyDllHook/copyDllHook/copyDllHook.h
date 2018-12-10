@@ -126,19 +126,7 @@ extern std::list<FileHandleRelationNode>::iterator handleListNode;
 //#define ZwClose (NTSTATUS (NTAPI*)) (IN HANDLE Handle)
 //#define myRtlInitUnicodeString (void)(PUNICODE_STRING DestinationString,PCWSTR SourceString)
 //#define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
-#define  ZwQueryDirectoryFile  (NTSTATUS(NTAPI*)(    \
-_In_     HANDLE                 FileHandle,\
-_In_opt_ HANDLE                 Event,\
-_In_opt_ PIO_APC_ROUTINE        ApcRoutine,\
-_In_opt_ PVOID                  ApcContext,\
-_Out_    PIO_STATUS_BLOCK       IoStatusBlock,\
-_Out_    PVOID                  FileInformation,\
-_In_     ULONG                  Length,\
-_In_     FILE_INFORMATION_CLASS FileInformationClass,\
-_In_     BOOLEAN                ReturnSingleEntry,\
-_In_opt_ PUNICODE_STRING        FileName0,\
-_In_     BOOLEAN                RestartScan\
-))
+#define  ZwQueryDirectoryFile  (NTSTATUS(NTAPI*)( _In_ HANDLE  FileHandle,_In_opt_ HANDLE  Event,_In_opt_ PIO_APC_ROUTINE  ApcRoutine,_In_opt_ PVOID ApcContext,_Out_   PIO_STATUS_BLOCK  IoStatusBlock,_Out_  PVOID  FileInformation,_In_   ULONG   Length,_In_  FILE_INFORMATION_CLASS FileInformationClass,_In_  BOOLEAN  ReturnSingleEntry,_In_opt_ PUNICODE_STRING FileName0,_In_  BOOLEAN  RestartScan))
 
 
 #define   ZwReadFile   (NTSTATUS(NTAPI*)(HANDLE  FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID  ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key))

@@ -971,6 +971,11 @@ Description: 开始所有的HOOK
 ************************************************/
 void __stdcall StartHook()
 {
+	m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
+	if (m_pfnOriginalZwQueryDirectoryFile == 0x00) {
+		OutputDebugStringEx("m_pfnOriginalZwQueryDirectoryFile获取失败");
+		return;
+	}
 	m_pfnOriginalZwReadFile = ZwReadFile StartOneHook(NTDLL, "ZwReadFile", HookZwReadFile);
 	if (m_pfnOriginalZwReadFile == 0x00) {
 		OutputDebugStringEx("m_pfnOriginalZwReadFile获取失败");
@@ -1002,7 +1007,7 @@ void __stdcall StartHook()
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 	    m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
 		//createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
-		//m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
+	
 		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 	   // getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);

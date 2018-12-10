@@ -34,6 +34,21 @@ typedef struct _FILE_DIRECTORY_INFORMATION {
 	WCHAR         FileName666[1];
 } FILE_DIRECTORY_INFORMATION, *PFILE_DIRECTORY_INFORMATION;
 
+typedef struct _FILE_FULL_DIR_INFORMATION {
+	ULONG         NextEntryOffset;
+	ULONG         FileIndex;
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER AllocationSize;
+	ULONG         FileAttributes;
+	ULONG         FileNameLength;
+	ULONG         EaSize;
+	WCHAR         FileName77[1];
+} FILE_FULL_DIR_INFORMATION, *PFILE_FULL_DIR_INFORMATION;
+
 
 
 typedef struct _FILE_MODE_INFORMATION {
@@ -94,20 +109,7 @@ typedef struct _FILE_ID_FULL_DIR_INFORMATION {
 	WCHAR         FileNam2e1[1];
 } FILE_ID_FULL_DIR_INFORMATION, *PFILE_ID_FULL_DIR_INFORMATION;
 
-typedef struct _FILE_FULL_DIR_INFORMATION {
-	ULONG         NextEntryOffset;
-	ULONG         FileIndex;
-	LARGE_INTEGER CreationTime;
-	LARGE_INTEGER LastAccessTime;
-	LARGE_INTEGER LastWriteTime;
-	LARGE_INTEGER ChangeTime;
-	LARGE_INTEGER EndOfFile;
-	LARGE_INTEGER AllocationSize;
-	ULONG         FileAttributes;
-	ULONG         FileNameLength;
-	ULONG         EaSize;
-	WCHAR         FileName333[1];
-} FILE_FULL_DIR_INFORMATION, *PFILE_FULL_DIR_INFORMATION;
+
 
 
 typedef struct _FILE_ID_GLOBAL_TX_DIR_INFORMATION {
@@ -327,14 +329,13 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 			{
 				if (handleListNode->FileHandle == FileHandle)
 				{
-					auto fsiGlobalTxDirectory = *(FILE_POSITION_INFORMATION*)FileInformation;
+	            	auto fsiGlobalTxDirectory = *(FILE_POSITION_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FilePositionInformation获取的文件长度:%d", fsiGlobalTxDirectory.CurrentByteOffset.QuadPart);
 					if (fsiGlobalTxDirectory.CurrentByteOffset.QuadPart >= HeadFlaglength)
 					{
 						OutputDebugStringEx("改长度大于文件头");
-						((FILE_POSITION_INFORMATION*)FileInformation)->CurrentByteOffset.QuadPart += HeadFlaglength;
-					}
-					    
+						((FILE_POSITION_INFORMATION*)FileInformation)->CurrentByteOffset.QuadPart -= HeadFlaglength;
+					}					    
 				}
 			}
 			mutexObj.unlock();
@@ -353,6 +354,24 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_DIRECTORY_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_DIRECTORY_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+				}
+			}
+			mutexObj.unlock();
+		}
+	}
+	if (FileInformationClass == FileFullDirectoryInformation)
+	{
+		bRet = !m_handleList.empty();
+		if (bRet)
+		{
+			mutexObj.lock();
+			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
+			{
+				if (handleListNode->FileHandle == FileHandle)
+				{
+					auto fsiGlobalTxDirectory = *(FILE_FULL_DIR_INFORMATION*)FileInformation;
+					OutputDebugStringEx("FileDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
+					((FILE_FULL_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
 				}
 			}
 			mutexObj.unlock();
