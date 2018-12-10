@@ -101,8 +101,7 @@ HookZwCreateSection(
 				return ntStatus;
 			}
 		}
-		dealSection:
-
+dealSection:
 		if (bRet /*&& robj.m_FileInfo.bReadDecrypt*/)
 		{
 			if (DesiredAccess & SECTION_MAP_WRITE)
@@ -133,26 +132,25 @@ HookZwCreateSection(
 						if (map_Secite->m_SectionHandle == hTmpSection)
 						{
 							*SectionHandle = hTmpSection;
-							//OutputDebugStringEx("找到临时的hTmpSection");
+							OutputDebugStringEx("找到临时的hTmpSection");
+							//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 							return STATUS_SUCCESS;
 						}
 
 					}
 				 }
-							ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
+				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 								&iostatus,
 								&fsi,
 								sizeof(FILE_STANDARD_INFORMATION),
 								FileStandardInformation);
-
-							if (fsi.EndOfFile.QuadPart != 0)
-							{
-								/*if (fsi.EndOfFile.QuadPart < sizeof(RjFileSrtuct))
+				if (fsi.EndOfFile.QuadPart != 0)
+				{
+				//OutputDebugStringEx("获取文件长度:%08x", fsi.EndOfFile.QuadPart);
+								if (fsi.EndOfFile.QuadPart < sizeof(RjFileSrtuct)+1)
 								{
-									fsi.EndOfFile.QuadPart = maxSize.QuadPart;
-								}*/
-								//OutputDebugStringEx("获取文件长度:%08x", fsi.EndOfFile.QuadPart);
-						
+									fsi.EndOfFile.QuadPart = sizeof(RjFileSrtuct) + 1;
+								}
 								ntStatus = orgZwCreateSection(
 									__out  &hOldSection,
 									__in  DesiredAccess,
@@ -220,9 +218,6 @@ HookZwCreateSection(
 									m_pfnOriginalZwClose(hOldSection);
 									return ntStatus;
 								}
-
-								
-
 								if (ObjectAttributes != NULL)
 								{
 									if (ObjectAttributes->Attributes)
@@ -236,30 +231,30 @@ HookZwCreateSection(
 									}
 								}
 								m_pfnOriginalRtlInitUnicodeString(&secName, wstrMapName.c_str());
-
 								InitializeObjectAttributes(&NewObjectAttributes,
 									&secName,
 									Attributes,
 									RootDirectory,
 									SecurityDescriptor);
-
 								// 根据handle创建Section
+								if (ObjectAttributes)
+								{
+									OutputDebugStringEx("ObjectAttributes为空");
+								}
 								ntStatus = orgZwCreateSection(
 									__out  &hNewSection,
 									__in  DesiredAccess,
-									__in_opt/*(ObjectAttributes != NULL) ? &NewObjectAttributes :*/ ObjectAttributes, // guid
+									__in_opt(ObjectAttributes != NULL) ? &NewObjectAttributes : ObjectAttributes, // guid
 									__in_opt &fsi.EndOfFile,
 									__in  SectionPageProtection,
 									__in  SEC_COMMIT,
 									__in_opt  FileHandle);
-
 								if (!NT_SUCCESS(ntStatus))
 								{
 									//OutputDebugStringEx("原先的映射失败");
 									return ntStatus;
 								}
 								SizeView = fsi.EndOfFile.LowPart/* + g_nLenOfDGFileHeader*/;
-
 								//OutputDebugStringEx("new File Section length:%d", SizeView);
 								ntStatus = m_pfnOriginalZwMapViewOfSection(
 									__in hNewSection,
@@ -284,6 +279,7 @@ HookZwCreateSection(
 								//OutputDebugStringEx("org File FileSize:%d", FileSize);
 								//OutputDebugStringEx("pOldViewBase File content:%d", *(int*)pOldViewBase);
 								//ZeroMemory(pOldViewBase, sizeof(RjFileSrtuct));
+								//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 								    for (int i = 0; i < FileSize;i++)
 									{
 											pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];

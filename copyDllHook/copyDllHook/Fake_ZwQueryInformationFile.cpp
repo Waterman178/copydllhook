@@ -173,7 +173,7 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 		Length,
 		FileInformationClass);
 	if (!NT_SUCCESS(status))
-		return status;
+		 return status;
 	if (FileInformationClass == FileStandardInformation)
 	{
 		bRet = !m_handleList.empty();
@@ -186,8 +186,9 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 				{
 					fsi = *(FILE_STANDARD_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileStandardInformation获取的文件长度:%d", fsi.EndOfFile.QuadPart);
-					if (fsi.EndOfFile.QuadPart >= HeadFlaglength)
-						((FILE_STANDARD_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					((FILE_STANDARD_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -206,6 +207,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiend = *(FILE_END_OF_FILE_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileEndOfFileInformation获取的文件长度:%d", fsiend.EndOfFile.QuadPart);
 					((FILE_END_OF_FILE_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -224,6 +227,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					fsiall = *(FILE_ALL_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileAllInformation获取的文件长度:%d", fsiall.StandardInformation.EndOfFile.QuadPart);
 					((FILE_ALL_INFORMATION*)FileInformation)->StandardInformation.EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -242,6 +247,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiBOTH = *(FILE_BOTH_DIR_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FILE_BOTH_DIR_INFORMATION获取的文件长度:%d", fsiBOTH.EndOfFile.QuadPart);
 					((FILE_BOTH_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -260,6 +267,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_ID_GLOBAL_TX_DIR_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileIdGlobalTxDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_BOTH_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -278,6 +287,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_ID_FULL_DIR_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileIdFullDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_ID_FULL_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -296,6 +307,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_NETWORK_OPEN_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileNetworkOpenInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_NETWORK_OPEN_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -314,6 +327,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_ID_BOTH_DIR_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileIdBothDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_ID_BOTH_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -329,13 +344,16 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 			{
 				if (handleListNode->FileHandle == FileHandle)
 				{
-	            	auto fsiGlobalTxDirectory = *(FILE_POSITION_INFORMATION*)FileInformation;
-					OutputDebugStringEx("FilePositionInformation获取的文件长度:%d", fsiGlobalTxDirectory.CurrentByteOffset.QuadPart);
-					if (fsiGlobalTxDirectory.CurrentByteOffset.QuadPart >= HeadFlaglength)
+					if (((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.LowPart != -1)
 					{
-						OutputDebugStringEx("改长度大于文件头");
-						((FILE_POSITION_INFORMATION*)FileInformation)->CurrentByteOffset.QuadPart -= HeadFlaglength;
-					}					    
+					 auto OldQuadPart = ((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.QuadPart;
+						if (((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.QuadPart >= HeadFlaglength)
+						{
+							((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.QuadPart -= HeadFlaglength;
+						}
+						mutexObj.unlock();
+						return status;
+					}
 				}
 			}
 			mutexObj.unlock();
@@ -354,6 +372,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_DIRECTORY_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_DIRECTORY_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();
@@ -372,6 +392,8 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 					auto fsiGlobalTxDirectory = *(FILE_FULL_DIR_INFORMATION*)FileInformation;
 					OutputDebugStringEx("FileDirectoryInformation获取的文件长度:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_FULL_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
+					mutexObj.unlock();
+					return status;
 				}
 			}
 			mutexObj.unlock();

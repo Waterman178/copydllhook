@@ -13,6 +13,8 @@
 #define FileName "RjiSafe9575"
 #define FILE_SIGN_LEN 11
 
+
+
 BOOL IsOrigfileExt(WCHAR* pExt)
 {
 	WCHAR			p1[] = L".docx";
@@ -51,6 +53,13 @@ NTSTATUS(NTAPI  * m_pfnOriginalZwQueryDirectoryFile)(
 NTSTATUS(NTAPI  * m_pfnOriginalZwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
 NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
 NTSTATUS(NTAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
+
+
+HANDLE (WINAPI*  m_pfnOriginalFindFirstFileW)(
+	LPCWSTR             lpFileName,
+	LPWIN32_FIND_DATAA lpFindFileData
+);
+
 std::list<HANDLE> MAPHAD_list;
 std::list<HANDLE>::iterator map_ite;
 std::list<HANDLE> MAPHADD_list;
@@ -92,6 +101,39 @@ void OutputDebugStringEx(const char *strOutputString, ...)
 
 	delete[] strBuffer;
 
+}
+
+HANDLE WINAPI Fake_FindFirstFileW (
+	LPCWSTR             lpFileName,
+	LPWIN32_FIND_DATAA lpFindFileData
+	) {
+	std::mutex mutexObj;
+	//OutputDebugStringEx("！！！！！！！！！！！！！！！！！！！！！！！！！Fake_FindFirstFileW find");
+	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
+	auto  FileHandle = createFileW((LPCTSTR)lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE ret = nullptr;
+	if (FileHandle = NULL)
+	{
+		OutputDebugStringEx("Fake_FindFirstFileW open File:%ws fail", lpFileName);
+	}
+	DWORD readLen;
+	LPVOID fileHead = new char[HeadFlaglength];
+	//SetFilePointer(FileHandle, 0, NULL, FILE_BEGIN);
+	ReadFile(FileHandle, fileHead, HeadFlaglength, &readLen, NULL);
+	//OutputDebugStringEx("Fake_FindFirstFileW open File:%ws", lpFileName);
+	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
+	{
+		
+		ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
+		OutputDebugStringEx("Fake_FindFirstFileW find org File lpFileInformation->nFileSizeLow:%d", lpFindFileData->nFileSizeLow);
+		lpFindFileData->nFileSizeLow -= HeadFlaglength;
+	}
+	else {
+		ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
+	}
+	if (!FileHandle)
+		CloseHandle(FileHandle);
+	return ret;
 }
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>被HOOK的函数的新功能<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 /***********************************************
@@ -971,6 +1013,7 @@ Description: 开始所有的HOOK
 ************************************************/
 void __stdcall StartHook()
 {
+	m_pfnOriginalFindFirstFileW = FindFirstFileW StartOneHook(KERNEL32, "FindFirstFileW", Fake_FindFirstFileW);
 	m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
 	if (m_pfnOriginalZwQueryDirectoryFile == 0x00) {
 		OutputDebugStringEx("m_pfnOriginalZwQueryDirectoryFile获取失败");
@@ -1006,6 +1049,7 @@ void __stdcall StartHook()
 		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 	    m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
+
 		//createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
 	
 		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);

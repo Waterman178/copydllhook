@@ -88,11 +88,11 @@ WINAPI HookZwReadFile(
 
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
-				//OutputDebugStringEx("异步\r\n");
+				OutputDebugStringEx("异步\r\n");
 			}
 			else if (ByteOffset == NULL) // 同步
 			{
-				//OutputDebugStringEx("同步\r\n");
+				OutputDebugStringEx("同步\r\n");
 				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 					&iostatus,
 					&fpi,    // current pos
@@ -113,6 +113,7 @@ WINAPI HookZwReadFile(
 						ByteOffset,
 						Key);
 				}*/
+				OutputDebugStringEx("当前的偏移为:%d\r\n", fpi.CurrentByteOffset.QuadPart);
 				if (fpi.CurrentByteOffset.QuadPart < HeaderLength)
 				{
 					fpi.CurrentByteOffset.QuadPart += HeaderLength;
@@ -125,6 +126,11 @@ WINAPI HookZwReadFile(
 				}
 
 				lCurrentOffset.QuadPart = fpi.CurrentByteOffset.QuadPart;
+				//ntStatus = m_pfnOriginalZwSetInformationFile(FileHandle,
+				//	&iostatus,
+				//	&fpi,    // +1024
+				//	sizeof(FILE_POSITION_INFORMATION),
+				//	FilePositionInformation);
 				//OutputDebugStringEx("fpi.CurrentByteOffset.QuadPart：%08x\r\n", fpi.CurrentByteOffset.QuadPart);
 
 			}
@@ -171,7 +177,9 @@ WINAPI HookZwReadFile(
 
 				if (Event && ntStatus == STATUS_PENDING)
 				{
+					
 					bOverRideRet = GetOverlappedResult(FileHandle, &pOverlapped, &dwReaded, TRUE);
+					OutputDebugStringEx("Event and ntStatus bOverRideRet:%d", bOverRideRet);
 					SetEvent(Event);
 				}
 				else
@@ -204,13 +212,13 @@ WINAPI HookZwReadFile(
 						pRobj->m_FileInfo.rc4Key);*/
 				//OutputDebugStringEx("lCurrentOffset：%08x", lCurrentOffset.QuadPart);
 				
-			    //MessageBox(NULL, "1111", "dsadsa", MH_OK);
+				///::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 
-			
-					for (int i = 0; i < IoStatusBlock->Information ; i++)
-					{
-						reinterpret_cast<char*>(Buffer)[i] ^= 'a';
-					}
+			    
+				for (int i = 0; i < IoStatusBlock->Information; i++)
+				{
+					reinterpret_cast<char*>(Buffer)[i] ^= 'a';
+				}
 
 
 			
