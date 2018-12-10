@@ -169,7 +169,8 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 	std::mutex mutexObj;
 	bool bRet;
 	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
-	//OutputDebugStringEx("Fake_ZwQueryDirectoryFile::获取的文件长度:%d", fsi.EndOfFile.QuadPart);
+	OutputDebugStringEx("Fake_ZwQueryDirectoryFile::获取的文件长度:%d", fsi.EndOfFile.QuadPart);
+	//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 	status = m_pfnOriginalZwQueryDirectoryFile(FileHandle,
 		Event,
 		ApcRoutine,

@@ -1087,6 +1087,8 @@ void __stdcall EndHook()
 		EndOneHook(NTDLL, m_pfnOriginalZwReadFile, HookZwReadFile);
 		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
 		EndOneHook(KERNEL32, pfCloseHandle, NewCloseHandle);
+		EndOneHook(NTDLL, m_pfnOriginalZwQueryDirectoryFile, Fake_ZwQueryDirectoryFile);
+		EndOneHook(NTDLL, m_pfnOriginalZwQueryInformationFile, Fake_ZwQueryInformationFile);
 		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
 		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
