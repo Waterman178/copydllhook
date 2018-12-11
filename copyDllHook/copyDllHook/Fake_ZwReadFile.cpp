@@ -48,6 +48,7 @@ WINAPI HookZwReadFile(
 			{
 				pRobj->FileHandle = handleListNode->FileHandle;
 				pRobj->m_FileInfo = handleListNode->m_FileInfo;
+				
 			}
 			else
 			{
@@ -88,11 +89,11 @@ WINAPI HookZwReadFile(
 
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
-				OutputDebugStringEx("异步\r\n");
+				//OutputDebugStringEx("异步\r\n");
 			}
 			else if (ByteOffset == NULL) // 同步
 			{
-				OutputDebugStringEx("同步\r\n");
+				//OutputDebugStringEx("同步\r\n");
 				ntStatus = m_pfnOriginalZwQueryInformationFile(FileHandle,
 					&iostatus,
 					&fpi,    // current pos
@@ -113,18 +114,24 @@ WINAPI HookZwReadFile(
 						ByteOffset,
 						Key);
 				}*/
-				OutputDebugStringEx("当前的偏移为:%d\r\n", fpi.CurrentByteOffset.QuadPart);
+				//OutputDebugStringEx("当前的偏移为:%d", fpi.CurrentByteOffset.QuadPart);
 				if (fpi.CurrentByteOffset.QuadPart < HeaderLength)
 				{
 					fpi.CurrentByteOffset.QuadPart += HeaderLength;
-
+					//OutputDebugStringEx("小于0:%d\r\n", fpi.CurrentByteOffset.QuadPart);
 					ntStatus = m_pfnOriginalZwSetInformationFile(FileHandle,
 						&iostatus,
 						&fpi,    // +1024
 						sizeof(FILE_POSITION_INFORMATION),
 						FilePositionInformation);
+					if (ntStatus == STATUS_SUCCESS)
+					{
+						//OutputDebugStringEx("设置偏移成功");
+					}
+					else {
+						//OutputDebugStringEx("失败，错误代码:%08x", ntStatus);
+					}
 				}
-
 				lCurrentOffset.QuadPart = fpi.CurrentByteOffset.QuadPart;
 				//ntStatus = m_pfnOriginalZwSetInformationFile(FileHandle,
 				//	&iostatus,
@@ -145,8 +152,6 @@ WINAPI HookZwReadFile(
 				Length,
 				ByteOffset,
 				Key);
-
-
 			if (ByteOffset != NULL)
 			{
 				if (ApcContext != NULL)
@@ -179,7 +184,7 @@ WINAPI HookZwReadFile(
 				{
 					
 					bOverRideRet = GetOverlappedResult(FileHandle, &pOverlapped, &dwReaded, TRUE);
-					OutputDebugStringEx("Event and ntStatus bOverRideRet:%d", bOverRideRet);
+					//OutputDebugStringEx("Event and ntStatus bOverRideRet:%d", bOverRideRet);
 					SetEvent(Event);
 				}
 				else
@@ -214,7 +219,8 @@ WINAPI HookZwReadFile(
 				
 				///::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 
-			    
+				//OutputDebugStringEx("实际长度:%d", IoStatusBlock->Information);
+			
 				for (int i = 0; i < IoStatusBlock->Information; i++)
 				{
 					reinterpret_cast<char*>(Buffer)[i] ^= 'a';

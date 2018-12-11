@@ -26,7 +26,7 @@ BOOL IsOrigfileExt(WCHAR* pExt)
 	WCHAR			p7[] = L".ppt";
 	WCHAR			p8[] = L".pptx";
 	WCHAR			p9[] = L".jpg";
-	WCHAR		    p10[] = L".dsadsadsadsd";
+	WCHAR		    p10[] = L".xml";
 	WCHAR		    p11[] = L".mp4";
 	WCHAR		    p12[] = L".mp3";
 	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL ||
@@ -53,7 +53,8 @@ NTSTATUS(NTAPI  * m_pfnOriginalZwQueryDirectoryFile)(
 NTSTATUS(NTAPI  * m_pfnOriginalZwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
 NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
 NTSTATUS(NTAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
-
+NTSTATUS(NTAPI*  m_pfnOriginalZwWriteFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
+NTSTATUS(NTAPI * m_pfnOriginalZwSetInformationFile)(HANDLE  FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID  FileInformation, ULONG  Length, FILE_INFORMATION_CLASS FileInformationClass);
 
 HANDLE (WINAPI*  m_pfnOriginalFindFirstFileW)(
 	LPCWSTR             lpFileName,
@@ -74,7 +75,6 @@ pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
 pfZwClose m_pfnOriginalZwClose;
 pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
 pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
-pfnOriginalZwSetInformationFile m_pfnOriginalZwSetInformationFile;
 
 
 //全局变量
@@ -112,6 +112,7 @@ HANDLE WINAPI Fake_FindFirstFileW (
 	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
 	auto  FileHandle = createFileW((LPCTSTR)lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 	HANDLE ret = nullptr;
+	OutputDebugStringEx("Fake_FindFirstFileW open File:%ws fail", lpFileName);
 	if (FileHandle = NULL)
 	{
 		OutputDebugStringEx("Fake_FindFirstFileW open File:%ws fail", lpFileName);
@@ -263,18 +264,19 @@ static HANDLE WINAPI NewCreateFileW(
 	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && IsOrigfileExt((WCHAR*)lpFileName)!=NULL) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
-		mutexObj.lock();
+		/*mutexObj.lock();
 		if (!m_handleList.empty())
 		{
 			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
 			{
 				if (handleListNode->FileHandle == keyHan)
 				{
+					mutexObj.unlock();
 					return keyHan;
 				}
 			}
 		}
-	   mutexObj.unlock();
+	   mutexObj.unlock();*/
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN+1];
@@ -282,6 +284,7 @@ static HANDLE WINAPI NewCreateFileW(
 			int currentPointer = 0;
 			//SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
 			ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
+			FlushFileBuffers(keyHan);
 			//SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
 			//OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
 			if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
@@ -292,6 +295,7 @@ static HANDLE WINAPI NewCreateFileW(
 				pRobj->FileHandle = ret;
 				pRobj->m_FileInfo.bReadDecrypt = TRUE;
 				pRobj->m_FileInfo.bEncryptFile = TRUE;
+				pRobj->m_FileInfo.bFrist = TRUE;
 				mutexObj.lock();
 				m_handleList.push_back(*pRobj);
 				mutexObj.unlock();
@@ -690,6 +694,7 @@ static BOOL WINAPI NewCloseHandle(HANDLE hObject)
 			if (handleListNode->FileHandle == hObject)
 			{
 				handleListNode = m_handleList.erase(handleListNode);
+				mutexObj.unlock();
 				return pfCloseHandle(hObject);
 			}
 			else
@@ -1013,6 +1018,7 @@ Description: 开始所有的HOOK
 ************************************************/
 void __stdcall StartHook()
 {
+	m_pfnOriginalZwSetInformationFile = ZwSetInformationFile  StartOneHook(NTDLL, "ZwSetInformationFile", HookSetInformathionFile);
 	m_pfnOriginalFindFirstFileW = FindFirstFileW StartOneHook(KERNEL32, "FindFirstFileW", Fake_FindFirstFileW);
 	m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
 	if (m_pfnOriginalZwQueryDirectoryFile == 0x00) {
@@ -1040,16 +1046,17 @@ void __stdcall StartHook()
 		if (m_pfnOriginalZwUnmapViewOfSection == 0x00) { 
 			OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSection获取失败");
 			return; };
-		m_pfnOriginalZwSetInformationFile = (pfnOriginalZwSetInformationFile)FindProcAddress(NTDLL, "ZwSetInformationFile");
-		if (m_pfnOriginalZwSetInformationFile == 0x00) {
-			OutputDebugStringEx("m_pfnOriginalZwSetInformationFile获取失败");
-			return;}
+		//m_pfnOriginalZwSetInformationFile = (pfnOriginalZwSetInformationFile)FindProcAddress(NTDLL, "ZwSetInformationFile");
+		//if (m_pfnOriginalZwSetInformationFile == 0x00) {
+		//	OutputDebugStringEx("m_pfnOriginalZwSetInformationFile获取失败");
+		//	return;}
 		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
 		//createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
 		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 	    m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
-
+		m_pfnOriginalZwWriteFile = ZwWriteFile StartOneHook(NTDLL, "ZwWriteFile", HookZwWriteFile);
+		
 		//createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
 	
 		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);

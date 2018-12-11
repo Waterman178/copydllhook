@@ -71,6 +71,12 @@
     <ClCompile Include="Fake_ZwQueryDirectoryFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Fake_ZwWriteFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Fake_ZwSetInformationFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="copyDllHook.def">

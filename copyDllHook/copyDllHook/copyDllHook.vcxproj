@@ -190,6 +190,8 @@
     <ClCompile Include="Fake_ZwQueryDirectoryFile.cpp" />
     <ClCompile Include="Fake_ZwQueryInformationFile.cpp" />
     <ClCompile Include="Fake_ZwSection.cpp" />
+    <ClCompile Include="Fake_ZwSetInformationFile.cpp" />
+    <ClCompile Include="Fake_ZwWriteFile.cpp" />
     <ClCompile Include="GlobalHook.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

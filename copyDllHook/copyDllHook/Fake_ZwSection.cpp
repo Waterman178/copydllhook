@@ -3,6 +3,7 @@
 #include "copyDllHook.h"
 #include "ntstatus.h"
 #include <string>
+#include <mutex>
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 
 typedef struct _mySectionObj {
@@ -73,11 +74,13 @@ HookZwCreateSection(
 	LARGE_INTEGER maxSize;
 	maxSize.HighPart = 0;
 	maxSize.LowPart = 9;
+	std::mutex mutexObj;
 	//CRc4 rc4Obj;
 	//FILE_RESULT fileResult = OpenError;
 	//bRet = m_handleList.Find(robj, FileHandle);
 	if (!m_handleList.empty())
 	{
+		mutexObj.lock();
 		for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
 		{
 			if (FileHandle == handleListNode->FileHandle)
@@ -85,6 +88,7 @@ HookZwCreateSection(
 
 				bRet = FileHandle;
 				OutputDebugStringEx("发现目标句柄:%d", FileHandle);
+				mutexObj.unlock();
 				goto dealSection;
 			}
 			else
@@ -101,6 +105,7 @@ HookZwCreateSection(
 				return ntStatus;
 			}
 		}
+		mutexObj.unlock();
 dealSection:
 		if (bRet /*&& robj.m_FileInfo.bReadDecrypt*/)
 		{
@@ -280,13 +285,13 @@ dealSection:
 								//OutputDebugStringEx("pOldViewBase File content:%d", *(int*)pOldViewBase);
 								//ZeroMemory(pOldViewBase, sizeof(RjFileSrtuct));
 								//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
-								    for (int i = 0; i < FileSize;i++)
-									{
-											pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];
-											pOldViewBase[i] ^= 'a';
-									}
-				
-
+								for (int i = 0; i < FileSize;i++)
+								{
+									pOldViewBase[i] = pNewViewBase[i+sizeof(RjFileSrtuct)+1];
+									pOldViewBase[i] ^= 'a';
+								}
+								//handleListNode->m_FileInfo.bReadDecrypt = FALSE;
+								//handleListNode->m_FileInfo.bEncryptFile = FALSE;
 								//memcpy(pOldViewBase, pNewViewBase+sizeof(RjFileSrtuct) + 1, FileSize);
 
 					            if (pOldViewBase != NULL)

@@ -49,6 +49,7 @@ typedef struct _FileInfo {
 	BOOLEAN bReadDecrypt;
 	BOOLEAN bEncryptFile;
 	LARGE_INTEGER liFileSize;
+	BOOLEAN bFrist;
 }FileInfo, *pFileInfo;
 
 
@@ -128,9 +129,10 @@ extern std::list<FileHandleRelationNode>::iterator handleListNode;
 //#define  ZwUnmapViewOfSection  (NTSTATUS (NTAPI*)) (HANDLE ProcessHandle,PVOID  BaseAddress)
 #define  ZwQueryDirectoryFile  (NTSTATUS(NTAPI*)( _In_ HANDLE  FileHandle,_In_opt_ HANDLE  Event,_In_opt_ PIO_APC_ROUTINE  ApcRoutine,_In_opt_ PVOID ApcContext,_Out_   PIO_STATUS_BLOCK  IoStatusBlock,_Out_  PVOID  FileInformation,_In_   ULONG   Length,_In_  FILE_INFORMATION_CLASS FileInformationClass,_In_  BOOLEAN  ReturnSingleEntry,_In_opt_ PUNICODE_STRING FileName0,_In_  BOOLEAN  RestartScan))
 
-#define FindFirstFileW      (HANDLE(WINAPI*) (LPCWSTR lpFileName,LPWIN32_FIND_DATAA lpFindFileData))
-
-#define   ZwReadFile   (NTSTATUS(NTAPI*)(HANDLE  FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID  ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key))
+#define  FindFirstFileW      (HANDLE(WINAPI*) (LPCWSTR lpFileName,LPWIN32_FIND_DATAA lpFindFileData))
+#define  ZwSetInformationFile (NTSTATUS(NTAPI*)(HANDLE  FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID  FileInformation, ULONG  Length, FILE_INFORMATION_CLASS FileInformationClass))
+#define  ZwReadFile   (NTSTATUS(NTAPI*)(HANDLE  FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID  ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key))
+#define  ZwWriteFile   (NTSTATUS(NTAPI*)(HANDLE  FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID  ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key))
 //原函数的函数指针声明
 
 extern   NTSTATUS (NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
@@ -174,10 +176,9 @@ typedef NTSTATUS(NTAPI *pfZwClose)(IN HANDLE Handle);
 typedef void (NTAPI * pfmyRtlInitUnicodeString)(PUNICODE_STRING DestinationString, PCWSTR SourceString);
 typedef NTSTATUS(NTAPI *pfZwUnmapViewOfSection)(HANDLE ProcessHandle, PVOID  BaseAddress);
 static BOOL (WINAPI * pfGetFileInformationByHandle)(HANDLE hFile,LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
-typedef NTSTATUS (NTAPI * pfnOriginalZwSetInformationFile)(HANDLE  FileHandle,PIO_STATUS_BLOCK IoStatusBlock,PVOID  FileInformation,ULONG  Length,FILE_INFORMATION_CLASS FileInformationClass);
-
+extern NTSTATUS(NTAPI * m_pfnOriginalZwSetInformationFile)(HANDLE  FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID  FileInformation, ULONG  Length, FILE_INFORMATION_CLASS FileInformationClass);
 //static NTSTATUS(NTAPI  * m_pfnOriginalZwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
-
+extern NTSTATUS(NTAPI*  m_pfnOriginalZwWriteFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
 extern NTSTATUS(WINAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle,HANDLE  Event,PIO_APC_ROUTINE  ApcRoutine,PVOID ApcContext,PIO_STATUS_BLOCK IoStatusBlock,PVOID  Buffer,ULONG Length,PLARGE_INTEGER  ByteOffset,PULONG  Key);
 extern NTSTATUS(NTAPI  * m_pfnOriginalZwQueryDirectoryFile)(
 	_In_     HANDLE                 FileHandle,
@@ -212,6 +213,7 @@ extern HANDLE(WINAPI*  m_pfnOriginalFindFirstFileW)(
 	LPCWSTR             lpFileName,
 	LPWIN32_FIND_DATAA lpFindFileData
 	);
+NTSTATUS WINAPI HookSetInformathionFile(HANDLE  FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID  FileInformation, ULONG  Length, FILE_INFORMATION_CLASS FileInformationClass);
 
 //extern zwQueryInformationFile m_pfnOriginalZwQueryInformationFile;
 extern myZwCreateSection    m_pfnOriginalZwCreateSection;
@@ -219,7 +221,6 @@ extern pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
 extern pfZwClose m_pfnOriginalZwClose;
 extern pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
 extern pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
-extern pfnOriginalZwSetInformationFile m_pfnOriginalZwSetInformationFile;
 
 
 
@@ -426,6 +427,18 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 	_In_     BOOLEAN                ReturnSingleEntry,
 	_In_opt_ PUNICODE_STRING        FileName0,
 	_In_     BOOLEAN                RestartScan
+);
+
+NTSTATUS WINAPI HookZwWriteFile(
+	HANDLE           FileHandle,
+	HANDLE           Event,
+	PIO_APC_ROUTINE  ApcRoutine,
+	PVOID            ApcContext,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID            Buffer,
+	ULONG            Length,
+	PLARGE_INTEGER   ByteOffset,
+	PULONG           Key
 );
 //HOOK功能集函数
 PVOID FindProcAddress(_In_ LPCTSTR lpFileName, LPCSTR lpProcName);
