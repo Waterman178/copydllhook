@@ -162,6 +162,8 @@ NTSTATUS WINAPI HookSetInformathionFile(HANDLE  FileHandle, PIO_STATUS_BLOCK IoS
 	DWORD dwReaded = 0;
 	auto HeaderLength = sizeof(RjFileSrtuct) + 1;
 	bRet = !m_handleList.empty();
+	FILE_POSITION_INFORMATION   myinfomation;
+	auto  ret = m_pfnOriginalZwSetInformationFile(FileHandle, IoStatusBlock, FileInformation, Length, FileInformationClass);
 	if (bRet)
 	{
 		pRobj = new FileHandleRelationNode;
@@ -177,6 +179,7 @@ NTSTATUS WINAPI HookSetInformathionFile(HANDLE  FileHandle, PIO_STATUS_BLOCK IoS
 					&fpi,    // current pos
 					sizeof(FILE_STANDARD_INFORMATION),
 					FileStandardInformation);
+				auto length = fpi.EndOfFile.QuadPart - HeaderLength;
 				if (FileInformationClass == FileEndOfFileInformation)
 				{
 				((FILE_END_OF_FILE_INFORMATION*)FileInformation)->EndOfFile.QuadPart += HeaderLength;
@@ -189,12 +192,14 @@ NTSTATUS WINAPI HookSetInformathionFile(HANDLE  FileHandle, PIO_STATUS_BLOCK IoS
 				}
 				if (FileInformationClass == FilePositionInformation)
 				{
-				((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.QuadPart += HeaderLength;
-				if( ((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.QuadPart > fpi.EndOfFile.QuadPart)
-				{
-				((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.QuadPart = fpi.EndOfFile.QuadPart;
-				}
-				OutputDebugStringEx("HookSetInformathionFile::FilePositionInformation:%d", ((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset.QuadPart);
+					myinfomation.CurrentByteOffset = ((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset;
+					myinfomation.CurrentByteOffset.QuadPart += HeaderLength;
+					OutputDebugStringEx("HookSetInformathionFile::FilePositionInformation:%d", myinfomation.CurrentByteOffset.QuadPart);
+					ntStatus = m_pfnOriginalZwSetInformationFile(FileHandle,
+							&iostatus,
+							&myinfomation,    // current pos
+							sizeof(FILE_POSITION_INFORMATION),
+							FilePositionInformation);
 				}
 			}
 			else
@@ -203,7 +208,6 @@ NTSTATUS WINAPI HookSetInformathionFile(HANDLE  FileHandle, PIO_STATUS_BLOCK IoS
 		}
 		mutexObj.unlock();
 		delete pRobj;
-		return m_pfnOriginalZwSetInformationFile(FileHandle, IoStatusBlock, FileInformation, Length, FileInformationClass);
 	}
-	return m_pfnOriginalZwSetInformationFile(FileHandle, IoStatusBlock, FileInformation, Length, FileInformationClass);
+	return ret;
 }

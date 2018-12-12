@@ -219,8 +219,8 @@ WINAPI HookZwReadFile(
 				
 				///::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 
-				//OutputDebugStringEx("实际长度:%d", IoStatusBlock->Information);
-			
+				OutputDebugStringEx("当前偏移:%d", fpi.CurrentByteOffset.QuadPart);
+				//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 				for (int i = 0; i < IoStatusBlock->Information; i++)
 				{
 					reinterpret_cast<char*>(Buffer)[i] ^= 'a';

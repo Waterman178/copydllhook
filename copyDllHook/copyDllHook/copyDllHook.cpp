@@ -56,10 +56,15 @@ NTSTATUS(NTAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO
 NTSTATUS(NTAPI*  m_pfnOriginalZwWriteFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
 NTSTATUS(NTAPI * m_pfnOriginalZwSetInformationFile)(HANDLE  FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID  FileInformation, ULONG  Length, FILE_INFORMATION_CLASS FileInformationClass);
 
-HANDLE (WINAPI*  m_pfnOriginalFindFirstFileW)(
+HANDLE(WINAPI*  m_pfnOriginalFindFirstFileW)(
 	LPCWSTR             lpFileName,
-	LPWIN32_FIND_DATAA lpFindFileData
-);
+	LPWIN32_FIND_DATAW lpFindFileData
+	);
+
+BOOLEAN(WINAPI*  m_pfnOriginalFindNextFileW)(
+	HANDLE             hFindFile,
+	LPWIN32_FIND_DATAW lpFindFileData
+	);
 
 std::list<HANDLE> MAPHAD_list;
 std::list<HANDLE>::iterator map_ite;
@@ -103,39 +108,59 @@ void OutputDebugStringEx(const char *strOutputString, ...)
 
 }
 
-HANDLE WINAPI Fake_FindFirstFileW (
+HANDLE WINAPI Fake_FindFirstFileW(
 	LPCWSTR             lpFileName,
-	LPWIN32_FIND_DATAA lpFindFileData
-	) {
-	std::mutex mutexObj;
+	LPWIN32_FIND_DATAW lpFindFileData
+) {
+	//std::mutex mutexObj;
 	//OutputDebugStringEx("£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°£°Fake_FindFirstFileW find");
-	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
-	auto  FileHandle = createFileW((LPCTSTR)lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-	HANDLE ret = nullptr;
-	OutputDebugStringEx("Fake_FindFirstFileW open File:%ws fail", lpFileName);
-	if (FileHandle = NULL)
-	{
-		OutputDebugStringEx("Fake_FindFirstFileW open File:%ws fail", lpFileName);
-	}
-	DWORD readLen;
-	LPVOID fileHead = new char[HeadFlaglength];
-	//SetFilePointer(FileHandle, 0, NULL, FILE_BEGIN);
-	ReadFile(FileHandle, fileHead, HeadFlaglength, &readLen, NULL);
+	//int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
+	//auto  FileHandle = createFileW((LPCTSTR)lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	//HANDLE ret = nullptr;
+	//OutputDebugStringEx("Fake_FindFirstFileW open File:%ws fail", lpFileName);
+	//if (FileHandle = NULL)
+	//{
+	//	OutputDebugStringEx("Fake_FindFirstFileW open File:%ws fail", lpFileName);
+	//}
+	//DWORD readLen;
+	//LPVOID fileHead = new char[HeadFlaglength];
+	////SetFilePointer(FileHandle, 0, NULL, FILE_BEGIN);
+	//ReadFile(FileHandle, fileHead, HeadFlaglength, &readLen, NULL);
+	////OutputDebugStringEx("Fake_FindFirstFileW open File:%ws", lpFileName);
+	//if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
+	//{
+	//	
+	//	ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
+	//	OutputDebugStringEx("Fake_FindFirstFileW find org File lpFileInformation->nFileSizeLow:%d", lpFindFileData->nFileSizeLow);
+	//	lpFindFileData->nFileSizeLow -= HeadFlaglength;
+	//}
+	//else {
+	//	ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
+	//}
+	//if (!FileHandle)
+	//	CloseHandle(FileHandle);
 	//OutputDebugStringEx("Fake_FindFirstFileW open File:%ws", lpFileName);
-	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
-	{
-		
-		ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
-		OutputDebugStringEx("Fake_FindFirstFileW find org File lpFileInformation->nFileSizeLow:%d", lpFindFileData->nFileSizeLow);
-		lpFindFileData->nFileSizeLow -= HeadFlaglength;
-	}
-	else {
-		ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
-	}
-	if (!FileHandle)
-		CloseHandle(FileHandle);
+	//auto File1Name = new wchar_t[wcslen(lpFileName) * sizeof(wchar_t)];
+	//CString File2Name = File1Name;
+	//memcpy(File2Name.GetBuffer(), lpFileName, wcslen(lpFileName) * sizeof(wchar_t));
+	//File2Name += "\0\0";
+	WIN32_FIND_DATA pNextInfo;
+	auto  ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
+	OutputDebugStringEx("Fake_FindFirstFileW open File:%ws", lpFindFileData->cFileName);
 	return ret;
 }
+BOOLEAN WINAPI Fake_FindNextFileW(HANDLE hFindFile,
+	LPWIN32_FIND_DATAW lpFindFileData) {
+	BOOLEAN ret;
+    ret = m_pfnOriginalFindNextFileW(hFindFile, lpFindFileData);
+	//OutputDebugStringEx("Fake_FindNextFileW open File:%ws", lpFindFileData->cFileName);
+	return ret;
+}
+
+
+
+
+
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>±ªHOOKµƒ∫Ø ˝µƒ–¬π¶ƒ‹<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 /***********************************************
 OpenClipboard¥Úø™ºÙ«–∞Â
@@ -201,14 +226,14 @@ static BOOL WINAPI NewSetWindowPos(_In_     HWND hWnd,//‘⁄z–Ú÷–µƒŒª”⁄±ª÷√Œªµƒ¥∞ø
 	_In_     int  cx,//“‘œÒÀÿ÷∏∂®¥∞ø⁄µƒ–¬µƒøÌ∂»°£
 	_In_     int  cy,//“‘œÒÀÿ÷∏∂®¥∞ø⁄µƒ–¬µƒ∏ﬂ∂»°£
 	_In_     UINT uFlags//¥∞ø⁄≥ﬂ¥Á∫Õ∂®Œªµƒ±Í÷æ,15÷÷≤Œ ˝
-	)
+)
 {
-	
+
 	//OutputDebugStringEx("HOOK  setWindow: hwnd = %d,nCmdShow = %d ,uFlag = %d", hWnd, hWndInsertAfter, uFlags);
 	return setWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
 }
 /***********************************************
-SetWindowTextW()∫Ø ˝  SetWindowTextA()∫Ø ˝ 
+SetWindowTextW()∫Ø ˝  SetWindowTextA()∫Ø ˝
 …Ë÷√∂‘ª∞øÚ±ÍÃ‚ªÚ’ﬂ∂‘ª∞øÚøÿº˛Œƒ±æµƒƒ⁄»›
 ************************************************/
 static BOOL WINAPI NewSetWindowTextW(HWND hwnd, //“™∏ƒ±‰Œƒ±æƒ⁄»›µƒ¥∞ø⁄ªÚøÿº˛µƒæ‰±˙
@@ -261,10 +286,10 @@ static HANDLE WINAPI NewCreateFileW(
 	HANDLE keyHan = nullptr;
 	BOOL bReadDecrypt = FALSE;
 	std::mutex mutexObj;
-	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && IsOrigfileExt((WCHAR*)lpFileName)!=NULL) {
+	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && IsOrigfileExt((WCHAR*)lpFileName) != NULL) {
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
-		/*mutexObj.lock();
+		mutexObj.lock();
 		if (!m_handleList.empty())
 		{
 			for (handleListNode = m_handleList.begin(); handleListNode != m_handleList.end(); handleListNode++)
@@ -276,10 +301,10 @@ static HANDLE WINAPI NewCreateFileW(
 				}
 			}
 		}
-	   mutexObj.unlock();*/
+		mutexObj.unlock();
 		if (keyHan != INVALID_HANDLE_VALUE) {
 			DWORD readLen;
-			LPVOID fileHead = new char[FILE_SIGN_LEN+1];
+			LPVOID fileHead = new char[FILE_SIGN_LEN + 1];
 			ZeroMemory(fileHead, FILE_SIGN_LEN + 1);
 			int currentPointer = 0;
 			//SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
@@ -348,7 +373,7 @@ static int WINAPI NewReadfile(
 				nNumberOfBytesToRead = temp;
 			}
 		}
-		
+
 		OutputDebugStringEx("$$$$$********$$$$$ HOOK!!!!!currentPointer = %d,nNumberOfBytesToRead=%d\r\n", currentPointer, nNumberOfBytesToRead);
 		Ret = readfile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 		for (int i = 0; i < *lpNumberOfBytesRead; i++) {
@@ -360,7 +385,7 @@ static int WINAPI NewReadfile(
 		//hexdump((unsigned char *)lpBuffer, nNumberOfBytesToRead > 10 ? 10 : nNumberOfBytesToRead);
 	}
 	else
-	{		
+	{
 		Ret = readfile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 	}
 	delete fileHead;
@@ -382,7 +407,7 @@ static BOOL WINAPI New_WriteFile(
 		// char *aa = new char[nNumberOfBytesToRead];
 		//rc4(FILE_SIGN, FILE_SIGN_LEN, (char *)lpBuffer, nNumberOfBytesToWrite, (char *)lpBuffer);
 		//lpBuffer = aa;
-	
+
 	return writeFile(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
 }
 /***********************************************
@@ -394,7 +419,7 @@ static LPVOID WINAPI NewMapViewOfFile(
 	__in DWORD dwFileOffsetHigh,
 	__in DWORD dwFileOffsetLow,
 	__in SIZE_T dwNumberOfBytesToMap
-	)
+)
 {
 
 	OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
@@ -430,7 +455,7 @@ static LPVOID WINAPI NewMapViewOfFileEx(
 	__in DWORD dwFileOffsetLow,
 	__in SIZE_T dwNumberOfBytesToMap,
 	__in LPVOID lpBaseAddress
-	)
+)
 {
 	//char* buf = (char *)mapViewOfFileEx(hFileMappingObject, dwDesiredAccess, 0, 30, 30, lpBaseAddress);
 
@@ -508,14 +533,14 @@ static HANDLE WINAPI NewOpenFileMappingW(
 ZwClose()∫Ø ˝			∏˘æ›æ‰±˙πÿ±’π¶ƒ‹
 ************************************************/
 static NTSTATUS WINAPI New_ZwClose(_In_ HANDLE Handle)
-{	
+{
 	NTSTATUS Ret = zwClose(Handle);
 	return Ret;
 }
 static NTSTATUS NTAPI NewNtClose(IN HANDLE Handle)
 {
 	NTSTATUS Ret = ntClose(Handle);
-	
+
 	return Ret;
 }
 /***********************************************
@@ -526,14 +551,14 @@ static DWORD WINAPI NewSetFilePointer(
 	_In_        LONG   lDistanceToMove,
 	_Inout_opt_ PLONG  lpDistanceToMoveHigh,
 	_In_        DWORD  dwMoveMethod
-	)
+)
 {
 	OutputDebugStringEx("$$$$$>>>>>   3   HOOK:  THE SetFilePointer function !!!!,lDistanceToMove = %d\r\n", lpDistanceToMoveHigh);
 	if (dwMoveMethod == FILE_END && hFile == dochFile)
-	{	
+	{
 		lDistanceToMove -= FILE_SIGN_LEN;
 	}
-	
+
 	return setFilePointer(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
 }
 /***********************************************
@@ -543,8 +568,8 @@ static BOOL WINAPI NewGetFileInformationByHandle(
 	_In_  HANDLE                       hFile,
 	_Out_ LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
 {
-	OutputDebugStringEx("@@@@@@@@@@HOOK:  THE GETFILEINFORMATIONBYHANDLE FUNCTION !!     %d\r\n",lpFileInformation->dwFileAttributes);
-	
+	OutputDebugStringEx("@@@@@@@@@@HOOK:  THE GETFILEINFORMATIONBYHANDLE FUNCTION !!     %d\r\n", lpFileInformation->dwFileAttributes);
+
 	BOOL Ret = getFileInformationByHandle(hFile, lpFileInformation);
 	//lpFileInformation->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 	return Ret;
@@ -570,7 +595,7 @@ static BOOL WINAPI NewReadFileEx(
 	_In_      DWORD                           nNumberOfBytesToRead,
 	_Inout_   LPOVERLAPPED                    lpOverlapped,
 	_In_      LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
-	)
+)
 {
 	OutputDebugStringEx("HOOK:  THE NewReadFileEx FUNCTION !!\r\n");
 	BOOL result = readFileEx(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped, lpCompletionRoutine);
@@ -585,7 +610,7 @@ static BOOL WINAPI NewReadFileScatter(
 	_In_       DWORD                nNumberOfBytesToRead,
 	_Reserved_ LPDWORD              lpReserved,
 	_Inout_    LPOVERLAPPED         lpOverlapped
-	)
+)
 {
 	OutputDebugStringEx("HOOK:  THE NewReadFileScatter FUNCTION !!\r\n");
 	BOOL result = readFileScatter(hFile, aSegmentArray, nNumberOfBytesToRead, lpReserved, lpOverlapped);
@@ -617,8 +642,8 @@ static BOOL WINAPI NewGetFileSizeEx(
 	ReadFile(hFile, fileHead, HeadFlaglength, &readLen, NULL); //”√‘≠ ºµƒ
 	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!    readHead = %s\r\n", fileHead);
 	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
-	{		
-		OutputDebugStringEx("********  getFileSizeEx ******HOOK:sercret file \r\n");	
+	{
+		OutputDebugStringEx("********  getFileSizeEx ******HOOK:sercret file \r\n");
 		lpFileSize->QuadPart -= HeadFlaglength;
 	}
 	OutputDebugStringEx("HOOK:  THE NewGetFileSizeEx FUNCTION !!  %ld\r\n ", lpFileSize->QuadPart);
@@ -720,11 +745,11 @@ static BOOL WINAPI New_BitBlt(_In_ HDC   hdcDest,
 	_In_ int   nXDest, _In_ int   nYDest, _In_ int   nWidth,
 	_In_ int   nHeight, _In_ HDC   hdcSrc, _In_ int   nXSrc,
 	_In_ int   nYSrc, _In_ DWORD dwRop
-	)
+)
 {
 	int result;
 	if ((dwRop & 0xCC0020) == 0xCC0020 && GetObjectType(hdcSrc) == 3)
-	{		
+	{
 		HWND gameh = FindWindow(NULL, TEXT("OutGoingFileTool"));
 		if (gameh == 0)
 		{
@@ -733,7 +758,7 @@ static BOOL WINAPI New_BitBlt(_In_ HDC   hdcDest,
 		else
 		{
 			result = bitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, BLACKNESS);
-		}	
+		}
 	}
 	else
 	{
@@ -769,37 +794,37 @@ static BOOL WINAPI NewCreateProcessW(
 	_In_opt_    LPCTSTR               lpCurrentDirectory,
 	_In_        LPSTARTUPINFO         lpStartupInfo,
 	_Out_       LPPROCESS_INFORMATION lpProcessInformation
-	)
+)
 {
 	OutputDebugStringEx(" THE NewCreateProcessW FUNCTION !!!!\r\n");
 	BOOL result;
 	result = createProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 
 	//InjectDll(lpProcessInformation->dwProcessId, _T("C:\\Users\\Wrench\\Desktop\\1111\\copyDllHook.dll"));
-		
+
 	return result;
 }
 /***********************************************
 CreateProcessInternal()∫Ø ˝			¥¥Ω®Ω¯≥Ãπ¶ƒ‹
 ************************************************/
 static HANDLE WINAPI NewCreateProcessInternal(
-	HANDLE hToken, 
-	LPCTSTR lpApplicationName, 
-	LPTSTR lpCommandLine, 
-	LPSECURITY_ATTRIBUTES lpProcessAttributes, 
-	LPSECURITY_ATTRIBUTES lpThreadAttributes, 
-	BOOL bInheritHandles, 
-	DWORD dwCreationFlags, 
-	LPVOID lpEnvironment, 
+	HANDLE hToken,
+	LPCTSTR lpApplicationName,
+	LPTSTR lpCommandLine,
+	LPSECURITY_ATTRIBUTES lpProcessAttributes,
+	LPSECURITY_ATTRIBUTES lpThreadAttributes,
+	BOOL bInheritHandles,
+	DWORD dwCreationFlags,
+	LPVOID lpEnvironment,
 	LPCTSTR lpCurrentDirectory,
 	LPSTARTUPINFOA lpStartupInfo,
-	LPPROCESS_INFORMATION lpProcessInformation, 
+	LPPROCESS_INFORMATION lpProcessInformation,
 	PHANDLE hNewToken)
 {
 	OutputDebugStringEx("???????????HOOK: THE NewCreateProcessInternal FUNCTION !!!! name = %s\r\n", lpApplicationName);
 	HANDLE result;
 	result = createProcessInternalW(hToken, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles,
-							dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, hNewToken);
+		dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, hNewToken);
 	InjectDll(lpProcessInformation->dwProcessId, _T("C:\\Users\\Wrench\\Desktop\\1111\\copyDllHook.dll"));
 	return result;
 }
@@ -852,13 +877,13 @@ Input:	LPCTSTR dllName ∫Ø ˝À˘‘⁄µƒdllø‚
 		PVOID newFunc	–¬∫Ø ˝µƒ∫Ø ˝÷∏’Î
 Returns: ≥…π¶£∫æ…∫Ø ˝µÿ÷∑  ß∞‹£∫NULL
 ************************************************/
-PVOID StartOneHook(LPCTSTR dllName, LPCSTR funcName,PVOID newFunc)
+PVOID StartOneHook(LPCTSTR dllName, LPCSTR funcName, PVOID newFunc)
 {
 	//ø™ º ¬ŒÒ
 	DetourTransactionBegin();
 	//∏¸–¬œﬂ≥Ã–≈œ¢  
 	DetourUpdateThread(GetCurrentThread());
-	PVOID oldFunc = FindProcAddress(dllName,funcName);
+	PVOID oldFunc = FindProcAddress(dllName, funcName);
 	if (oldFunc == NULL)
 	{
 		return NULL;
@@ -943,15 +968,15 @@ BOOL  HOOKGetFileAttributesExW(
 	OutputDebugStringEx("HOOKGetFileAttributesExW open File:%ws fail", lpFileName);
 	BOOL ret = FALSE;
 	auto  FileHandle = CreateFileW(lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (FileHandle=NULL)
+	if (FileHandle = NULL)
 	{
 		OutputDebugStringEx("HOOKGetFileAttributesExW open File:%ws fail", lpFileName);
 	}
-	int HeadFlaglength = sizeof(RjFileSrtuct)+1;
+	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
 	DWORD readLen;
 	LPVOID fileHead = new char[HeadFlaglength];
 	SetFilePointer(FileHandle, 0, NULL, FILE_BEGIN);
-	ReadFile(FileHandle, fileHead, HeadFlaglength, &readLen, NULL); 
+	ReadFile(FileHandle, fileHead, HeadFlaglength, &readLen, NULL);
 	if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 	{
 		OutputDebugStringEx("HOOKGetFileAttributesExW find org File lpFileInformation->nFileSizeLow:%d", lpFileInformation->nFileSizeLow);
@@ -1018,6 +1043,7 @@ Description: ø™ ºÀ˘”–µƒHOOK
 ************************************************/
 void __stdcall StartHook()
 {
+	m_pfnOriginalFindNextFileW = FindNextFileW StartOneHook(KERNEL32, "FindNextFileW", Fake_FindNextFileW);
 	m_pfnOriginalZwSetInformationFile = ZwSetInformationFile  StartOneHook(NTDLL, "ZwSetInformationFile", HookSetInformathionFile);
 	m_pfnOriginalFindFirstFileW = FindFirstFileW StartOneHook(KERNEL32, "FindFirstFileW", Fake_FindFirstFileW);
 	m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
@@ -1030,86 +1056,92 @@ void __stdcall StartHook()
 		OutputDebugStringEx("m_pfnOriginalZwReadFileªÒ»° ß∞‹");
 		return;
 	}
-		m_pfnOriginalZwClose  = (pfZwClose)FindProcAddress(NTDLL, "ZwClose");
-		if (m_pfnOriginalZwClose == 0x00) { 
-			OutputDebugStringEx("m_pfnOriginalZwCloseªÒ»° ß∞‹");
-			return; }
-	    m_pfnOriginalZwMapViewOfSection  = (pfZwMapViewOfSection)FindProcAddress(NTDLL, "ZwMapViewOfSection");
-		if (m_pfnOriginalZwMapViewOfSection == 0x00) {
-			OutputDebugStringEx("m_pfnOriginalZwMapViewOfSectionªÒ»° ß∞‹");
-			return; }
-		m_pfnOriginalRtlInitUnicodeString =  (pfmyRtlInitUnicodeString)FindProcAddress(NTDLL, "RtlInitUnicodeString");
-		if (m_pfnOriginalRtlInitUnicodeString == 0x00) { 
-			OutputDebugStringEx("RtlInitUnicodeStringªÒ»° ß∞‹");
-			return; };
-		m_pfnOriginalZwUnmapViewOfSection =  (pfZwUnmapViewOfSection)FindProcAddress(NTDLL, "ZwUnmapViewOfSection");
-		if (m_pfnOriginalZwUnmapViewOfSection == 0x00) { 
-			OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSectionªÒ»° ß∞‹");
-			return; };
-		//m_pfnOriginalZwSetInformationFile = (pfnOriginalZwSetInformationFile)FindProcAddress(NTDLL, "ZwSetInformationFile");
-		//if (m_pfnOriginalZwSetInformationFile == 0x00) {
-		//	OutputDebugStringEx("m_pfnOriginalZwSetInformationFileªÒ»° ß∞‹");
-		//	return;}
-		orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
-		//createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
-		pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
-		createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
-	    m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
-		m_pfnOriginalZwWriteFile = ZwWriteFile StartOneHook(NTDLL, "ZwWriteFile", HookZwWriteFile);
-		
-		//createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
+	m_pfnOriginalZwClose = (pfZwClose)FindProcAddress(NTDLL, "ZwClose");
+	if (m_pfnOriginalZwClose == 0x00) {
+		OutputDebugStringEx("m_pfnOriginalZwCloseªÒ»° ß∞‹");
+		return;
+	}
+	m_pfnOriginalZwMapViewOfSection = (pfZwMapViewOfSection)FindProcAddress(NTDLL, "ZwMapViewOfSection");
+	if (m_pfnOriginalZwMapViewOfSection == 0x00) {
+		OutputDebugStringEx("m_pfnOriginalZwMapViewOfSectionªÒ»° ß∞‹");
+		return;
+	}
+	m_pfnOriginalRtlInitUnicodeString = (pfmyRtlInitUnicodeString)FindProcAddress(NTDLL, "RtlInitUnicodeString");
+	if (m_pfnOriginalRtlInitUnicodeString == 0x00) {
+		OutputDebugStringEx("RtlInitUnicodeStringªÒ»° ß∞‹");
+		return;
+	};
+	m_pfnOriginalZwUnmapViewOfSection = (pfZwUnmapViewOfSection)FindProcAddress(NTDLL, "ZwUnmapViewOfSection");
+	if (m_pfnOriginalZwUnmapViewOfSection == 0x00) {
+		OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSectionªÒ»° ß∞‹");
+		return;
+	};
+	//m_pfnOriginalZwSetInformationFile = (pfnOriginalZwSetInformationFile)FindProcAddress(NTDLL, "ZwSetInformationFile");
+	//if (m_pfnOriginalZwSetInformationFile == 0x00) {
+	//	OutputDebugStringEx("m_pfnOriginalZwSetInformationFileªÒ»° ß∞‹");
+	//	return;}
+	orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
+	//createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
+	pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
+	createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
+	m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
+	m_pfnOriginalZwWriteFile = ZwWriteFile StartOneHook(NTDLL, "ZwWriteFile", HookZwWriteFile);
+
 	
-		//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
-	   // getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
-		//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
-		//pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
-	    // mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
-		//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
-		//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
-		//openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
-	    /*if (MH_CreateHook(&m_pfnOriginalZwCreateSection,&HookZwCreateSection,reinterpret_cast<void**>(&orgZwCreateSection))!=MH_OK)
-		{
-			OutputDebugStringEx("orgZwCreateSectionªÒ»° ß∞‹");
-		}*/
-		/*DetourTransactionBegin();
-		DetourUpdateThread(NtCurrentThread);
-		DetourAttach((PVOID*)&orgZwCreateSection, HookZwCreateSection);
-		DetourTransactionCommit();*/
-		//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);
-		/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
-		unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
-		
-		ntClose = NTCLOSE StartOneHook(NTDLL, "NtClose", NewNtClose);
-		setFilePointer = SETFILEPOINTER StartOneHook(KERNELBASE, "SetFilePointer", NewSetFilePointer);
-		getFileInformationByHandle = GETFILEINFBYHANDLE StartOneHook(KERNELBASE, "GetFileInformationByHandle", NewGetFileInformationByHandle);
-		getFileSizeEx = GETFILESIZEEX StartOneHook(KERNEL32, "GetFileSizeEx", NewGetFileSizeEx);
-		setFilePointerEx = SETFILEPOINTER_EX StartOneHook(KERNEL32, "SetFilePointerEx", NewSetFilePointerEx);
-		getSaveFileNameW = GETSAVEFILENAMEW StartOneHook(COMDLG32, "GetSaveFileNameA", New_GetSaveFileNameW);
-		getFileAttributesW = GETFILEATTRIBUTESW StartOneHook(KERNELBASE, "GetFileAttributesW", NewGetFileAttributesW);
-		readFileEx = READFILEEX StartOneHook(KERNEL32, "ReadFileEx", NewReadFileEx);
-		readFileScatter = READFILESCATTER StartOneHook(KERNEL32, "ReadFileScatter", NewReadFileScatter);
-		getFileAttributesExW = GETFILEATTRIBUTESEXW StartOneHook(KERNEL32, "GetFileAttributesEx", NewGetFileAttributesExW);
-		createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
-		*/
-		//listenParentProcess(GetCurrentProcessId());
-	//}
-	//else
-	//{
-	//	bitBlt = BITBLT StartOneHook(GDI32, "BitBlt", New_BitBlt);
-	//	stretchBlt = STRECTCHBLT StartOneHook(GDI32, "StretchBlt", New_StretchBlt);
-	//	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
-	//	createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
-	//}
-			/*openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
-	openPrinter = OPENPRINTER StartOneHook(WINSPOOL, "OpenPrinterW", NewOpenPrinter);
-	showWindow = SHOWWINDOW StartOneHook(USER32, "ShowWindow", NewShowWindow);
-	setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
-	setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
-	setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
-	/*m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
-	if (m_pfnOriginalZwCreateSection == 0x00) {
-	OutputDebugStringEx("m_pfnOriginalZwCreateSectionªÒ»° ß∞‹");
-	return;}*/
+
+	//createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
+
+	//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
+   // getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+	//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
+	//pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
+	// mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
+	//mapViewOfFileEx = MAPVIEWOFFILEEX StartOneHook(KERNEL32, "MapViewOfFileEx", NewMapViewOfFileEx);
+	//createfilemappingA = CREATEFILEMAPPINGA StartOneHook(KERNEL32, "CreateFileMappingA", NewCreateFileMappingA);
+	//openFileMappingW = OPENFILEMAPPINGW StartOneHook(KERNEL32, "OpenFileMappingW", NewOpenFileMappingW);
+	/*if (MH_CreateHook(&m_pfnOriginalZwCreateSection,&HookZwCreateSection,reinterpret_cast<void**>(&orgZwCreateSection))!=MH_OK)
+	{
+		OutputDebugStringEx("orgZwCreateSectionªÒ»° ß∞‹");
+	}*/
+	/*DetourTransactionBegin();
+	DetourUpdateThread(NtCurrentThread);
+	DetourAttach((PVOID*)&orgZwCreateSection, HookZwCreateSection);
+	DetourTransactionCommit();*/
+	//m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile  StartOneHook(NTDLL, "ZwQueryInformationFile", NewOpenFileMappingW);
+	/*zwClose = ZWCLOSE StartOneHook(NTDLL, "ZwClose", New_ZwClose);
+	unmapViewOfFile = UNMAPVIEWOFFILE StartOneHook(KERNELBASE, "UnmapViewOfFile", NewUnmapViewOfFile);
+
+	ntClose = NTCLOSE StartOneHook(NTDLL, "NtClose", NewNtClose);
+	setFilePointer = SETFILEPOINTER StartOneHook(KERNELBASE, "SetFilePointer", NewSetFilePointer);
+	getFileInformationByHandle = GETFILEINFBYHANDLE StartOneHook(KERNELBASE, "GetFileInformationByHandle", NewGetFileInformationByHandle);
+	getFileSizeEx = GETFILESIZEEX StartOneHook(KERNEL32, "GetFileSizeEx", NewGetFileSizeEx);
+	setFilePointerEx = SETFILEPOINTER_EX StartOneHook(KERNEL32, "SetFilePointerEx", NewSetFilePointerEx);
+	getSaveFileNameW = GETSAVEFILENAMEW StartOneHook(COMDLG32, "GetSaveFileNameA", New_GetSaveFileNameW);
+	getFileAttributesW = GETFILEATTRIBUTESW StartOneHook(KERNELBASE, "GetFileAttributesW", NewGetFileAttributesW);
+	readFileEx = READFILEEX StartOneHook(KERNEL32, "ReadFileEx", NewReadFileEx);
+	readFileScatter = READFILESCATTER StartOneHook(KERNEL32, "ReadFileScatter", NewReadFileScatter);
+	getFileAttributesExW = GETFILEATTRIBUTESEXW StartOneHook(KERNEL32, "GetFileAttributesEx", NewGetFileAttributesExW);
+	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
+	*/
+	//listenParentProcess(GetCurrentProcessId());
+//}
+//else
+//{
+//	bitBlt = BITBLT StartOneHook(GDI32, "BitBlt", New_BitBlt);
+//	stretchBlt = STRECTCHBLT StartOneHook(GDI32, "StretchBlt", New_StretchBlt);
+//	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
+//	createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
+//}
+		/*openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
+openPrinter = OPENPRINTER StartOneHook(WINSPOOL, "OpenPrinterW", NewOpenPrinter);
+showWindow = SHOWWINDOW StartOneHook(USER32, "ShowWindow", NewShowWindow);
+setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
+setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
+setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
+/*m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
+if (m_pfnOriginalZwCreateSection == 0x00) {
+OutputDebugStringEx("m_pfnOriginalZwCreateSectionªÒ»° ß∞‹");
+return;}*/
 }
 /***********************************************
 Function: StartHook
@@ -1131,42 +1163,42 @@ void __stdcall EndHook()
 		//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
 		//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
 		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
-	   
-		EndOneHook(KERNEL32, pfGetFileInformationByHandle, hookGetFileInformationByHandle);
-		EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
-	    EndOneHook(KERNEL32, createFileW, NewCreateFileW);
-		EndOneHook(NTDLL, m_pfnOriginalZwReadFile, HookZwReadFile);
-		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
-		EndOneHook(KERNEL32, pfCloseHandle, NewCloseHandle);
-		EndOneHook(NTDLL, m_pfnOriginalZwQueryDirectoryFile, Fake_ZwQueryDirectoryFile);
-		EndOneHook(NTDLL, m_pfnOriginalZwQueryInformationFile, Fake_ZwQueryInformationFile);
-		//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
-		//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
-		//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
-		/*EndOneHook(NTDLL, zwClose, New_ZwClose);
-		EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
-		
-		EndOneHook(NTDLL, ntClose, NewNtClose);
-		EndOneHook(KERNELBASE, setFilePointer, NewSetFilePointer);
-		EndOneHook(KERNELBASE, getFileInformationByHandle, NewGetFileInformationByHandle);
-		EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
-		EndOneHook(KERNEL32, setFilePointerEx, NewSetFilePointerEx);
-		EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
-		EndOneHook(COMDLG32, getSaveFileNameW, New_GetSaveFileNameW);
-		EndOneHook(KERNELBASE, getFileAttributesW, NewGetFileAttributesW);
-		EndOneHook(KERNEL32, readFileEx, NewReadFileEx);
-		EndOneHook(KERNEL32, ReadFileScatter, NewReadFileScatter);
-		EndOneHook(KERNELBASE, getFileAttributesExW, NewGetFileAttributesExW);
-		EndOneHook(KERNEL32, createProcessW, NewCreateProcessW);
-		EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);*/
-		//EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
-		//TerminateProcess(GetCurrentProcess(), 0);
-	//}
-	//else
-	//{
-	//	EndOneHook(GDI32, bitBlt, New_BitBlt);
-	//	EndOneHook(GDI32, stretchBlt, New_StretchBlt);
-	//	EndOneHook(KERNEL32, createProcessW, NewCreateProcessW);
-	//	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
-	//}
+
+	EndOneHook(KERNEL32, pfGetFileInformationByHandle, hookGetFileInformationByHandle);
+	EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
+	EndOneHook(KERNEL32, createFileW, NewCreateFileW);
+	EndOneHook(NTDLL, m_pfnOriginalZwReadFile, HookZwReadFile);
+	EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+	EndOneHook(KERNEL32, pfCloseHandle, NewCloseHandle);
+	EndOneHook(NTDLL, m_pfnOriginalZwQueryDirectoryFile, Fake_ZwQueryDirectoryFile);
+	EndOneHook(NTDLL, m_pfnOriginalZwQueryInformationFile, Fake_ZwQueryInformationFile);
+	//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
+	//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
+	//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
+	/*EndOneHook(NTDLL, zwClose, New_ZwClose);
+	EndOneHook(KERNELBASE, unmapViewOfFile, NewUnmapViewOfFile);
+
+	EndOneHook(NTDLL, ntClose, NewNtClose);
+	EndOneHook(KERNELBASE, setFilePointer, NewSetFilePointer);
+	EndOneHook(KERNELBASE, getFileInformationByHandle, NewGetFileInformationByHandle);
+	EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
+	EndOneHook(KERNEL32, setFilePointerEx, NewSetFilePointerEx);
+	EndOneHook(KERNEL32, getFileSize, NewGetFileSize);
+	EndOneHook(COMDLG32, getSaveFileNameW, New_GetSaveFileNameW);
+	EndOneHook(KERNELBASE, getFileAttributesW, NewGetFileAttributesW);
+	EndOneHook(KERNEL32, readFileEx, NewReadFileEx);
+	EndOneHook(KERNEL32, ReadFileScatter, NewReadFileScatter);
+	EndOneHook(KERNELBASE, getFileAttributesExW, NewGetFileAttributesExW);
+	EndOneHook(KERNEL32, createProcessW, NewCreateProcessW);
+	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);*/
+	//EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
+	//TerminateProcess(GetCurrentProcess(), 0);
+//}
+//else
+//{
+//	EndOneHook(GDI32, bitBlt, New_BitBlt);
+//	EndOneHook(GDI32, stretchBlt, New_StretchBlt);
+//	EndOneHook(KERNEL32, createProcessW, NewCreateProcessW);
+//	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
+//}
 }
