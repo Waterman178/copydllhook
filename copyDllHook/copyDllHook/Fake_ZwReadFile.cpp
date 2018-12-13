@@ -219,17 +219,13 @@ WINAPI HookZwReadFile(
 				
 				///::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 
-				OutputDebugStringEx("当前偏移:%d", fpi.CurrentByteOffset.QuadPart);
+				//OutputDebugStringEx("当前偏移:%d", fpi.CurrentByteOffset.QuadPart);
 				//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 				for (int i = 0; i < IoStatusBlock->Information; i++)
 				{
 					reinterpret_cast<char*>(Buffer)[i] ^= 'a';
 				}
-
-
-			
 				//OutputDebugStringEx("内容为：%s lCurrentOffset.QuadPart为：%d", Buffer, lCurrentOffset.QuadPart);
-
 				// 异步情况
 				if (ByteOffset != NULL)  // 恢复位置
 				{

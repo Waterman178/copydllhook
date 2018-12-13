@@ -40,6 +40,21 @@
 				pRobj->FileHandle = handleListNode->FileHandle;
 				pRobj->m_FileInfo = handleListNode->m_FileInfo;
 				OutputDebugStringEx("HookZwWriteFile!Find!!!!!!!");
+				for (int i = 0; i < Length; i++)
+				{
+					reinterpret_cast<char*>(Buffer)[i] ^= 'a';
+				}
+				return m_pfnOriginalZwWriteFile(
+					FileHandle,
+					Event,
+					ApcRoutine,
+					ApcContext,
+					IoStatusBlock,
+					(char*)Buffer,
+					Length,
+					ByteOffset+HeaderLength,
+					Key
+				);
 			}
 			else
 			{

@@ -4,6 +4,8 @@
 #include <string>
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 #include <mutex>
+
+//与 SETINFOFILE处理相反 要尽量暴露自己设置的偏移给应用程序
 typedef struct _FILE_END_OF_FILE_INFORMATION {
 	LARGE_INTEGER EndOfFile;
 } FILE_END_OF_FILE_INFORMATION, *PFILE_END_OF_FILE_INFORMATION;

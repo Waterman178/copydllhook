@@ -85,20 +85,17 @@ COutGoingFileToolDlg::COutGoingFileToolDlg(CWnd* pParent /*=NULL*/)
 }
 COutGoingFileToolDlg::~COutGoingFileToolDlg()
 {
-	/*USES_CONVERSION;
-	if (!my_Cstr.IsEmpty())
-	{
-		DeleteFileW(A2CW(my_Cstr));
-		my_Cstr.Empty();
-	}*/
+	USES_CONVERSION;
+	DeleteFileW(A2CW(my_Cstr));
+
 	//卸载键盘的PRINT SCREEN 按键的控制
 	//UnstallHook = (BOOL (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookKeyBord");
 	//UnstallHook();
 
 	////卸载全局消息钩子
-	/*UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookMsg");
-	UnstallHook();
-	UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "EndHookMsg");
+	//UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookMsg");
+	//UnstallHook();
+	/*UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "EndHookMsg");
 	UnstallHook();*/
 
 	//关闭已打开的文件
@@ -392,6 +389,7 @@ void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 }
 void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 {
+	USES_CONVERSION;
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
@@ -435,7 +433,10 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 			}
 			updata.Dlgthis = (CHAR*)this;
 			updata.pShExecInfo = &ShExecInfo;
-			AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
+			//AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
+			WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+			DeleteFileW(A2CW(my_Cstr));
+			::PostMessage((HWND)this, WM_UPDATE_STATIC, 0, 0);
 		}
 	}
 }

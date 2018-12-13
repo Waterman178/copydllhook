@@ -26,6 +26,7 @@ BOOL	 IsOrigProcess(CHAR* pExt)
 	CHAR			p6[] = "POWERONT.EXE";
 	CHAR			p7[] = "NOTEPAD.EXE";
 	CHAR			p8[] = "EXCEL.EXE";
+
 	return (strstr(pExt, p1) != NULL  || strstr(pExt, p2) != NULL || strstr(pExt, p3) != NULL || strstr(pExt, p4) != NULL || strstr(pExt, p5) != NULL || strstr(pExt, p6) != NULL || strstr(pExt, p7) != NULL || strstr(pExt, p8) != NULL);
 }
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -33,6 +34,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
 					 )
 {
+
 	char cIniFileName[MAX_PATH];
 	switch (ul_reason_for_call)
 	{
@@ -51,7 +53,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_THREAD_DETACH:
 		break;
 	case DLL_PROCESS_DETACH:
-		OutputDebugStringEx("DLL EXIT!\r\n");
+		//OutputDebugStringEx("DLL EXIT!\r\n");
 		if (bhook)
 		{
 			EndHook();

@@ -4,6 +4,8 @@
 #include <string>
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 #include <mutex> 
+
+//这里注意一点 SETINFOFILE 不要暴露自己设置的偏移给应用程序
 typedef struct _FILE_END_OF_FILE_INFORMATION {
 	LARGE_INTEGER EndOfFile;
 } FILE_END_OF_FILE_INFORMATION, *PFILE_END_OF_FILE_INFORMATION;
@@ -194,7 +196,7 @@ NTSTATUS WINAPI HookSetInformathionFile(HANDLE  FileHandle, PIO_STATUS_BLOCK IoS
 				{
 					myinfomation.CurrentByteOffset = ((PFILE_POSITION_INFORMATION)FileInformation)->CurrentByteOffset;
 					myinfomation.CurrentByteOffset.QuadPart += HeaderLength;
-					OutputDebugStringEx("HookSetInformathionFile::FilePositionInformation:%d", myinfomation.CurrentByteOffset.QuadPart);
+					//OutputDebugStringEx("HookSetInformathionFile::FilePositionInformation:%d", myinfomation.CurrentByteOffset.QuadPart);
 					ntStatus = m_pfnOriginalZwSetInformationFile(FileHandle,
 							&iostatus,
 							&myinfomation,    // current pos

@@ -1043,9 +1043,9 @@ Description: 开始所有的HOOK
 ************************************************/
 void __stdcall StartHook()
 {
-	m_pfnOriginalFindNextFileW = FindNextFileW StartOneHook(KERNEL32, "FindNextFileW", Fake_FindNextFileW);
+	//m_pfnOriginalFindNextFileW = FindNextFileW StartOneHook(KERNEL32, "FindNextFileW", Fake_FindNextFileW);
 	m_pfnOriginalZwSetInformationFile = ZwSetInformationFile  StartOneHook(NTDLL, "ZwSetInformationFile", HookSetInformathionFile);
-	m_pfnOriginalFindFirstFileW = FindFirstFileW StartOneHook(KERNEL32, "FindFirstFileW", Fake_FindFirstFileW);
+	//m_pfnOriginalFindFirstFileW = FindFirstFileW StartOneHook(KERNEL32, "FindFirstFileW", Fake_FindFirstFileW);
 	m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
 	if (m_pfnOriginalZwQueryDirectoryFile == 0x00) {
 		OutputDebugStringEx("m_pfnOriginalZwQueryDirectoryFile获取失败");
@@ -1172,6 +1172,9 @@ void __stdcall EndHook()
 	EndOneHook(KERNEL32, pfCloseHandle, NewCloseHandle);
 	EndOneHook(NTDLL, m_pfnOriginalZwQueryDirectoryFile, Fake_ZwQueryDirectoryFile);
 	EndOneHook(NTDLL, m_pfnOriginalZwQueryInformationFile, Fake_ZwQueryInformationFile);
+	EndOneHook(KERNEL32, m_pfnOriginalZwWriteFile, HookZwWriteFile);
+	EndOneHook(NTDLL, m_pfnOriginalZwSetInformationFile, HookSetInformathionFile);
+
 	//EndOneHook(NTDLL, getFileAttributesExW, HOOKGetFileAttributesExW);
 	//EndOneHook(KERNEL32, openFileMappingW, NewOpenFileMappingW);
 	//EndOneHook(KERNEL32, getFileSizeEx, NewGetFileSizeEx);
