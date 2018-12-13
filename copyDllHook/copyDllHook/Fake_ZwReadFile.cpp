@@ -4,8 +4,6 @@
 #include <string>
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 #include <mutex>   
-
-
 NTSTATUS
 WINAPI HookZwReadFile(
 	IN HANDLE  FileHandle,
@@ -48,7 +46,6 @@ WINAPI HookZwReadFile(
 			{
 				pRobj->FileHandle = handleListNode->FileHandle;
 				pRobj->m_FileInfo = handleListNode->m_FileInfo;
-				
 			}
 			else
 			{
@@ -65,7 +62,6 @@ WINAPI HookZwReadFile(
 		//
 		// 不需要解密，提示
 		//
-
 		delete pRobj;
 		//OutputDebugStringEx("不需要解密\r\n");
 		return m_pfnOriginalZwReadFile(FileHandle,
@@ -86,7 +82,6 @@ WINAPI HookZwReadFile(
 			// 异步
 			if (ByteOffset != NULL)
 			{
-
 				ByteOffset->QuadPart += HeaderLength;
 				lCurrentOffset.QuadPart = ByteOffset->QuadPart;
 				//OutputDebugStringEx("异步\r\n");
@@ -99,11 +94,9 @@ WINAPI HookZwReadFile(
 					&fpi,    // current pos
 					sizeof(FILE_POSITION_INFORMATION),
 					FilePositionInformation);
-
 				/*if ((lOldOffset.QuadPart > pRobj->m_FileInfo.liFileSize.QuadPart))
 				{
 					delete pRobj;
-
 					return m_pfnOriginalZwReadFile(FileHandle,
 						Event,
 						ApcRoutine,
@@ -139,9 +132,7 @@ WINAPI HookZwReadFile(
 				//	sizeof(FILE_POSITION_INFORMATION),
 				//	FilePositionInformation);
 				//OutputDebugStringEx("fpi.CurrentByteOffset.QuadPart：%08x\r\n", fpi.CurrentByteOffset.QuadPart);
-
 			}
-
 			// 当前位置 < 1024  pos + 1024
 			ntStatus = m_pfnOriginalZwReadFile(FileHandle,
 				Event,
@@ -165,7 +156,6 @@ WINAPI HookZwReadFile(
 					pOverlapped.Offset = ByteOffset->u.LowPart;
 					pOverlapped.OffsetHigh = ByteOffset->u.HighPart;
 				}
-
 				//powerpoint
 				//if (m_pStrategy->IsPowerPoint())
 				//{
@@ -179,10 +169,8 @@ WINAPI HookZwReadFile(
 				//{
 				//	bOverRideRet = GetOverlappedResult(FileHandle, &pOverlapped, &dwReaded, TRUE);
 				//}
-
 				if (Event && ntStatus == STATUS_PENDING)
 				{
-					
 					bOverRideRet = GetOverlappedResult(FileHandle, &pOverlapped, &dwReaded, TRUE);
 					//OutputDebugStringEx("Event and ntStatus bOverRideRet:%d", bOverRideRet);
 					SetEvent(Event);
@@ -191,7 +179,6 @@ WINAPI HookZwReadFile(
 				{
 					bOverRideRet = GetOverlappedResult(FileHandle, &pOverlapped, &dwReaded, TRUE);
 				}
-
 				//OutputLogMsg(LOGLEVEL_INFO, L"[%s] %d %s 0x%08x [IO]0x%08x %d", __FUNCTIONW__, FileHandle, robj.m_FileInfo.wcSrcFileName, ntStatus, IoStatusBlock->Status, bOverRideRet);
 			}
 
@@ -216,9 +203,7 @@ WINAPI HookZwReadFile(
 						IoStatusBlock->Information,
 						pRobj->m_FileInfo.rc4Key);*/
 				//OutputDebugStringEx("lCurrentOffset：%08x", lCurrentOffset.QuadPart);
-				
 				///::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
-
 				//OutputDebugStringEx("当前偏移:%d", fpi.CurrentByteOffset.QuadPart);
 				//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 				for (int i = 0; i < IoStatusBlock->Information; i++)
@@ -234,12 +219,10 @@ WINAPI HookZwReadFile(
 			}
 			delete pRobj;
 			return ntStatus;
-		} //
-
+		}
 	}
 	//EXIT:
 	//MessageBox(NULL, "1111", "dsadsa", MH_OK);
-
 	ntStatus = m_pfnOriginalZwReadFile(FileHandle,
 		Event,
 		ApcRoutine,
@@ -249,7 +232,6 @@ WINAPI HookZwReadFile(
 		Length,
 		ByteOffset,
 		Key);
-
 	if (pRobj!=NULL)
 	{
 		delete pRobj;

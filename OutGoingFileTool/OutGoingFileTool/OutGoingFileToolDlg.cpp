@@ -454,7 +454,7 @@ static int InjectDll(DWORD dwProcessId, PTCHAR szDllName)
 	//提高权限相关操作  
 	//EnablePrivilege(TRUE);
 	//1. 打开进程  
-	HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS,   //打开进程权限  
+	HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS,     //打开进程权限  
 		FALSE,                                              //是否可继承   
 		dwProcessId);                                       //进程ID  
 

@@ -51,8 +51,6 @@ typedef struct _FILE_FULL_DIR_INFORMATION {
 	WCHAR         FileName77[1];
 } FILE_FULL_DIR_INFORMATION, *PFILE_FULL_DIR_INFORMATION;
 
-
-
 typedef struct _FILE_MODE_INFORMATION {
 	ULONG Mode;
 } FILE_MODE_INFORMATION, *PFILE_MODE_INFORMATION;
@@ -111,9 +109,6 @@ typedef struct _FILE_ID_FULL_DIR_INFORMATION {
 	WCHAR         FileNam2e1[1];
 } FILE_ID_FULL_DIR_INFORMATION, *PFILE_ID_FULL_DIR_INFORMATION;
 
-
-
-
 typedef struct _FILE_ID_GLOBAL_TX_DIR_INFORMATION {
 	ULONG         NextEntryOffset;
 	ULONG         FileIndex;
@@ -130,9 +125,6 @@ typedef struct _FILE_ID_GLOBAL_TX_DIR_INFORMATION {
 	ULONG         TxInfoFlags;
 	WCHAR         FileName22[1];
 } FILE_ID_GLOBAL_TX_DIR_INFORMATION, *PFILE_ID_GLOBAL_TX_DIR_INFORMATION;
-
-
-
 typedef struct _FILE_ID_BOTH_DIR_INFORMATION {
 	ULONG         NextEntryOffset;
 	ULONG         FileIndex;
@@ -150,12 +142,7 @@ typedef struct _FILE_ID_BOTH_DIR_INFORMATION {
 	LARGE_INTEGER FileId;
 	WCHAR         FileNam335e[1];
 } FILE_ID_BOTH_DIR_INFORMATION, *PFILE_ID_BOTH_DIR_INFORMATION;
-
-
-
 FILE_ALL_INFORMATION fsiall;
-
-
 NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 	PIO_STATUS_BLOCK       IoStatusBlock,
 	PVOID                  FileInformation,
@@ -404,6 +391,5 @@ NTSTATUS NTAPI Fake_ZwQueryInformationFile(HANDLE FileHandle,
 			mutexObj.unlock();
 		}
 	}
-
 	return status;
 }
