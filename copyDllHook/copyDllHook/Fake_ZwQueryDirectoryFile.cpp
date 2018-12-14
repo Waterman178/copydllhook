@@ -241,3 +241,4 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 	}
 	return status;
 }
+

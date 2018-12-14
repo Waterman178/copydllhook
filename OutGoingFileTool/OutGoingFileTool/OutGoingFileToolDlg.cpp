@@ -250,10 +250,10 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	//InstallHook();
 	//
 	////全局消息钩子
-	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookMsg");
-	//InstallHook();
-	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "StartHookMsg");
-	//InstallHook();
+	InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookMsg");
+	InstallHook();
+	/*InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "StartHookMsg");
+	InstallHook();*/
 	//LoadLibraryA("copyDllHook.dll");
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -463,30 +463,30 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		auto orgdll64 = GetWorkDir();
 		orgdll64.Replace("\\", "\\\\");
 		orgdll64 += "copyDllHook64.dll";
-		if (ShellExecuteEx(&ShExecInfo))
-		{
-			HANDLE hid = ShExecInfo.hProcess;
-			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
-			if (!IsWow64(OpenProcess(PROCESS_TERMINATE, FALSE, dwId)))
-			{
-		  	if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
-			{
-				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
-				return;
-			}
-			}
-			else
-			{
-				if (InjectDll(dwId, orgdll64.GetBuffer()) == -1)
-				{
-					::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
-					return;
-				}
-			}
-			updata.Dlgthis = (CHAR*)this;
-			updata.pShExecInfo = &ShExecInfo;
-			AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
-		}
+		//if (ShellExecuteEx(&ShExecInfo))
+		//{
+		//	HANDLE hid = ShExecInfo.hProcess;
+		//	DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
+		//	/*if (!IsWow64(OpenProcess(PROCESS_TERMINATE, FALSE, dwId)))
+		//	{
+		//  	if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
+		//	{
+		//		::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+		//		return;
+		//	}
+		//	}
+		//	else
+		//	{
+		//		if (InjectDll(dwId, orgdll64.GetBuffer()) == -1)
+		//		{
+		//			::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+		//			return;
+		//		}
+		//	}
+		//	updata.Dlgthis = (CHAR*)this;
+		//	updata.pShExecInfo = &ShExecInfo;
+		//	AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);*/
+		//}
 	}
 }
  CString GetWorkDir()

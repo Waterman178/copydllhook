@@ -313,7 +313,7 @@ static HANDLE WINAPI NewCreateFileW(
 			ReadFile(keyHan, fileHead, FILE_SIGN_LEN, &readLen, NULL);
 			FlushFileBuffers(keyHan);
 			//SetFilePointer(keyHan, NULL, NULL, FILE_BEGIN);
-			//OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
+			OutputDebugStringEx("******HOOK: fileHead = %s\r\n", fileHead);
 			if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 			{
 				pfCloseHandle(keyHan);
