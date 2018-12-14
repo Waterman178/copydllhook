@@ -10,6 +10,31 @@
 #include <stdio.h>
 #include <TlHelp32.h>
 
+typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+
+LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+BOOL IsWow64(HANDLE PROCESS)
+{
+	BOOL bIsWow64 = FALSE;
+
+	//IsWow64Process is not available on all supported versions of Windows.  
+	//Use GetModuleHandle to get a handle to the DLL that contains the function  
+	//and GetProcAddress to get a pointer to the function if available.  
+
+	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
+		GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
+
+	if (NULL != fnIsWow64Process)
+	{
+		if (!fnIsWow64Process(PROCESS, &bIsWow64))
+		{
+			//handle error  
+		}
+	}
+	return bIsWow64;
+}
+
 
 typedef struct _UPDATASTATIC
 {
@@ -147,6 +172,7 @@ END_MESSAGE_MAP()
 
 BOOL COutGoingFileToolDlg::OnInitDialog()
 {
+	char PROGRAM_path[255] = { 0 };
 	int Ret = ::MessageBox(NULL, _T("请关闭正在打开的文档，并在查看保密文件后及时关闭此程序，以免造成误加密"), _T("提示"), MB_YESNO | MB_ICONEXCLAMATION);
 	if (Ret == 7)
 		exit(0);
@@ -155,10 +181,22 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
 	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
 
+
+	SHGetSpecialFolderPath(0, PROGRAM_path, CSIDL_PROGRAM_FILESX86, 0);
+	CString temp_PROGRAM_pathx86 = CString(PROGRAM_path);
+	temp_PROGRAM_pathx86.Replace("\\", "\\\\");
+	temp_PROGRAM_pathx86 += "\\\\";
+	temp_PROGRAM_pathx86 += "copydllhook.dll";
+	CString temp_PROGRAM_pathx64 = CString(PROGRAM_path);
+	temp_PROGRAM_pathx64.Replace("\\", "\\\\");
+	temp_PROGRAM_pathx64 += "\\\\";
+	temp_PROGRAM_pathx64 += "copydllhook64.dll";
+	CopyFile("copydllhook.dll", temp_PROGRAM_pathx86.GetBuffer(),TRUE);
+	CopyFile("copydllhook64.dll", temp_PROGRAM_pathx64.GetBuffer(), TRUE);
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
-		ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
+	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
@@ -421,22 +459,33 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		//SetFileAttributes(str, FILE_ATTRIBUTE_READONLY);
 		auto orgdll = GetWorkDir();
 		orgdll.Replace("\\", "\\\\");
-		orgdll += _T("copyDllHook.dll");
+		orgdll += "copyDllHook.dll";
+		auto orgdll64 = GetWorkDir();
+		orgdll64.Replace("\\", "\\\\");
+		orgdll64 += "copyDllHook64.dll";
 		if (ShellExecuteEx(&ShExecInfo))
 		{
 			HANDLE hid = ShExecInfo.hProcess;
 			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
+			if (!IsWow64(OpenProcess(PROCESS_TERMINATE, FALSE, dwId)))
+			{
 		  	if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
 			{
 				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
 				return;
 			}
+			}
+			else
+			{
+				if (InjectDll(dwId, orgdll64.GetBuffer()) == -1)
+				{
+					::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+					return;
+				}
+			}
 			updata.Dlgthis = (CHAR*)this;
 			updata.pShExecInfo = &ShExecInfo;
-			//AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
-			WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
-			DeleteFileW(A2CW(my_Cstr));
-			::PostMessage((HWND)this, WM_UPDATE_STATIC, 0, 0);
+			AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
 		}
 	}
 }

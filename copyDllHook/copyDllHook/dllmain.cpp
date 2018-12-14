@@ -41,10 +41,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_PROCESS_ATTACH:
 		GetModuleFileNameA(NULL, cIniFileName, sizeof(cIniFileName));
 		//OutputDebugStringEx("cIniFileName%s£¬PID:%d \r\n", cIniFileName, GetCurrentProcessId());
-		if (IsOrigProcess(cIniFileName) == NULL)
+		/*if (IsOrigProcess(cIniFileName) == NULL)
 		{
 			break;
-		}
+		}*/
 	    bhook = true;
 		StartHook();
 		break;

@@ -8,6 +8,7 @@
 #include "GlobalHook.h"
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
 #include <mutex>   
+#include "Shlobj.h"
 
 #define FILE_SIGN "DSKFJLSKDF"
 #define FileName "RjiSafe9575"
@@ -26,14 +27,15 @@ BOOL IsOrigfileExt(WCHAR* pExt)
 	WCHAR			p7[] = L".ppt";
 	WCHAR			p8[] = L".pptx";
 	WCHAR			p9[] = L".jpg";
-	WCHAR		    p10[] = L".xml";
+	WCHAR		    p10[] = L".png";
 	WCHAR		    p11[] = L".mp4";
 	WCHAR		    p12[] = L".mp3";
+	WCHAR		    p13[] = L".et";
 	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL ||
 		wcswcs(pExt, p3) != NULL || wcswcs(pExt, p4) != NULL || wcswcs(pExt, p5) != NULL
 		|| wcswcs(pExt, p6) != NULL || wcswcs(pExt, p7) != NULL || wcswcs(pExt, p8) != NULL
 		|| wcswcs(pExt, p9) != NULL || wcswcs(pExt, p10) != NULL || wcswcs(pExt, p11) != NULL
-		|| wcswcs(pExt, p12) != NULL);
+		|| wcswcs(pExt, p12) != NULL|| wcswcs(pExt, p13) != NULL);
 }
 
 
@@ -796,12 +798,24 @@ static BOOL WINAPI NewCreateProcessW(
 	_Out_       LPPROCESS_INFORMATION lpProcessInformation
 )
 {
+	char PROGRAM_path[255] = { 0 };
 	OutputDebugStringEx(" THE NewCreateProcessW FUNCTION !!!!\r\n");
 	BOOL result;
+	SHGetSpecialFolderPathA(0, PROGRAM_path, CSIDL_PROGRAM_FILESX86, 0);
+	CString temp_PROGRAM_pathx86 = CString(PROGRAM_path);
+	temp_PROGRAM_pathx86.Replace("\\", "\\\\");
+	temp_PROGRAM_pathx86 += "\\\\";
+	temp_PROGRAM_pathx86 += "copydllhook.dll";
+	CString temp_PROGRAM_pathx64 = CString(PROGRAM_path);
+	temp_PROGRAM_pathx64.Replace("\\", "\\\\");
+	temp_PROGRAM_pathx64 += "\\\\";
+	temp_PROGRAM_pathx64 += "copydllhook64.dll";
 	result = createProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
-
-	//InjectDll(lpProcessInformation->dwProcessId, _T("C:\\Users\\Wrench\\Desktop\\1111\\copyDllHook.dll"));
-
+#ifdef _X86_
+	InjectDll(lpProcessInformation->dwProcessId, _T(temp_PROGRAM_pathx86.GetBuffer()));
+#else
+	InjectDll(lpProcessInformation->dwProcessId, _T(temp_PROGRAM_pathx64.GetBuffer()));
+#endif
 	return result;
 }
 /***********************************************
@@ -1081,7 +1095,7 @@ void __stdcall StartHook()
 	//	OutputDebugStringEx("m_pfnOriginalZwSetInformationFileªÒ»° ß∞‹");
 	//	return;}
 	orgZwCreateSection = ZwCreateSection StartOneHook(NTDLL, "ZwCreateSection", HookZwCreateSection);
-	//createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
+	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
 	pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 	createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 	m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
