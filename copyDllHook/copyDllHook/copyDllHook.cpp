@@ -7,113 +7,98 @@
 #include "GetParentProID.h"
 #include "GlobalHook.h"
 #include "../../OutGoingFileTool/OutGoingFileTool/FIlestruct.h"
-#include <mutex>   
+#include <mutex>
 #include "Shlobj.h"
 
 #define FILE_SIGN "DSKFJLSKDF"
 #define FileName "RjiSafe9575"
 #define FILE_SIGN_LEN 11
 
-
-
-BOOL IsOrigfileExt(WCHAR* pExt)
+BOOL IsOrigfileExt(WCHAR *pExt)
 {
-	WCHAR			p1[] = L".docx";
-	WCHAR			p2[] = L".doc";
-	WCHAR			p3[] = L".pdf";
-	WCHAR			p4[] = L".xls";
-	WCHAR			p5[] = L".xlsx";
-	WCHAR			p6[] = L".txt";
-	WCHAR			p7[] = L".ppt";
-	WCHAR			p8[] = L".pptx";
-	WCHAR			p9[] = L".jpg";
-	WCHAR		    p10[] = L".png";
-	WCHAR		    p11[] = L".mp4";
-	WCHAR		    p12[] = L".mp3";
-	WCHAR		    p13[] = L".et";
+	WCHAR p1[] = L".docx";
+	WCHAR p2[] = L".doc";
+	WCHAR p3[] = L".pdf";
+	WCHAR p4[] = L".xls";
+	WCHAR p5[] = L".xlsx";
+	WCHAR p6[] = L".txt";
+	WCHAR p7[] = L".ppt";
+	WCHAR p8[] = L".pptx";
+	WCHAR p9[] = L".jpg";
+	WCHAR p10[] = L".png";
+	WCHAR p11[] = L".mp4";
+	WCHAR p12[] = L".mp3";
+	WCHAR p13[] = L".et";
 	return (wcswcs(pExt, p1) != NULL || wcswcs(pExt, p2) != NULL ||
-		wcswcs(pExt, p3) != NULL || wcswcs(pExt, p4) != NULL || wcswcs(pExt, p5) != NULL
-		|| wcswcs(pExt, p6) != NULL || wcswcs(pExt, p7) != NULL || wcswcs(pExt, p8) != NULL
-		|| wcswcs(pExt, p9) != NULL || wcswcs(pExt, p10) != NULL || wcswcs(pExt, p11) != NULL
-		|| wcswcs(pExt, p12) != NULL|| wcswcs(pExt, p13) != NULL);
+			wcswcs(pExt, p3) != NULL || wcswcs(pExt, p4) != NULL || wcswcs(pExt, p5) != NULL || wcswcs(pExt, p6) != NULL || wcswcs(pExt, p7) != NULL || wcswcs(pExt, p8) != NULL || wcswcs(pExt, p9) != NULL || wcswcs(pExt, p10) != NULL || wcswcs(pExt, p11) != NULL || wcswcs(pExt, p12) != NULL || wcswcs(pExt, p13) != NULL);
 }
 
+NTSTATUS(NTAPI *m_pfnOriginalZwQueryDirectoryFile)
+(
+	_In_ HANDLE FileHandle,
+	_In_opt_ HANDLE Event,
+	_In_opt_ PIO_APC_ROUTINE ApcRoutine,
+	_In_opt_ PVOID ApcContext,
+	_Out_ PIO_STATUS_BLOCK IoStatusBlock,
+	_Out_ PVOID FileInformation,
+	_In_ ULONG Length,
+	_In_ FILE_INFORMATION_CLASS FileInformationClass,
+	_In_ BOOLEAN ReturnSingleEntry,
+	_In_opt_ PUNICODE_STRING FileName0,
+	_In_ BOOLEAN RestartScan);
+NTSTATUS(NTAPI *m_pfnOriginalZwQueryInformationFile)
+(HANDLE FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID FileInformation, ULONG Length, ULONG FileInformationClass);
+NTSTATUS(NTAPI *orgZwCreateSection)
+(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
+NTSTATUS(NTAPI *m_pfnOriginalZwReadFile)
+(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
+NTSTATUS(NTAPI *m_pfnOriginalZwWriteFile)
+(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
+NTSTATUS(NTAPI *m_pfnOriginalZwSetInformationFile)
+(HANDLE FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, ULONG Length, FILE_INFORMATION_CLASS FileInformationClass);
 
-NTSTATUS(NTAPI  * m_pfnOriginalZwQueryDirectoryFile)(
-	_In_     HANDLE                 FileHandle,
-	_In_opt_ HANDLE                 Event,
-	_In_opt_ PIO_APC_ROUTINE        ApcRoutine,
-	_In_opt_ PVOID                  ApcContext,
-	_Out_    PIO_STATUS_BLOCK       IoStatusBlock,
-	_Out_    PVOID                  FileInformation,
-	_In_     ULONG                  Length,
-	_In_     FILE_INFORMATION_CLASS FileInformationClass,
-	_In_     BOOLEAN                ReturnSingleEntry,
-	_In_opt_ PUNICODE_STRING        FileName0,
-	_In_     BOOLEAN                RestartScan
-	);
-NTSTATUS(NTAPI  * m_pfnOriginalZwQueryInformationFile)(HANDLE  FileHandle, IO_STATUS_BLOCK *IoStatusBlock, PVOID  FileInformation, ULONG  Length, ULONG  FileInformationClass);
-NTSTATUS(NTAPI* orgZwCreateSection)(__out PHANDLE SectionHandle, __in ACCESS_MASK DesiredAccess, __in_opt POBJECT_ATTRIBUTES ObjectAttributes, __in_opt PLARGE_INTEGER MaximumSize, __in ULONG SectionPageProtection, __in ULONG AllocationAttributes, __in_opt HANDLE FileHandle);
-NTSTATUS(NTAPI*  m_pfnOriginalZwReadFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
-NTSTATUS(NTAPI*  m_pfnOriginalZwWriteFile) (HANDLE FileHandle, HANDLE  Event, PIO_APC_ROUTINE  ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID  Buffer, ULONG Length, PLARGE_INTEGER  ByteOffset, PULONG  Key);
-NTSTATUS(NTAPI * m_pfnOriginalZwSetInformationFile)(HANDLE  FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID  FileInformation, ULONG  Length, FILE_INFORMATION_CLASS FileInformationClass);
+HANDLE(WINAPI *m_pfnOriginalFindFirstFileW)
+(
+	LPCWSTR lpFileName,
+	LPWIN32_FIND_DATAW lpFindFileData);
 
-HANDLE(WINAPI*  m_pfnOriginalFindFirstFileW)(
-	LPCWSTR             lpFileName,
-	LPWIN32_FIND_DATAW lpFindFileData
-	);
-
-BOOLEAN(WINAPI*  m_pfnOriginalFindNextFileW)(
-	HANDLE             hFindFile,
-	LPWIN32_FIND_DATAW lpFindFileData
-	);
-
+BOOLEAN(WINAPI *m_pfnOriginalFindNextFileW)
+(
+	HANDLE hFindFile,
+	LPWIN32_FIND_DATAW lpFindFileData);
 std::list<HANDLE> MAPHAD_list;
 std::list<HANDLE>::iterator map_ite;
 std::list<HANDLE> MAPHADD_list;
 std::list<HANDLE>::iterator mapp_ite;
 std::list<FileHandleRelationNode> m_handleList;
 std::list<FileHandleRelationNode>::iterator handleListNode;
-BOOL  fristopen = FALSE;
+BOOL fristopen = FALSE;
 
 //zwQueryInformationFile ;
-myZwCreateSection    m_pfnOriginalZwCreateSection;
-pfZwMapViewOfSection  m_pfnOriginalZwMapViewOfSection;
+myZwCreateSection m_pfnOriginalZwCreateSection;
+pfZwMapViewOfSection m_pfnOriginalZwMapViewOfSection;
 pfZwClose m_pfnOriginalZwClose;
 pfmyRtlInitUnicodeString m_pfnOriginalRtlInitUnicodeString;
-pfZwUnmapViewOfSection  m_pfnOriginalZwUnmapViewOfSection;
-
-
+pfZwUnmapViewOfSection m_pfnOriginalZwUnmapViewOfSection;
 //È«¾Ö±äÁ¿
-HANDLE  dochFile = (HANDLE)-1;//wordµÄ¼ÓÃÜÎÄ¼þµÄ¾ä±ú
+HANDLE dochFile = (HANDLE)-1; //wordµÄ¼ÓÃÜÎÄ¼þµÄ¾ä±ú
 HANDLE hMap = ::OpenFileMapping(FILE_MAP_ALL_ACCESS, 0, _T("processMem_FUCK"));
 PVOID pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-void OutputDebugStringEx(const char *strOutputString, ...)
-
-{
-
+void OutputDebugStringEx(const char *strOutputString, ...){
 	va_list vlArgs = NULL;
-
 	va_start(vlArgs, strOutputString);
-
 	size_t nLen = _vscprintf(strOutputString, vlArgs) + 1;
-
 	char *strBuffer = new char[nLen];
-
 	_vsnprintf_s(strBuffer, nLen, nLen, strOutputString, vlArgs);
-
 	va_end(vlArgs);
-
 	OutputDebugStringA(strBuffer);
-
 	delete[] strBuffer;
-
 }
 
 HANDLE WINAPI Fake_FindFirstFileW(
-	LPCWSTR             lpFileName,
-	LPWIN32_FIND_DATAW lpFindFileData
-) {
+	LPCWSTR lpFileName,
+	LPWIN32_FIND_DATAW lpFindFileData)
+{
 	//std::mutex mutexObj;
 	//OutputDebugStringEx("£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡£¡Fake_FindFirstFileW find");
 	//int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
@@ -131,7 +116,7 @@ HANDLE WINAPI Fake_FindFirstFileW(
 	////OutputDebugStringEx("Fake_FindFirstFileW open File:%ws", lpFileName);
 	//if (memcmp(fileHead, FileName, FILE_SIGN_LEN) == 0)
 	//{
-	//	
+	//
 	//	ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
 	//	OutputDebugStringEx("Fake_FindFirstFileW find org File lpFileInformation->nFileSizeLow:%d", lpFindFileData->nFileSizeLow);
 	//	lpFindFileData->nFileSizeLow -= HeadFlaglength;
@@ -147,22 +132,18 @@ HANDLE WINAPI Fake_FindFirstFileW(
 	//memcpy(File2Name.GetBuffer(), lpFileName, wcslen(lpFileName) * sizeof(wchar_t));
 	//File2Name += "\0\0";
 	WIN32_FIND_DATA pNextInfo;
-	auto  ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
+	auto ret = m_pfnOriginalFindFirstFileW(lpFileName, lpFindFileData);
 	OutputDebugStringEx("Fake_FindFirstFileW open File:%ws", lpFindFileData->cFileName);
 	return ret;
 }
 BOOLEAN WINAPI Fake_FindNextFileW(HANDLE hFindFile,
-	LPWIN32_FIND_DATAW lpFindFileData) {
+								  LPWIN32_FIND_DATAW lpFindFileData)
+{
 	BOOLEAN ret;
-    ret = m_pfnOriginalFindNextFileW(hFindFile, lpFindFileData);
+	ret = m_pfnOriginalFindNextFileW(hFindFile, lpFindFileData);
 	//OutputDebugStringEx("Fake_FindNextFileW open File:%ws", lpFindFileData->cFileName);
 	return ret;
 }
-
-
-
-
-
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>±»HOOKµÄº¯ÊýµÄÐÂ¹¦ÄÜ<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 /***********************************************
 OpenClipboard´ò¿ª¼ôÇÐ°å
@@ -176,7 +157,7 @@ OpenClipboard´ò¿ª¼ôÇÐ°å
 //		return FALSE;
 //	}
 //	return openClipboard(hWndNewOwner);
-//	
+//
 //}
 
 /***********************************************
@@ -221,13 +202,13 @@ static BOOL WINAPI NewShowWindow(HWND hWnd, int nCmdShow)
 SetWindowPos()º¯Êý ¸Ä±äÒ»¸ö×Ó´°¿Ú£¬
 µ¯³öÊ½´°¿Ú»ò¶¥²ã´°¿ÚµÄ³ß´ç£¬Î»ÖÃºÍZÐò¹¦ÄÜ
 ************************************************/
-static BOOL WINAPI NewSetWindowPos(_In_     HWND hWnd,//ÔÚzÐòÖÐµÄÎ»ÓÚ±»ÖÃÎ»µÄ´°¿ÚÇ°µÄ´°¿Ú¾ä±ú¡£¸Ã²ÎÊý±ØÐëÎªÒ»¸ö´°¿Ú¾ä±ú
-	_In_opt_ HWND hWndInsertAfter,//ÓÃÓÚ±êÊ¶ÔÚz-Ë³ÐòµÄ´Ë CWnd ¶ÔÏóÖ®Ç°µÄ CWnd ¶ÔÏó
-	_In_     int  X,//ÒÔ¿Í»§×ø±êÖ¸¶¨´°¿ÚÐÂÎ»ÖÃµÄ×ó±ß½ç¡£
-	_In_     int  Y,//ÒÔ¿Í»§×ø±êÖ¸¶¨´°¿ÚÐÂÎ»ÖÃµÄ¶¥±ß½ç¡£
-	_In_     int  cx,//ÒÔÏñËØÖ¸¶¨´°¿ÚµÄÐÂµÄ¿í¶È¡£
-	_In_     int  cy,//ÒÔÏñËØÖ¸¶¨´°¿ÚµÄÐÂµÄ¸ß¶È¡£
-	_In_     UINT uFlags//´°¿Ú³ß´çºÍ¶¨Î»µÄ±êÖ¾,15ÖÖ²ÎÊý
+static BOOL WINAPI NewSetWindowPos(_In_ HWND hWnd,				  //ÔÚzÐòÖÐµÄÎ»ÓÚ±»ÖÃÎ»µÄ´°¿ÚÇ°µÄ´°¿Ú¾ä±ú¡£¸Ã²ÎÊý±ØÐëÎªÒ»¸ö´°¿Ú¾ä±ú
+								   _In_opt_ HWND hWndInsertAfter, //ÓÃÓÚ±êÊ¶ÔÚz-Ë³ÐòµÄ´Ë CWnd ¶ÔÏóÖ®Ç°µÄ CWnd ¶ÔÏó
+								   _In_ int X,					  //ÒÔ¿Í»§×ø±êÖ¸¶¨´°¿ÚÐÂÎ»ÖÃµÄ×ó±ß½ç¡£
+								   _In_ int Y,					  //ÒÔ¿Í»§×ø±êÖ¸¶¨´°¿ÚÐÂÎ»ÖÃµÄ¶¥±ß½ç¡£
+								   _In_ int cx,					  //ÒÔÏñËØÖ¸¶¨´°¿ÚµÄÐÂµÄ¿í¶È¡£
+								   _In_ int cy,					  //ÒÔÏñËØÖ¸¶¨´°¿ÚµÄÐÂµÄ¸ß¶È¡£
+								   _In_ UINT uFlags				  //´°¿Ú³ß´çºÍ¶¨Î»µÄ±êÖ¾,15ÖÖ²ÎÊý
 )
 {
 
@@ -238,8 +219,8 @@ static BOOL WINAPI NewSetWindowPos(_In_     HWND hWnd,//ÔÚzÐòÖÐµÄÎ»ÓÚ±»ÖÃÎ»µÄ´°¿
 SetWindowTextW()º¯Êý  SetWindowTextA()º¯Êý
 ÉèÖÃ¶Ô»°¿ò±êÌâ»òÕß¶Ô»°¿ò¿Ø¼þÎÄ±¾µÄÄÚÈÝ
 ************************************************/
-static BOOL WINAPI NewSetWindowTextW(HWND hwnd, //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä±ú
-	LPCTSTR lpString)//Ö¸ÏòÒ»¸ö¿Õ½áÊøµÄ×Ö·û´®µÄÖ¸Õë£¬¸Ã×Ö·û´®½«×÷Îª´°¿Ú»ò¿Ø¼þµÄÐÂÎÄ±¾
+static BOOL WINAPI NewSetWindowTextW(HWND hwnd,		   //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä±ú
+									 LPCTSTR lpString) //Ö¸ÏòÒ»¸ö¿Õ½áÊøµÄ×Ö·û´®µÄÖ¸Õë£¬¸Ã×Ö·û´®½«×÷Îª´°¿Ú»ò¿Ø¼þµÄÐÂÎÄ±¾
 {
 	//OutputDebugStringEx("HOOK  setWindowW: hwnd = %d,nCmdShow = %s", hwnd, lpString);
 	//CString otherSave = _T("Áí´æÎª");
@@ -266,8 +247,8 @@ static BOOL WINAPI NewSetWindowTextW(HWND hwnd, //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä
 	return setWindowTextW(hwnd, lpString);
 }
 
-static BOOL WINAPI NewSetWindowTextA(HWND hwnd, //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä±ú
-	LPCTSTR lpString)//Ö¸ÏòÒ»¸ö¿Õ½áÊøµÄ×Ö·û´®µÄÖ¸Õë£¬¸Ã×Ö·û´®½«×÷Îª´°¿Ú»ò¿Ø¼þµÄÐÂÎÄ±¾
+static BOOL WINAPI NewSetWindowTextA(HWND hwnd,		   //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä±ú
+									 LPCTSTR lpString) //Ö¸ÏòÒ»¸ö¿Õ½áÊøµÄ×Ö·û´®µÄÖ¸Õë£¬¸Ã×Ö·û´®½«×÷Îª´°¿Ú»ò¿Ø¼þµÄÐÂÎÄ±¾
 {
 	//OutputDebugStringEx("HOOK  setWindowA: hwnd = %d,nCmdShow = %s", hwnd, lpString);
 	return setWindowTextA(hwnd, lpString);
@@ -277,18 +258,19 @@ static BOOL WINAPI NewSetWindowTextA(HWND hwnd, //Òª¸Ä±äÎÄ±¾ÄÚÈÝµÄ´°¿Ú»ò¿Ø¼þµÄ¾ä
 CreateFileW()º¯Êý			º¯Êý´´½¨»ò´ò¿ªÏÂÁÐ¶ÔÏó
 ************************************************/
 static HANDLE WINAPI NewCreateFileW(
-	_In_     LPCTSTR               lpFileName,
-	_In_     DWORD                 dwDesiredAccess,
-	_In_     DWORD                 dwShareMode,
+	_In_ LPCTSTR lpFileName,
+	_In_ DWORD dwDesiredAccess,
+	_In_ DWORD dwShareMode,
 	_In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-	_In_     DWORD                 dwCreationDisposition,
-	_In_     DWORD                 dwFlagsAndAttributes,
-	_In_opt_ HANDLE                hTemplateFile)
+	_In_ DWORD dwCreationDisposition,
+	_In_ DWORD dwFlagsAndAttributes,
+	_In_opt_ HANDLE hTemplateFile)
 {
 	HANDLE keyHan = nullptr;
 	BOOL bReadDecrypt = FALSE;
 	std::mutex mutexObj;
-	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && IsOrigfileExt((WCHAR*)lpFileName) != NULL) {
+	if (memcmp(lpFileName, _T("\\\\"), 4) != 0 && IsOrigfileExt((WCHAR *)lpFileName) != NULL)
+	{
 		keyHan = createFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		//OutputDebugStringEx(">>>>>>>>HOOK THE NewCreateFileW %d %ws\r\n", keyHan, lpFileName);
 		mutexObj.lock();
@@ -304,7 +286,8 @@ static HANDLE WINAPI NewCreateFileW(
 			}
 		}
 		mutexObj.unlock();
-		if (keyHan != INVALID_HANDLE_VALUE) {
+		if (keyHan != INVALID_HANDLE_VALUE)
+		{
 			DWORD readLen;
 			LPVOID fileHead = new char[FILE_SIGN_LEN + 1];
 			ZeroMemory(fileHead, FILE_SIGN_LEN + 1);
@@ -345,10 +328,10 @@ static HANDLE WINAPI NewCreateFileW(
 Readfile()º¯Êý			º¯Êý¶ÁÈ¡ÎÄ¼þ¹¦ÄÜ   ¶ÁÈ¡ÎÄ¼þ²»ÊÇÕâÃ´Ð´£¬ÕâÀï×÷·Ï
 ************************************************/
 static int WINAPI NewReadfile(
-	_In_        HANDLE       hFile,
-	_Out_       LPVOID       lpBuffer,
-	_In_        DWORD        nNumberOfBytesToRead,
-	_Out_opt_   LPDWORD      lpNumberOfBytesRead,
+	_In_ HANDLE hFile,
+	_Out_ LPVOID lpBuffer,
+	_In_ DWORD nNumberOfBytesToRead,
+	_Out_opt_ LPDWORD lpNumberOfBytesRead,
 	_Inout_opt_ LPOVERLAPPED lpOverlapped)
 {
 	OutputDebugStringEx(">>>>>>>HOOK:   readfile function !!!\r\n");
@@ -369,7 +352,7 @@ static int WINAPI NewReadfile(
 		if (currentPointer + nNumberOfBytesToRead > NewGetFileSize(hFile, NULL))
 		{
 			OutputDebugStringEx(">>>>>>>HOOK:  currentPointer + nNumberOfBytesToRead > getFileSize(hFile, NULL) - 10!!!\r\n");
-			DWORD  temp = NewGetFileSize(hFile, NULL) - currentPointer;
+			DWORD temp = NewGetFileSize(hFile, NULL) - currentPointer;
 			if (temp > 0)
 			{
 				nNumberOfBytesToRead = temp;
@@ -378,7 +361,8 @@ static int WINAPI NewReadfile(
 
 		OutputDebugStringEx("$$$$$********$$$$$ HOOK!!!!!currentPointer = %d,nNumberOfBytesToRead=%d\r\n", currentPointer, nNumberOfBytesToRead);
 		Ret = readfile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
-		for (int i = 0; i < *lpNumberOfBytesRead; i++) {
+		for (int i = 0; i < *lpNumberOfBytesRead; i++)
+		{
 			((char *)lpBuffer)[i] ^= 'a';
 		}
 
@@ -406,9 +390,9 @@ static BOOL WINAPI New_WriteFile(
 {
 	//OutputDebugStringEx(">>>>>>>>HOOK THE WRITEFILE hFile=%d,dochFile=%d", hFile, dochFile);
 
-		// char *aa = new char[nNumberOfBytesToRead];
-		//rc4(FILE_SIGN, FILE_SIGN_LEN, (char *)lpBuffer, nNumberOfBytesToWrite, (char *)lpBuffer);
-		//lpBuffer = aa;
+	// char *aa = new char[nNumberOfBytesToRead];
+	//rc4(FILE_SIGN, FILE_SIGN_LEN, (char *)lpBuffer, nNumberOfBytesToWrite, (char *)lpBuffer);
+	//lpBuffer = aa;
 
 	return writeFile(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
 }
@@ -420,8 +404,7 @@ static LPVOID WINAPI NewMapViewOfFile(
 	__in DWORD dwDesiredAccess,
 	__in DWORD dwFileOffsetHigh,
 	__in DWORD dwFileOffsetLow,
-	__in SIZE_T dwNumberOfBytesToMap
-)
+	__in SIZE_T dwNumberOfBytesToMap)
 {
 
 	OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFile buf %d \r\n", hFileMappingObject);
@@ -456,14 +439,13 @@ static LPVOID WINAPI NewMapViewOfFileEx(
 	__in DWORD dwFileOffsetHigh,
 	__in DWORD dwFileOffsetLow,
 	__in SIZE_T dwNumberOfBytesToMap,
-	__in LPVOID lpBaseAddress
-)
+	__in LPVOID lpBaseAddress)
 {
 	//char* buf = (char *)mapViewOfFileEx(hFileMappingObject, dwDesiredAccess, 0, 30, 30, lpBaseAddress);
 
 	//OutputDebugStringEx(">>>>>>>>HOOK THE MapViewOfFileEx buf = %s",buf);
-//	OutputDebugStringEx("hFileMappingObject = %d,dwDesiredAccess=%d,dwFileOffsetHigh=%d", hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh);
-//	OutputDebugStringEx("dwFileOffsetLow = %d,dwNumberOfBytesToMap=%d,lpBaseAddress=%d", dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
+	//	OutputDebugStringEx("hFileMappingObject = %d,dwDesiredAccess=%d,dwFileOffsetHigh=%d", hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh);
+	//	OutputDebugStringEx("dwFileOffsetLow = %d,dwNumberOfBytesToMap=%d,lpBaseAddress=%d", dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
 	return mapViewOfFileEx(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
 }
 /***********************************************
@@ -482,7 +464,7 @@ static HANDLE WINAPI NewCreateFileMapping(
 	HANDLE fileMap;
 	DWORD readLen;
 	int HeadFlaglength = sizeof(FILE_SIGN_LEN);
-	char* fileHead = new char[FILE_SIGN_LEN];
+	char *fileHead = new char[FILE_SIGN_LEN];
 	//int currentPointer = 0;
 	//currentPointer = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
 	//SetFilePointer(hFile, -HeadFlaglength, NULL, FILE_END);
@@ -499,7 +481,6 @@ static HANDLE WINAPI NewCreateFileMapping(
 		/*GetSystemInfo(sysinfo);
 		auto  dwAllocationGranularity = sysinfo->dwAllocationGranularity;*/
 		MAPHAD_list.push_back(hFile);
-
 
 		//ReleaseMutex(hMutex);
 		OutputDebugStringEx("dwMaximumSizeHigh:%d dwMaximumSizeLow:%d \r\n", dwMaximumSizeHigh, dwMaximumSizeLow);
@@ -523,8 +504,8 @@ static HANDLE WINAPI NewCreateFileMapping(
 OpenFileMappingW()º¯Êý			´ò¿ªÒ»¸öÐÂµÄÎÄ¼þÓ³ÉäÄÚºË¶ÔÏó¹¦ÄÜ
 ************************************************/
 static HANDLE WINAPI NewOpenFileMappingW(
-	_In_ DWORD   dwDesiredAccess,
-	_In_ BOOL    bInheritHandle,
+	_In_ DWORD dwDesiredAccess,
+	_In_ BOOL bInheritHandle,
 	_In_ LPCTSTR lpName)
 {
 	OutputDebugStringEx(">>>>>>>>HOOK THE OpenFileMappingW\r\n");
@@ -549,11 +530,10 @@ static NTSTATUS NTAPI NewNtClose(IN HANDLE Handle)
 SetFilePointer()º¯Êý			¸ù¾Ý¾ä±ú¹Ø±Õ¹¦ÄÜ
 ************************************************/
 static DWORD WINAPI NewSetFilePointer(
-	_In_        HANDLE hFile,
-	_In_        LONG   lDistanceToMove,
-	_Inout_opt_ PLONG  lpDistanceToMoveHigh,
-	_In_        DWORD  dwMoveMethod
-)
+	_In_ HANDLE hFile,
+	_In_ LONG lDistanceToMove,
+	_Inout_opt_ PLONG lpDistanceToMoveHigh,
+	_In_ DWORD dwMoveMethod)
 {
 	OutputDebugStringEx("$$$$$>>>>>   3   HOOK:  THE SetFilePointer function !!!!,lDistanceToMove = %d\r\n", lpDistanceToMoveHigh);
 	if (dwMoveMethod == FILE_END && hFile == dochFile)
@@ -567,7 +547,7 @@ static DWORD WINAPI NewSetFilePointer(
 GetFileInformationByHandle()º¯Êý			¸ù¾Ý¾ä±ú¹Ø±Õ¹¦ÄÜ
 ************************************************/
 static BOOL WINAPI NewGetFileInformationByHandle(
-	_In_  HANDLE                       hFile,
+	_In_ HANDLE hFile,
 	_Out_ LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
 {
 	OutputDebugStringEx("@@@@@@@@@@HOOK:  THE GETFILEINFORMATIONBYHANDLE FUNCTION !!     %d\r\n", lpFileInformation->dwFileAttributes);
@@ -592,12 +572,11 @@ static DWORD WINAPI NewGetFileAttributesW(
 ReadFileEx()º¯Êý			¶ÁÈ¡ÎÄ¼þÊôÐÔ
 ************************************************/
 static BOOL WINAPI NewReadFileEx(
-	_In_      HANDLE                          hFile,
-	_Out_opt_ LPVOID                          lpBuffer,
-	_In_      DWORD                           nNumberOfBytesToRead,
-	_Inout_   LPOVERLAPPED                    lpOverlapped,
-	_In_      LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
-)
+	_In_ HANDLE hFile,
+	_Out_opt_ LPVOID lpBuffer,
+	_In_ DWORD nNumberOfBytesToRead,
+	_Inout_ LPOVERLAPPED lpOverlapped,
+	_In_ LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
 	OutputDebugStringEx("HOOK:  THE NewReadFileEx FUNCTION !!\r\n");
 	BOOL result = readFileEx(hFile, lpBuffer, nNumberOfBytesToRead, lpOverlapped, lpCompletionRoutine);
@@ -607,12 +586,11 @@ static BOOL WINAPI NewReadFileEx(
 ReadFileScatter()º¯Êý			¶ÁÈ¡ÎÄ¼þÊôÐÔ
 ************************************************/
 static BOOL WINAPI NewReadFileScatter(
-	_In_       HANDLE               hFile,
-	_In_       FILE_SEGMENT_ELEMENT aSegmentArray[],
-	_In_       DWORD                nNumberOfBytesToRead,
-	_Reserved_ LPDWORD              lpReserved,
-	_Inout_    LPOVERLAPPED         lpOverlapped
-)
+	_In_ HANDLE hFile,
+	_In_ FILE_SEGMENT_ELEMENT aSegmentArray[],
+	_In_ DWORD nNumberOfBytesToRead,
+	_Reserved_ LPDWORD lpReserved,
+	_Inout_ LPOVERLAPPED lpOverlapped)
 {
 	OutputDebugStringEx("HOOK:  THE NewReadFileScatter FUNCTION !!\r\n");
 	BOOL result = readFileScatter(hFile, aSegmentArray, nNumberOfBytesToRead, lpReserved, lpOverlapped);
@@ -633,7 +611,7 @@ GetFileAttributesExW()º¯Êý			¶ÁÈ¡ÎÄ¼þÊôÐÔ
 GetFileSizeEx()º¯Êý			¹¦ÄÜ
 ************************************************/
 static BOOL WINAPI NewGetFileSizeEx(
-	_In_  HANDLE         hFile,
+	_In_ HANDLE hFile,
 	_Out_ PLARGE_INTEGER lpFileSize)
 {
 	BOOL result = getFileSizeEx(hFile, lpFileSize);
@@ -656,10 +634,10 @@ static BOOL WINAPI NewGetFileSizeEx(
 SetFilePointerEx()º¯Êý			¹¦ÄÜ
 ************************************************/
 static BOOL WINAPI NewSetFilePointerEx(
-	_In_      HANDLE         hFile,
-	_In_      LARGE_INTEGER  liDistanceToMove,
+	_In_ HANDLE hFile,
+	_In_ LARGE_INTEGER liDistanceToMove,
 	_Out_opt_ PLARGE_INTEGER lpNewFilePointer,
-	_In_      DWORD          dwMoveMethod)
+	_In_ DWORD dwMoveMethod)
 {
 	OutputDebugStringEx("HOOK: THE SetFilePointerEx FUNCTION!!!!hFile=%d, liDistanceToMove=%d\r\n", hFile, liDistanceToMove);
 	if (dwMoveMethod == FILE_END && hFile == dochFile)
@@ -743,11 +721,10 @@ static BOOL WINAPI NewUnmapViewOfFile(_In_ LPCVOID lpBaseAddress)
 /***********************************************
 BitBlt()º¯Êý			º¯Êý½ØÍ¼¹¦ÄÜ
 ************************************************/
-static BOOL WINAPI New_BitBlt(_In_ HDC   hdcDest,
-	_In_ int   nXDest, _In_ int   nYDest, _In_ int   nWidth,
-	_In_ int   nHeight, _In_ HDC   hdcSrc, _In_ int   nXSrc,
-	_In_ int   nYSrc, _In_ DWORD dwRop
-)
+static BOOL WINAPI New_BitBlt(_In_ HDC hdcDest,
+							  _In_ int nXDest, _In_ int nYDest, _In_ int nWidth,
+							  _In_ int nHeight, _In_ HDC hdcSrc, _In_ int nXSrc,
+							  _In_ int nYSrc, _In_ DWORD dwRop)
 {
 	int result;
 	if ((dwRop & 0xCC0020) == 0xCC0020 && GetObjectType(hdcSrc) == 3)
@@ -773,10 +750,10 @@ static BOOL WINAPI New_BitBlt(_In_ HDC   hdcDest,
 StretchBlt()º¯Êý			º¯Êý½ØÍ¼¹¦ÄÜ
 ************************************************/
 static BOOL WINAPI New_StretchBlt(HDC hdcDest, int nXOriginDest,
-	int nYOriginDest, int nWidthDest,
-	int nHeightDest, HDC hdcSrc,
-	int nXOriginSrc, int nYOriginSrc, int nWidthSrc,
-	int nHeightSrc, DWORD dwRop)
+								  int nYOriginDest, int nWidthDest,
+								  int nHeightDest, HDC hdcSrc,
+								  int nXOriginSrc, int nYOriginSrc, int nWidthSrc,
+								  int nHeightSrc, DWORD dwRop)
 {
 	//OutputDebugStringEx("HOOK²âÊÔ2New_StretchBlt£º hdcDest = %d,hdcSrc = %d,dwRop = %d", hdcDest, hdcSrc, dwRop);
 	return stretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, dwRop);
@@ -786,19 +763,18 @@ static BOOL WINAPI New_StretchBlt(HDC hdcDest, int nXOriginDest,
 CreateProcessW()º¯Êý			´´½¨½ø³Ì¹¦ÄÜ
 ************************************************/
 static BOOL WINAPI NewCreateProcessW(
-	_In_opt_    LPCTSTR               lpApplicationName,
-	_Inout_opt_ LPTSTR                lpCommandLine,
-	_In_opt_    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-	_In_opt_    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-	_In_        BOOL                  bInheritHandles,
-	_In_        DWORD                 dwCreationFlags,
-	_In_opt_    LPVOID                lpEnvironment,
-	_In_opt_    LPCTSTR               lpCurrentDirectory,
-	_In_        LPSTARTUPINFO         lpStartupInfo,
-	_Out_       LPPROCESS_INFORMATION lpProcessInformation
-)
+	_In_opt_ LPCTSTR lpApplicationName,
+	_Inout_opt_ LPTSTR lpCommandLine,
+	_In_opt_ LPSECURITY_ATTRIBUTES lpProcessAttributes,
+	_In_opt_ LPSECURITY_ATTRIBUTES lpThreadAttributes,
+	_In_ BOOL bInheritHandles,
+	_In_ DWORD dwCreationFlags,
+	_In_opt_ LPVOID lpEnvironment,
+	_In_opt_ LPCTSTR lpCurrentDirectory,
+	_In_ LPSTARTUPINFO lpStartupInfo,
+	_Out_ LPPROCESS_INFORMATION lpProcessInformation)
 {
-	char PROGRAM_path[255] = { 0 };
+	char PROGRAM_path[255] = {0};
 	OutputDebugStringEx(" THE NewCreateProcessW FUNCTION !!!!\r\n");
 	BOOL result;
 	SHGetSpecialFolderPathA(0, PROGRAM_path, CSIDL_PROGRAM_FILESX86, 0);
@@ -838,24 +814,21 @@ static HANDLE WINAPI NewCreateProcessInternal(
 	OutputDebugStringEx("???????????HOOK: THE NewCreateProcessInternal FUNCTION !!!! name = %s\r\n", lpApplicationName);
 	HANDLE result;
 	result = createProcessInternalW(hToken, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles,
-		dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, hNewToken);
+									dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, hNewToken);
 	InjectDll(lpProcessInformation->dwProcessId, _T("C:\\Users\\Wrench\\Desktop\\1111\\copyDllHook.dll"));
 	return result;
 }
 
-
-
-static
-HANDLE
-WINAPI
-NewCreateFileMappingA(
-	__in     HANDLE hFile,
-	__in_opt LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
-	__in     DWORD flProtect,
-	__in     DWORD dwMaximumSizeHigh,
-	__in      DWORD dwMaximumSizeLow,
-	__in_opt LPCSTR lpName
-) {
+static HANDLE
+	WINAPI
+	NewCreateFileMappingA(
+		__in HANDLE hFile,
+		__in_opt LPSECURITY_ATTRIBUTES lpFileMappingAttributes,
+		__in DWORD flProtect,
+		__in DWORD dwMaximumSizeHigh,
+		__in DWORD dwMaximumSizeLow,
+		__in_opt LPCSTR lpName)
+{
 	OutputDebugStringEx("-----HOOK---createfilemappingAÍê³É");
 	return createfilemappingA(hFile, lpFileMappingAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 }
@@ -869,12 +842,12 @@ PVOID FindProcAddress(_In_ LPCTSTR lpFileName, LPCSTR lpProcName)
 {
 	PVOID insthook;
 	HINSTANCE hinst = NULL;
-	hinst = LoadLibrary(lpFileName);//¼ÓÔØdllÎÄ¼þ
+	hinst = LoadLibrary(lpFileName); //¼ÓÔØdllÎÄ¼þ
 	if (hinst == NULL)
 	{
 		return NULL;
 	}
-	insthook = GetProcAddress(hinst, lpProcName);//»ñÈ¡º¯ÊýµØÖ·
+	insthook = GetProcAddress(hinst, lpProcName); //»ñÈ¡º¯ÊýµØÖ·
 	if (insthook == NULL)
 	{
 		return NULL;
@@ -895,7 +868,7 @@ PVOID StartOneHook(LPCTSTR dllName, LPCSTR funcName, PVOID newFunc)
 {
 	//¿ªÊ¼ÊÂÎñ
 	DetourTransactionBegin();
-	//¸üÐÂÏß³ÌÐÅÏ¢  
+	//¸üÐÂÏß³ÌÐÅÏ¢
 	DetourUpdateThread(GetCurrentThread());
 	PVOID oldFunc = FindProcAddress(dllName, funcName);
 	if (oldFunc == NULL)
@@ -923,7 +896,7 @@ void EndOneHook(LPCTSTR dllName, PVOID oldFunc, PVOID newFunc)
 	////OutputDebugStringEx("end the funcName=%s ", funcName);
 	//¿ªÊ¼ÊÂÎñ
 	DetourTransactionBegin();
-	//¸üÐÂÏß³ÌÐÅÏ¢ 
+	//¸üÐÂÏß³ÌÐÅÏ¢
 	DetourUpdateThread(GetCurrentThread());
 	//½«À¹½ØµÄº¯Êý´ÓÔ­º¯ÊýµÄµØÖ·ÉÏ½â³ý
 	//PVOID oldFunc = FindProcAddress(dllName,funcName);
@@ -957,31 +930,35 @@ int rc4(char *pSecret, int SecretLen, char *pMessage, int MessageLen, char *pOut
 		s[ia] = i;
 
 	for (ia = 0; ia <= 255; ia++)
-		k[ia] = ((unsigned char *)pSecret)[ia%SecretLen];
+		k[ia] = ((unsigned char *)pSecret)[ia % SecretLen];
 	for (ia = i = j = 0; ia <= 255; ia++, i++)
 	{
 		j = (j + s[i] + k[i]) % 256;
-		t = s[i]; s[i] = s[j]; s[j] = t;
+		t = s[i];
+		s[i] = s[j];
+		s[j] = t;
 	}
 	for (ia = i = j = 0; ia <= MessageLen - 1; ia++)
 	{
 		i = (i + 1) % 256;
 		j = (j + s[i]) % 256;
-		t = s[i]; s[i] = s[j]; s[j] = t;
+		t = s[i];
+		s[i] = s[j];
+		s[j] = t;
 		t = (s[i] + s[j]) % 256;
 		((unsigned char *)pOut)[ia] = s[t] ^ ((unsigned char *)pMessage)[ia];
 	}
 	return 0;
 }
-BOOL  HOOKGetFileAttributesExW(
-	LPCWSTR                lpFileName,
+BOOL HOOKGetFileAttributesExW(
+	LPCWSTR lpFileName,
 	GET_FILEEX_INFO_LEVELS fInfoLevelId,
-	WIN32_FILE_ATTRIBUTE_DATA       *          lpFileInformation
-) {
+	WIN32_FILE_ATTRIBUTE_DATA *lpFileInformation)
+{
 	OutputDebugStringEx("  .............. HOOKGetFileAttributesExW ");
 	OutputDebugStringEx("HOOKGetFileAttributesExW open File:%ws fail", lpFileName);
 	BOOL ret = FALSE;
-	auto  FileHandle = CreateFileW(lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	auto FileHandle = CreateFileW(lpFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (FileHandle = NULL)
 	{
 		OutputDebugStringEx("HOOKGetFileAttributesExW open File:%ws fail", lpFileName);
@@ -997,13 +974,14 @@ BOOL  HOOKGetFileAttributesExW(
 		ret = getFileAttributesExW(lpFileName, fInfoLevelId, lpFileInformation);
 		lpFileInformation->nFileSizeLow -= HeadFlaglength;
 	}
-	else {
+	else
+	{
 		ret = getFileAttributesExW(lpFileName, fInfoLevelId, lpFileInformation);
 	}
 	return ret;
-
 }
-BOOL  WINAPI  hookGetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation) {
+BOOL WINAPI hookGetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
+{
 
 	std::mutex mutexObj;
 	bool bRet;
@@ -1026,7 +1004,6 @@ BOOL  WINAPI  hookGetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFO
 	return pfGetFileInformationByHandle(hFile, lpFileInformation);
 }
 
-
 void hexdump(const unsigned char *buf, const int num)
 {
 	char *temp = new char[num * 3 + 20];
@@ -1039,7 +1016,8 @@ void hexdump(const unsigned char *buf, const int num)
 		//OutputDebugStringEx("HOOK %d:%02x ", i, buf[i]);
 		sprintf_s(temp + i * 3, 4, "%02X \r\n", buf[i]);
 	}
-	for (i = 0; i < num * 3; i++) {
+	for (i = 0; i < num * 3; i++)
+	{
 		temp1[i * 2] = temp[i];
 	}
 	OutputDebugStringEx("HOOK DUMP!!! %s\r\n", temp1);
@@ -1058,35 +1036,41 @@ Description: ¿ªÊ¼ËùÓÐµÄHOOK
 void __stdcall StartHook()
 {
 	//m_pfnOriginalFindNextFileW = FindNextFileW StartOneHook(KERNEL32, "FindNextFileW", Fake_FindNextFileW);
-	m_pfnOriginalZwSetInformationFile = ZwSetInformationFile  StartOneHook(NTDLL, "ZwSetInformationFile", HookSetInformathionFile);
+	m_pfnOriginalZwSetInformationFile = ZwSetInformationFile StartOneHook(NTDLL, "ZwSetInformationFile", HookSetInformathionFile);
 	//m_pfnOriginalFindFirstFileW = FindFirstFileW StartOneHook(KERNEL32, "FindFirstFileW", Fake_FindFirstFileW);
 	m_pfnOriginalZwQueryDirectoryFile = ZwQueryDirectoryFile StartOneHook(NTDLL, "ZwQueryDirectoryFile", Fake_ZwQueryDirectoryFile);
-	if (m_pfnOriginalZwQueryDirectoryFile == 0x00) {
+	if (m_pfnOriginalZwQueryDirectoryFile == 0x00)
+	{
 		OutputDebugStringEx("m_pfnOriginalZwQueryDirectoryFile»ñÈ¡Ê§°Ü");
 		return;
 	}
 	m_pfnOriginalZwReadFile = ZwReadFile StartOneHook(NTDLL, "ZwReadFile", HookZwReadFile);
-	if (m_pfnOriginalZwReadFile == 0x00) {
+	if (m_pfnOriginalZwReadFile == 0x00)
+	{
 		OutputDebugStringEx("m_pfnOriginalZwReadFile»ñÈ¡Ê§°Ü");
 		return;
 	}
 	m_pfnOriginalZwClose = (pfZwClose)FindProcAddress(NTDLL, "ZwClose");
-	if (m_pfnOriginalZwClose == 0x00) {
+	if (m_pfnOriginalZwClose == 0x00)
+	{
 		OutputDebugStringEx("m_pfnOriginalZwClose»ñÈ¡Ê§°Ü");
 		return;
 	}
 	m_pfnOriginalZwMapViewOfSection = (pfZwMapViewOfSection)FindProcAddress(NTDLL, "ZwMapViewOfSection");
-	if (m_pfnOriginalZwMapViewOfSection == 0x00) {
+	if (m_pfnOriginalZwMapViewOfSection == 0x00)
+	{
 		OutputDebugStringEx("m_pfnOriginalZwMapViewOfSection»ñÈ¡Ê§°Ü");
 		return;
 	}
 	m_pfnOriginalRtlInitUnicodeString = (pfmyRtlInitUnicodeString)FindProcAddress(NTDLL, "RtlInitUnicodeString");
-	if (m_pfnOriginalRtlInitUnicodeString == 0x00) {
+	if (m_pfnOriginalRtlInitUnicodeString == 0x00)
+	{
 		OutputDebugStringEx("RtlInitUnicodeString»ñÈ¡Ê§°Ü");
 		return;
 	};
 	m_pfnOriginalZwUnmapViewOfSection = (pfZwUnmapViewOfSection)FindProcAddress(NTDLL, "ZwUnmapViewOfSection");
-	if (m_pfnOriginalZwUnmapViewOfSection == 0x00) {
+	if (m_pfnOriginalZwUnmapViewOfSection == 0x00)
+	{
 		OutputDebugStringEx("m_pfnOriginalZwUnmapViewOfSection»ñÈ¡Ê§°Ü");
 		return;
 	};
@@ -1101,12 +1085,10 @@ void __stdcall StartHook()
 	m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
 	//m_pfnOriginalZwWriteFile = ZwWriteFile StartOneHook(NTDLL, "ZwWriteFile", HookZwWriteFile);
 
-	
-
 	//createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
 
 	//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
-   // getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
+	// getFileSize = GETFILESIZE StartOneHook(KERNEL32, "GetFileSize", NewGetFileSize);
 	//createFileMapping = CREATEFILEMAPPING StartOneHook(KERNEL32, "CreateFileMappingW", NewCreateFileMapping);
 	//pfGetFileInformationByHandle = GetFileInformationByHandle StartOneHook(KERNEL32, "GetFileInformationByHandle", hookGetFileInformationByHandle);
 	// mapViewOfFile = MAPVIEWOFFILE StartOneHook(KERNEL32, "MapViewOfFile", NewMapViewOfFile);
@@ -1138,21 +1120,21 @@ void __stdcall StartHook()
 	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
 	*/
 	//listenParentProcess(GetCurrentProcessId());
-//}
-//else
-//{
-//	bitBlt = BITBLT StartOneHook(GDI32, "BitBlt", New_BitBlt);
-//	stretchBlt = STRECTCHBLT StartOneHook(GDI32, "StretchBlt", New_StretchBlt);
-//	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
-//	createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
-//}
-		/*openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
+	//}
+	//else
+	//{
+	//	bitBlt = BITBLT StartOneHook(GDI32, "BitBlt", New_BitBlt);
+	//	stretchBlt = STRECTCHBLT StartOneHook(GDI32, "StretchBlt", New_StretchBlt);
+	//	createProcessW = CREATEPROCESS StartOneHook(KERNEL32, "CreateProcessW", NewCreateProcessW);
+	//	createProcessInternalW = PROCESSINTERNALW StartOneHook(KERNEL32, "CreateProcessInternalW", NewCreateProcessInternal);
+	//}
+	/*openClipboard = OPENCLIPBOARD StartOneHook(USER32, "OpenClipboard", NewOpenClipboard);
 openPrinter = OPENPRINTER StartOneHook(WINSPOOL, "OpenPrinterW", NewOpenPrinter);
 showWindow = SHOWWINDOW StartOneHook(USER32, "ShowWindow", NewShowWindow);
 setWindowPos = SETWINDOWPOS StartOneHook(USER32, "SetWindowPos", NewSetWindowPos);
 setWindowTextW = SETWINDOWTEXTW StartOneHook(USER32, "SetWindowTextW", NewSetWindowTextW);
 setWindowTextA = SETWINDOWTEXTA StartOneHook(USER32, "SetWindowTextA", NewSetWindowTextA);*/
-/*m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
+	/*m_pfnOriginalZwCreateSection =  (myZwCreateSection)FindProcAddress(NTDLL, "ZwCreateSection");
 if (m_pfnOriginalZwCreateSection == 0x00) {
 OutputDebugStringEx("m_pfnOriginalZwCreateSection»ñÈ¡Ê§°Ü");
 return;}*/
@@ -1165,18 +1147,18 @@ void __stdcall EndHook()
 {
 	//if (GetParentProcessID(GetCurrentProcessId()) == *(int*)pBuffer)
 	//{
-		//TODO:½øÐÐ¶ÔÎÄ¼þµÄ½áÎ²ÐÅÏ¢µÄ·ÖÎö´Ó¶øÈ¥½áÊø¶ÔÓ¦µÄHOOK¹¦ÄÜ
-		/*EndOneHook(USER32, openClipboard, NewOpenClipboard);
+	//TODO:½øÐÐ¶ÔÎÄ¼þµÄ½áÎ²ÐÅÏ¢µÄ·ÖÎö´Ó¶øÈ¥½áÊø¶ÔÓ¦µÄHOOK¹¦ÄÜ
+	/*EndOneHook(USER32, openClipboard, NewOpenClipboard);
 		EndOneHook(WINSPOOL, openPrinter, NewOpenPrinter);
 		EndOneHook(USER32, showWindow, NewShowWindow);
 		EndOneHook(USER32, setWindowPos, NewSetWindowPos);
 		EndOneHook(USER32, setWindowTextW, NewSetWindowTextW);
 		EndOneHook(USER32, setWindowTextA, NewSetWindowTextA);*/
-		//EndOneHook(KERNEL32, readfile, NewReadfile);
-		//EndOneHook(KERNEL32, writeFile, New_WriteFile);
-		//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
-		//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
-		//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
+	//EndOneHook(KERNEL32, readfile, NewReadfile);
+	//EndOneHook(KERNEL32, writeFile, New_WriteFile);
+	//EndOneHook(KERNEL32, mapViewOfFile, NewMapViewOfFile);
+	//EndOneHook(KERNEL32, mapViewOfFileEx, NewMapViewOfFileEx);
+	//EndOneHook(KERNEL32, createFileMapping, NewCreateFileMapping);
 
 	EndOneHook(KERNEL32, pfGetFileInformationByHandle, hookGetFileInformationByHandle);
 	EndOneHook(NTDLL, orgZwCreateSection, HookZwCreateSection);
@@ -1210,12 +1192,12 @@ void __stdcall EndHook()
 	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);*/
 	//EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
 	//TerminateProcess(GetCurrentProcess(), 0);
-//}
-//else
-//{
-//	EndOneHook(GDI32, bitBlt, New_BitBlt);
-//	EndOneHook(GDI32, stretchBlt, New_StretchBlt);
-//	EndOneHook(KERNEL32, createProcessW, NewCreateProcessW);
-//	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
-//}
+	//}
+	//else
+	//{
+	//	EndOneHook(GDI32, bitBlt, New_BitBlt);
+	//	EndOneHook(GDI32, stretchBlt, New_StretchBlt);
+	//	EndOneHook(KERNEL32, createProcessW, NewCreateProcessW);
+	//	EndOneHook(KERNEL32, createProcessInternalW, NewCreateProcessInternal);
+	//}
 }
