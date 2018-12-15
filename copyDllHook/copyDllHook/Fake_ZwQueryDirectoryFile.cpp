@@ -169,7 +169,7 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 	std::mutex mutexObj;
 	bool bRet;
 	int HeadFlaglength = sizeof(RjFileSrtuct) + 1;
-	//OutputDebugStringEx("Fake_ZwQueryDirectoryFile::»ñÈ¡µÄÎÄ¼þ³¤¶È:%d", fsi.EndOfFile.QuadPart);
+	//OutputDebugStringEx("Fake_ZwQueryDirectoryFile::ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½:%d", fsi.EndOfFile.QuadPart);
 	//::MessageBox(NULL, "1111", "dsadsa", MB_YESNO | MB_ICONEXCLAMATION);
 	status = m_pfnOriginalZwQueryDirectoryFile(FileHandle,
 		Event,
@@ -195,7 +195,7 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 				if (handleListNode->FileHandle == FileHandle)
 				{
 					auto fsiBOTH = *(FILE_BOTH_DIR_INFORMATION*)FileInformation;
-					OutputDebugStringEx("QueryDirectoryFile£º£ºFILE_BOTH_DIR_INFORMATION»ñÈ¡µÄÎÄ¼þ³¤¶È:%d", fsiBOTH.EndOfFile.QuadPart);
+					OutputDebugStringEx("QueryDirectoryFileï¿½ï¿½ï¿½ï¿½FILE_BOTH_DIR_INFORMATIONï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½:%d", fsiBOTH.EndOfFile.QuadPart);
 					((FILE_BOTH_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
 				}
 			}
@@ -214,7 +214,7 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 				if (handleListNode->FileHandle == FileHandle)
 				{
 					auto fsiGlobalTxDirectory = *(FILE_DIRECTORY_INFORMATION*)FileInformation;
-					OutputDebugStringEx("QueryDirectoryFile£º£ºFileDirectoryInformation»ñÈ¡µÄÎÄ¼þ³¤¶È:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
+					OutputDebugStringEx("QueryDirectoryFileï¿½ï¿½ï¿½ï¿½FileDirectoryInformationï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_DIRECTORY_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
 				}
 			}
@@ -232,7 +232,7 @@ NTSTATUS NTAPI Fake_ZwQueryDirectoryFile(
 				if (handleListNode->FileHandle == FileHandle)
 				{
 					auto fsiGlobalTxDirectory = *(FILE_FULL_DIR_INFORMATION*)FileInformation;
-					OutputDebugStringEx("QueryDirectoryFile£º£ºFileDirectoryInformation»ñÈ¡µÄÎÄ¼þ³¤¶È:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
+					OutputDebugStringEx("QueryDirectoryFileï¿½ï¿½ï¿½ï¿½FileDirectoryInformationï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½:%d", fsiGlobalTxDirectory.EndOfFile.QuadPart);
 					((FILE_FULL_DIR_INFORMATION*)FileInformation)->EndOfFile.QuadPart -= HeadFlaglength;
 				}
 			}

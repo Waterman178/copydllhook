@@ -1099,7 +1099,7 @@ void __stdcall StartHook()
 	pfCloseHandle = CLOSEHANDLE StartOneHook(KERNEL32, "CloseHandle", NewCloseHandle);
 	createFileW = CREATEFILEW StartOneHook(KERNEL32, "CreateFileW", NewCreateFileW);
 	m_pfnOriginalZwQueryInformationFile = ZwQueryInformationFile StartOneHook(NTDLL, "ZwQueryInformationFile", Fake_ZwQueryInformationFile);
-	m_pfnOriginalZwWriteFile = ZwWriteFile StartOneHook(NTDLL, "ZwWriteFile", HookZwWriteFile);
+	//m_pfnOriginalZwWriteFile = ZwWriteFile StartOneHook(NTDLL, "ZwWriteFile", HookZwWriteFile);
 
 	
 
