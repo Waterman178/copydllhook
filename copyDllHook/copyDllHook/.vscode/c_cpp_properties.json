@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "WIN32",
+                "_X86_",
+                "_USING_V110_SDK71_",
+                "NDEBUG",
+                "_WINDOWS",
+                "_USRDLL",
+                "COPYDLLHOOK_EXPORTS"
+            ],
+            "windowsSdkVersion": "7.0",
+            "compilerPath": "D:/VS2017/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "msvc-x64"
+        }
+    ],
+    "version": 4
+}
