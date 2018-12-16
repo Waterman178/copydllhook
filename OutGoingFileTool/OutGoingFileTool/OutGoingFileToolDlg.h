@@ -60,6 +60,8 @@ private:
 	HANDLE hid = 0;
 	LPVOID pBuffer;                                    // π≤œÌƒ⁄¥Ê÷∏’Î
 	HANDLE hMap;
+	CString temp_PROGRAM_pathx64;
+	CString temp_PROGRAM_pathx86;
 public:
 	std::shared_ptr<rjFileInfo> encryptInfo;
 	PVOID TfileName;

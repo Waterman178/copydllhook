@@ -1,0 +1,8 @@
+LIBRARY copyDllHookx64
+EXPORTS
+StartHookKeyBord
+EndHookKeyBord
+StartHookMsg
+EndHookMsg
+StartHook
+EndHook 

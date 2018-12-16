@@ -100,9 +100,6 @@ END_MESSAGE_MAP()
 
 
 // COutGoingFileToolDlg 对话框
-
-
-
 COutGoingFileToolDlg::COutGoingFileToolDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(COutGoingFileToolDlg::IDD, pParent)
 {
@@ -112,13 +109,14 @@ COutGoingFileToolDlg::~COutGoingFileToolDlg()
 {
 	USES_CONVERSION;
 	DeleteFileW(A2CW(my_Cstr));
-
+    //EndHookMsg(&g_HookMsgx86);
+	//EndHookMsg(&g_HookMsgx64);
 	//卸载键盘的PRINT SCREEN 按键的控制
 	//UnstallHook = (BOOL (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookKeyBord");
 	//UnstallHook();
 
 	////卸载全局消息钩子
-	//UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookMsg");
+	UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T(temp_PROGRAM_pathx86.GetBuffer()), "EndHookMsg");
 	//UnstallHook();
 	/*UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "EndHookMsg");
 	UnstallHook();*/
@@ -167,6 +165,9 @@ BEGIN_MESSAGE_MAP(COutGoingFileToolDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
+
+
+
 // COutGoingFileToolDlg 消息处理程序
 
 
@@ -183,16 +184,16 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 
 
 	SHGetSpecialFolderPath(0, PROGRAM_path, CSIDL_PROGRAM_FILESX86, 0);
-	CString temp_PROGRAM_pathx86 = CString(PROGRAM_path);
+	temp_PROGRAM_pathx86 = CString(PROGRAM_path);
 	temp_PROGRAM_pathx86.Replace("\\", "\\\\");
 	temp_PROGRAM_pathx86 += "\\\\";
-	temp_PROGRAM_pathx86 += "copydllhook.dll";
-	CString temp_PROGRAM_pathx64 = CString(PROGRAM_path);
+	temp_PROGRAM_pathx86 += "copyDllHookx86.dll";
+	temp_PROGRAM_pathx64 = CString(PROGRAM_path);
 	temp_PROGRAM_pathx64.Replace("\\", "\\\\");
 	temp_PROGRAM_pathx64 += "\\\\";
-	temp_PROGRAM_pathx64 += "copydllhook64.dll";
-	CopyFile("copydllhook.dll", temp_PROGRAM_pathx86.GetBuffer(),TRUE);
-	CopyFile("copydllhook64.dll", temp_PROGRAM_pathx64.GetBuffer(), TRUE);
+	temp_PROGRAM_pathx64 += "copyDllHookx64.dll";
+	//CopyFile("copyDllHookx86.dll", temp_PROGRAM_pathx86.GetBuffer(),TRUE);
+	//CopyFile("copyDllHookx64.dll", temp_PROGRAM_pathx64.GetBuffer(), TRUE);
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
@@ -248,13 +249,8 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	////键盘的PRINT SCREEN 按键的控制
 	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookKeyBord");
 	//InstallHook();
-	//
-	////全局消息钩子
-	InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookMsg");
+	InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHookx86.dll"), "StartHookMsg");
 	InstallHook();
-	/*InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "StartHookMsg");
-	InstallHook();*/
-	//LoadLibraryA("copyDllHook.dll");
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -463,30 +459,30 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		auto orgdll64 = GetWorkDir();
 		orgdll64.Replace("\\", "\\\\");
 		orgdll64 += "copyDllHook64.dll";
-		//if (ShellExecuteEx(&ShExecInfo))
-		//{
-		//	HANDLE hid = ShExecInfo.hProcess;
-		//	DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
-		//	/*if (!IsWow64(OpenProcess(PROCESS_TERMINATE, FALSE, dwId)))
-		//	{
-		//  	if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
-		//	{
-		//		::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
-		//		return;
-		//	}
-		//	}
-		//	else
-		//	{
-		//		if (InjectDll(dwId, orgdll64.GetBuffer()) == -1)
-		//		{
-		//			::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
-		//			return;
-		//		}
-		//	}
-		//	updata.Dlgthis = (CHAR*)this;
-		//	updata.pShExecInfo = &ShExecInfo;
-		//	AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);*/
-		//}
+		if (ShellExecuteEx(&ShExecInfo))
+		{
+			HANDLE hid = ShExecInfo.hProcess;
+			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
+			/*if (!IsWow64(OpenProcess(PROCESS_TERMINATE, FALSE, dwId)))
+			{
+		  	if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
+			{
+				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+				return;
+			}
+			}
+			else
+			{
+				if (InjectDll(dwId, orgdll64.GetBuffer()) == -1)
+				{
+					::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+					return;
+				}
+			}
+			updata.Dlgthis = (CHAR*)this;
+			updata.pShExecInfo = &ShExecInfo;
+			AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);*/
+		}
 	}
 }
  CString GetWorkDir()

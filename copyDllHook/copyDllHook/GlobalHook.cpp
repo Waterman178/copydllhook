@@ -53,7 +53,7 @@ BOOL __stdcall EndHookKeyBord()//Ð¶ÔØ¼üÅÌ¹³×Ó
 
 void __stdcall StartHookMsg()
 {
-	g_HookMsg = SetWindowsHookEx(WH_CALLWNDPROCRET, MyMessageProc, GetModuleHandle(TEXT("copyDllHook.dll")), 0);
+	g_HookMsg = SetWindowsHookEx(WH_CALLWNDPROCRET, MyMessageProc, GetModuleHandle(TEXT("copyDllHookx86.dll")), 0);
 }
 BOOL __stdcall EndHookMsg()
 {
