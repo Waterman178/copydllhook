@@ -47,26 +47,15 @@ UPDATASTATIC updata;
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-void OutputDebugStringEx(const char *strOutputString, ...)
-
-{
-
+void OutputDebugStringEx(const char *strOutputString, ...){
 	va_list vlArgs = NULL;
-
 	va_start(vlArgs, strOutputString);
-
 	size_t nLen = _vscprintf(strOutputString, vlArgs) + 1;
-
 	char *strBuffer = new char[nLen];
-
 	_vsnprintf_s(strBuffer, nLen, nLen, strOutputString, vlArgs);
-
 	va_end(vlArgs);
-
 	OutputDebugStringA(strBuffer);
-
 	delete[] strBuffer;
-
 }
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -114,13 +103,11 @@ COutGoingFileToolDlg::~COutGoingFileToolDlg()
 	//卸载键盘的PRINT SCREEN 按键的控制
 	//UnstallHook = (BOOL (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookKeyBord");
 	//UnstallHook();
-
 	////卸载全局消息钩子
 	//UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T(temp_PROGRAM_pathx86.GetBuffer()), "EndHookMsg");
 	//UnstallHook();
 	/*UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "EndHookMsg");
 	UnstallHook();*/
-
 	//关闭已打开的文件
 	//::SendMessage(, WM_SYSCOMMAND, SC_CLOSE, 0);
 //	TerminateProcess(hid,0);
@@ -249,8 +236,8 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	////键盘的PRINT SCREEN 按键的控制
 	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookKeyBord");
 	//InstallHook();
-	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHookx86.dll"), "StartHookMsg");
-	//InstallHook();
+	InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHookx86.dll"), "StartHookMsg");
+	InstallHook();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
