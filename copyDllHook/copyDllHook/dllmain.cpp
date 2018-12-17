@@ -4,7 +4,7 @@
 #include "GlobalHook.h"
 bool bhook=false;
 HMODULE g_hDll = NULL;
-
+#define   WM_UPDATE_STATIC  (WM_USER + 0x100)
 HANDLE hMutex = NULL;
 DWORD WINAPI UnloadProc(PVOID param)
 {
@@ -61,6 +61,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		{
 			EndHook();
 		}
+		auto windowHand = FindWindowA("#32770", "outdoorsTool");
+		OutputDebugStringEx("FindWIN it!");
+		if (windowHand)
+			PostMessage(windowHand, WM_UPDATE_STATIC, 0, 0);
 		break;
 	}
 	return TRUE;

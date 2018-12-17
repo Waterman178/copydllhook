@@ -116,7 +116,7 @@ COutGoingFileToolDlg::~COutGoingFileToolDlg()
 	//UnstallHook();
 
 	////卸载全局消息钩子
-	UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T(temp_PROGRAM_pathx86.GetBuffer()), "EndHookMsg");
+	//UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T(temp_PROGRAM_pathx86.GetBuffer()), "EndHookMsg");
 	//UnstallHook();
 	/*UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "EndHookMsg");
 	UnstallHook();*/
@@ -249,8 +249,8 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	////键盘的PRINT SCREEN 按键的控制
 	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookKeyBord");
 	//InstallHook();
-	InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHookx86.dll"), "StartHookMsg");
-	InstallHook();
+	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHookx86.dll"), "StartHookMsg");
+	//InstallHook();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -259,11 +259,14 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 
 LRESULT COutGoingFileToolDlg::OnUpdateStatic(WPARAM wParam, LPARAM lParam)
 {
+	USES_CONVERSION;
 	if (wParam == 0) {
 		fileList.DeleteItem(0);
+		DeleteFileW(A2CW(my_Cstr));
 	}
 	else {
 		fileList.DeleteItem(wParam);
+		DeleteFileW(A2CW(my_Cstr));
 	}
 	return 0;
 }
@@ -415,7 +418,7 @@ void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 	COutGoingFileToolDlg *pDlg = (COutGoingFileToolDlg*)(((UPDATASTATIC *)pParam)->Dlgthis);
 	while (!WaitForSingleObject(ShExecInfo.hProcess, INFINITE))
 	{
-		DeleteFileW(A2CW(my_Cstr));
+		
 		::PostMessage(pDlg->m_hWnd, WM_UPDATE_STATIC, 0, 0);
 		return TRUE;
 	}
