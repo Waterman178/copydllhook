@@ -100,7 +100,10 @@ COutGoingFileToolDlg::~COutGoingFileToolDlg()
 	UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(TEXT("copyDllHookx86.dll"), "EndHookMsg");
 	UnstallHook();
 	if (!my_Cstr.IsEmpty())
+	{
 		DeleteFileW(A2CW(my_Cstr));
+	}
+		
 	HWND PWND = ::FindWindowA(NULL, "Wrenchx64");
 	if (PWND)
 		OutputDebugStringA("Find Wrenchx64");
@@ -183,7 +186,6 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	fileList.InsertColumn(0, _T("文件名"), LVCFMT_CENTER, 120, 0);
 	fileList.InsertColumn(1, _T("修改时间"), LVCFMT_CENTER, 120, 1);
 	fileList.InsertColumn(2, _T("文件大小/KB"), LVCFMT_CENTER, 120, 2);
-	fileList.InsertColumn(3, _T(""), LVCFMT_CENTER, 0,3);
 	//创建临时文件夹
 	int ret = CreateDirectory(_T(E_TMPDIR), 0);
 	if (ret == 0) {
@@ -219,6 +221,7 @@ LRESULT COutGoingFileToolDlg::OnUpdateStatic(WPARAM wParam, LPARAM lParam)
 	USES_CONVERSION;
 	if (wParam == 0) {
 		fileList.DeleteItem(0);
+		SetFileAttributesA(my_Cstr.GetBuffer(), FILE_ATTRIBUTE_NORMAL);
 		DeleteFileW(A2CW(my_Cstr));
 	}
 	return 0;
@@ -263,82 +266,6 @@ HCURSOR COutGoingFileToolDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
-//void COutGoingFileToolDlg::OnBnClickedOpenFile()
-//{
-//
-//	////加密文件
-//
-//	/*FILE * TEMP = fopen("E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD\\test001.rar", "rb+");
-//	FILE * TEMP1 = fopen("E:\\XUJYALDSKFJLSKDFJKLSDFJALSDKFJLKSD\\rar001.rar", "ab+");
-//
-//	char buf[20] = { 0 };
-//	while (fread(buf, 1, 1, TEMP)) {
-//		buf[0] ^= 'a';
-//		fwrite(buf, 1, 1, TEMP1);
-//	}
-//	char scretInfo[] = { "DSKFJLSKDF" };
-//	int iflag = 0;
-//	while (iflag < 10)
-//	{
-//		fwrite(&scretInfo[iflag], 1, 1, TEMP1);
-//		iflag++;
-//	}
-//	fflush(TEMP1);
-//	fclose(TEMP);
-//	fclose(TEMP1);
-//	return;*/
-//
-//
-//	char ucomDirPath[2048] = { 0 };
-//
-//	//设置过滤器
-//	TCHAR szFilter[] = _T("rar文件(*.rar)|*.rar|全部文件(*.*)|*.*");
-//	CFileDialog dlg(TRUE, _T("doc"), _T("my"), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, this);
-//	if (dlg.DoModal() == IDOK)
-//	{
-//		//随机生成一个文件夹名称，解压选定文件到这个目录下
-//		//memcpy(ucomDirPath,GetRandLetter(),15);
-//		//sprintf(ucomDirPath, "%s",GetRandLetter());
-//		int ret = UncompreFile(E_TMPDIR, CString2char(dlg.GetPathName()));
-//		Sleep(100);														//TODO:多文件的时候感觉还是会有问题
-//		//if (ret > 31)
-//		//{
-//			if (SetCurrentDirectory(_T(E_TMPDIR)) == TRUE)
-//			{
-//				OutputDebugString(_T("find the file>>>>>>>>>>>>"));
-//				CFileFind  finder;
-//				CString fileInfo;
-//				BOOL bWorking = finder.FindFile(_T("*.*"));
-//				int line = 0;
-//				CTime tmp;
-//				while (bWorking)
-//				{
-//					bWorking = finder.FindNextFile();
-//					if (line > 1)
-//					{
-//						OutputDebugString(_T("find the file"));
-//						fileList.InsertItem(line - 2, finder.GetFileName());
-//						finder.GetLastWriteTime(tmp);
-//						fileInfo.Format(_T("%d/%d/%d"), tmp.GetYear(), tmp.GetMonth(), tmp.GetDay());
-//						fileList.SetItemText(line - 2, 1, fileInfo);
-//						fileInfo.Format(_T("%ld"), finder.GetLength());
-//						fileList.SetItemText(line - 2, 2, fileInfo);
-//						fileList.SetItemText(line - 2, 3, finder.GetFilePath());
-//					}
-//					line++;
-//				}
-//			}
-//			else
-//			{
-//				return;
-//			}
-//		//}
-//		
-//
-//	}
-//	
-//}
-
 void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
@@ -348,10 +275,7 @@ void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 	NMLISTVIEW *pNMListView = (NMLISTVIEW*)pNMHDR;
 	if (-1 != pNMListView->iItem)
 	{
-		//获取被选择列表的第一个子项的文本
 		strLangName = fileList.GetItemText(pNMListView->iItem, 3);
-		//将选择的语言显示与编辑框中
-		//SetDlgItemText(IDC_LANG_SEL_EDIT,strLangName);
 		ShellExecute(NULL, _T("open"), strLangName, NULL, NULL, SW_SHOWNORMAL);
 	}
 }
@@ -362,7 +286,6 @@ void COutGoingFileToolDlg::OnHdnItemclickList1(NMHDR *pNMHDR, LRESULT *pResult)
 	COutGoingFileToolDlg *pDlg = (COutGoingFileToolDlg*)(((UPDATASTATIC *)pParam)->Dlgthis);
 	while (!WaitForSingleObject(ShExecInfo.hProcess, INFINITE))
 	{
-		
 		::PostMessage(pDlg->m_hWnd, WM_UPDATE_STATIC, 0, 0);
 		return TRUE;
 	}
@@ -411,26 +334,7 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		if (ShellExecuteEx(&ShExecInfo))
 		{
 			HANDLE hid = ShExecInfo.hProcess;
-			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
-			/*if (!IsWow64(OpenProcess(PROCESS_TERMINATE, FALSE, dwId)))
-			{
-			if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
-			{
-				::MessageBox(NULL, "注入失败", "软件提示", MB_YESNO | MB_ICONEXCLAMATION);
-				return;
-			}
-			}
-			else
-			{
-				if (InjectDll(dwId, orgdll64.GetBuffer()) == -1)
-				{
-					::MessageBox(NULL, "注入失败", "软件提示", MB_YESNO | MB_ICONEXCLAMATION);
-					return;
-				}
-			}
-			updata.Dlgthis = (CHAR*)this;
-			updata.pShExecInfo = &ShExecInfo;*/
-			//AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
+			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);
 		}
 	}
 }
