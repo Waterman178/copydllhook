@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "copyDllHook", "..\copyDllHo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CryptTool", "..\CryptTool\CryptTool.vcxproj", "{3033B797-B492-4BCA-93E2-732B25A384C0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OurDoorToolx64", "..\OurDoorToolx64\OurDoorToolx64.vcxproj", "{44E5CCC9-E268-45B7-AD25-37243E228824}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -41,6 +43,14 @@ Global
 		{3033B797-B492-4BCA-93E2-732B25A384C0}.Release|Win32.Build.0 = Release|Win32
 		{3033B797-B492-4BCA-93E2-732B25A384C0}.Release|x64.ActiveCfg = Release|x64
 		{3033B797-B492-4BCA-93E2-732B25A384C0}.Release|x64.Build.0 = Release|x64
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Debug|Win32.ActiveCfg = Debug|Win32
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Debug|Win32.Build.0 = Debug|Win32
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Debug|x64.ActiveCfg = Debug|x64
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Debug|x64.Build.0 = Debug|x64
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Release|Win32.ActiveCfg = Release|Win32
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Release|Win32.Build.0 = Release|Win32
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Release|x64.ActiveCfg = Release|x64
+		{44E5CCC9-E268-45B7-AD25-37243E228824}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

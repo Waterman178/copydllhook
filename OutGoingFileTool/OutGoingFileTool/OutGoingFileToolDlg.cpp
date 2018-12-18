@@ -13,7 +13,7 @@
 typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 
 LPFN_ISWOW64PROCESS fnIsWow64Process;
-
+#define   WM_EXITPROCESS   (WM_USER + 0x103)
 BOOL IsWow64(HANDLE PROCESS)
 {
 	BOOL bIsWow64 = FALSE;
@@ -97,40 +97,15 @@ COutGoingFileToolDlg::COutGoingFileToolDlg(CWnd* pParent /*=NULL*/)
 COutGoingFileToolDlg::~COutGoingFileToolDlg()
 {
 	USES_CONVERSION;
-	DeleteFileW(A2CW(my_Cstr));
-    //EndHookMsg(&g_HookMsgx86);
-	//EndHookMsg(&g_HookMsgx64);
-	//卸载键盘的PRINT SCREEN 按键的控制
-	//UnstallHook = (BOOL (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "EndHookKeyBord");
-	//UnstallHook();
-	////卸载全局消息钩子
-	//UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T(temp_PROGRAM_pathx86.GetBuffer()), "EndHookMsg");
-	//UnstallHook();
-	/*UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(_T("copyDllHook64.dll"), "EndHookMsg");
-	UnstallHook();*/
-	//关闭已打开的文件
-	//::SendMessage(, WM_SYSCOMMAND, SC_CLOSE, 0);
-//	TerminateProcess(hid,0);
-//	//删除临时文件中解压出来的文件
-//	if (SetCurrentDirectory(_T(TMPDIR)) == TRUE)
-//	{
-//		CFileFind  finder;
-//		BOOL bWorking = finder.FindFile(_T("*.*"));
-//		int line = 0;
-//		CTime tmp;
-//		while (bWorking)
-//		{
-//			bWorking = finder.FindNextFile();
-//			if (line > 1)
-//			{
-//				HWND hwnd = ::FindWindow(NULL, finder.GetFileName());
-//				DeleteFile(finder.GetFilePath());		
-//			}
-//			line++;
-//		}
-//	}
-//	::UnmapViewOfFile(pBuffer);
-//	::CloseHandle(hMap);
+	UnstallHook = (BOOL(WINAPI*)())LoadDllFunc(TEXT("copyDllHookx86.dll"), "EndHookMsg");
+	UnstallHook();
+	if (!my_Cstr.IsEmpty())
+		DeleteFileW(A2CW(my_Cstr));
+	HWND PWND = ::FindWindowA(NULL, "Wrenchx64");
+	if (PWND)
+		OutputDebugStringA("Find Wrenchx64");
+	auto thradId = GetWindowThreadProcessId(PWND, NULL);
+	::PostThreadMessage(thradId,WM_EXITPROCESS, 0,0);
 }
 
 void COutGoingFileToolDlg::DoDataExchange(CDataExchange* pDX)
@@ -165,11 +140,8 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	if (Ret == 7)
 		exit(0);
 	CDialogEx::OnInitDialog();
-
 	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
 	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
-
-
 	SHGetSpecialFolderPath(0, PROGRAM_path, CSIDL_PROGRAM_FILESX86, 0);
 	temp_PROGRAM_pathx86 = CString(PROGRAM_path);
 	temp_PROGRAM_pathx86.Replace("\\", "\\\\");
@@ -181,12 +153,14 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	temp_PROGRAM_pathx64 += "copyDllHookx64.dll";
 	//CopyFile("copyDllHookx86.dll", temp_PROGRAM_pathx86.GetBuffer(),TRUE);
 	//CopyFile("copyDllHookx64.dll", temp_PROGRAM_pathx64.GetBuffer(), TRUE);
+
+	InstallHook = (void (WINAPI*)())LoadDllFunc(TEXT("copyDllHookx86.dll"), "StartHookMsg");
+	InstallHook();
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
-
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
 	if (pSysMenu != NULL)
 	{
@@ -200,19 +174,15 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
-
 	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
 	//  执行此操作
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
-
 	// TODO:  在此添加额外的初始化代码
 	CreateDirectory(_T(E_TMPDIR), NULL);
-
-
-	fileList.InsertColumn(0, _T("文件名"), LVCFMT_CENTER, 100, 0);
-	fileList.InsertColumn(1, _T("修改时间"), LVCFMT_CENTER, 100, 1);
-	fileList.InsertColumn(2, _T("文件大小/KB"), LVCFMT_CENTER, 100, 2);
+	fileList.InsertColumn(0, _T("文件名"), LVCFMT_CENTER, 120, 0);
+	fileList.InsertColumn(1, _T("修改时间"), LVCFMT_CENTER, 120, 1);
+	fileList.InsertColumn(2, _T("文件大小/KB"), LVCFMT_CENTER, 120, 2);
 	fileList.InsertColumn(3, _T(""), LVCFMT_CENTER, 0,3);
 	//创建临时文件夹
 	int ret = CreateDirectory(_T(E_TMPDIR), 0);
@@ -222,24 +192,24 @@ BOOL COutGoingFileToolDlg::OnInitDialog()
 	else {
 		printf("CreateDirectory -> %d\n", ret);
 	}
-
-	/*hMap = ::CreateFileMapping(INVALID_HANDLE_VALUE,
+	STARTUPINFO si;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+	si.dwFlags = STARTF_USESHOWWINDOW;  
+	si.wShowWindow = FALSE;        
+	BOOL bRet = CreateProcess(
+		NULL,           
+		(LPSTR)"OurDoorToolx64.exe",
+		NULL,         
+		NULL,           
+		FALSE,          
+		0, 
+		NULL,     
 		NULL,
-		PAGE_READWRITE,
-		0,
-		sizeof(int),
-		_T("processMem_FUCK"));*/
-	// 映射对象的一个视图，得到指向共享内存的指针，设置里面的数据
-//	pBuffer = ::MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	//*(int*)pBuffer = GetCurrentProcessId();
-	
-	////键盘的PRINT SCREEN 按键的控制
-	//InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHook.dll"), "StartHookKeyBord");
-	//InstallHook();
-	InstallHook = (void (WINAPI*)())LoadDllFunc(_T("copyDllHookx86.dll"), "StartHookMsg");
-	InstallHook();
-
-	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+		&si,
+		&pi);
+	return TRUE;
 }
 
 
@@ -249,10 +219,6 @@ LRESULT COutGoingFileToolDlg::OnUpdateStatic(WPARAM wParam, LPARAM lParam)
 	USES_CONVERSION;
 	if (wParam == 0) {
 		fileList.DeleteItem(0);
-		DeleteFileW(A2CW(my_Cstr));
-	}
-	else {
-		fileList.DeleteItem(wParam);
 		DeleteFileW(A2CW(my_Cstr));
 	}
 	return 0;
@@ -270,27 +236,18 @@ void COutGoingFileToolDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// 如果向对话框添加最小化按钮，则需要下面的代码
-//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
-//  这将由框架自动完成。
-
 void COutGoingFileToolDlg::OnPaint()
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // 用于绘制的设备上下文
-
+		CPaintDC dc(this); 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
-
-		// 使图标在工作区矩形中居中
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
 		GetClientRect(&rect);
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
-
-		// 绘制图标
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -429,6 +386,10 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		strLangName = fileList.GetItemText(pNMListView->iItem, 0);
 		//TODO:解压此文件
 		my_Cstr += strLangName;
+		auto hFile = fopen(my_Cstr.GetBuffer(), "r");
+		if (!hFile)
+			::MessageBox(NULL, "error", "no find file", MB_YESNO | MB_ICONEXCLAMATION);
+		fclose(hFile);
 		//将选择的语言显示与编辑框中
 		SHELLEXECUTEINFO ShExecInfo = { 0 };
 		ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -441,23 +402,21 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 		ShExecInfo.nShow = SW_SHOW;
 		ShExecInfo.hInstApp = NULL;
 		DWORD dwId = 0L;
-		//这里创建一个线程运行算了
-		//SetFileAttributes(str, FILE_ATTRIBUTE_READONLY);
 		auto orgdll = GetWorkDir();
 		orgdll.Replace("\\", "\\\\");
-		orgdll += "copyDllHook.dll";
+		orgdll += "copyDllHookx86.dll";
 		auto orgdll64 = GetWorkDir();
 		orgdll64.Replace("\\", "\\\\");
-		orgdll64 += "copyDllHook64.dll";
+		orgdll64 += "copyDllHookx64.dll";
 		if (ShellExecuteEx(&ShExecInfo))
 		{
 			HANDLE hid = ShExecInfo.hProcess;
 			DWORD dwId = ::GetProcessId(ShExecInfo.hProcess);//获取打开的另一个程序的进程ID
 			/*if (!IsWow64(OpenProcess(PROCESS_TERMINATE, FALSE, dwId)))
 			{
-		  	if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
+			if (InjectDll(dwId, orgdll.GetBuffer()) == -1)
 			{
-				::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+				::MessageBox(NULL, "注入失败", "软件提示", MB_YESNO | MB_ICONEXCLAMATION);
 				return;
 			}
 			}
@@ -465,13 +424,13 @@ void COutGoingFileToolDlg::OnNMDblclkList1(NMHDR *pNMHDR, LRESULT *pResult)
 			{
 				if (InjectDll(dwId, orgdll64.GetBuffer()) == -1)
 				{
-					::MessageBox(NULL, "软件提示", "注入失败", MB_YESNO | MB_ICONEXCLAMATION);
+					::MessageBox(NULL, "注入失败", "软件提示", MB_YESNO | MB_ICONEXCLAMATION);
 					return;
 				}
 			}
 			updata.Dlgthis = (CHAR*)this;
-			updata.pShExecInfo = &ShExecInfo;
-			AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);*/
+			updata.pShExecInfo = &ShExecInfo;*/
+			//AfxBeginThread((AFX_THREADPROC)ThreadProc, &updata, THREAD_PRIORITY_TIME_CRITICAL);
 		}
 	}
 }
@@ -486,87 +445,58 @@ static int InjectDll(DWORD dwProcessId, PTCHAR szDllName)
 {
 	if (szDllName[0] == NULL)
 		return -1;
-	//提高权限相关操作  
-	//EnablePrivilege(TRUE);
-	//1. 打开进程  
-	HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS,     //打开进程权限  
-		FALSE,                                              //是否可继承   
-		dwProcessId);                                       //进程ID  
-
+	HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS,       
+		FALSE,                                             
+		dwProcessId);                                      
 	if (hProcess == INVALID_HANDLE_VALUE)
 		return -1;
-
-	//2. 在远程进程中申请空间  
-	LPVOID pszDllName = ::VirtualAllocEx(hProcess, //远程进程句柄  
-		NULL,                                  //建议开始地址  
-		4096,                                  //分配空间大小  
-		MEM_COMMIT,                            //空间初始化全0  
-		PAGE_EXECUTE_READWRITE);               //空间权限  
-
+	LPVOID pszDllName = ::VirtualAllocEx(hProcess, 
+		NULL,                                    
+		4096,                                 
+		MEM_COMMIT,                           
+		PAGE_EXECUTE_READWRITE);                
 	if (NULL == pszDllName)
-	{
 		return -1;
-	}
-
-	//3. 向远程进程中写入数据  
 	BOOL bRet = ::WriteProcessMemory(hProcess, pszDllName,
 		szDllName, MAX_PATH, NULL);
-
 	if (NULL == bRet)
-	{
 		return -1;
-	}
-
-	//4. 在远程进程中创建远程线程 
 	HANDLE m_hInjecthread = NULL;
-	m_hInjecthread = ::CreateRemoteThread(hProcess,      //远程进程句柄  
-		NULL,                                            //安全属性  
-		0,                                               //栈大小  
-		(LPTHREAD_START_ROUTINE)LoadLibrary,             //进程处理函数      
-		pszDllName,                                      //传入参数  
-		NULL,                                            //默认创建后的状态  
-		NULL);                                           //线程ID  
-
+	m_hInjecthread = ::CreateRemoteThread(hProcess,     
+		NULL,                                             
+		0,                                               
+		(LPTHREAD_START_ROUTINE)LoadLibrary,              
+		pszDllName,                                     
+		NULL,                                           
+		NULL);                                          
 	if (NULL == m_hInjecthread)
 	{
 		DWORD dwErr = GetLastError();
 		return -1;
 	}
-
-	//5. 等待线程结束返回  
-	DWORD dw = WaitForSingleObject(m_hInjecthread, -1);
-	//6. 获取线程退出码,即LoadLibrary的返回值，即dll的首地址  
+	DWORD dw = WaitForSingleObject(m_hInjecthread, -1);  
 	DWORD dwExitCode;
 	HMODULE m_hMod;
 	GetExitCodeThread(m_hInjecthread, &dwExitCode);
 	m_hMod = (HMODULE)dwExitCode;
-
-	//7. 释放空间  
 	BOOL bReturn = VirtualFreeEx(hProcess, pszDllName,
 		4096, MEM_DECOMMIT);
-
 	if (NULL == bReturn)
-	{
 		return -1;
-	}
-
 	CloseHandle(hProcess);
 	hProcess = NULL;
-	//恢复权限相关操作  
-	//EnablePrivilege(FALSE);
-
 	return 0;
 }
 PVOID COutGoingFileToolDlg::LoadDllFunc(LPCTSTR lpFileName, LPCSTR lpProcName)
 {
 	PVOID insthook;
 	HINSTANCE hinst = NULL;
-	hinst = LoadLibrary(lpFileName);//加载dll文件
+	hinst = LoadLibrary(lpFileName);
 	if (hinst == NULL)
 	{
 		return NULL;
 	}
-	insthook = GetProcAddress(hinst, lpProcName);//获取函数地址
+	insthook = GetProcAddress(hinst, lpProcName);
 	if (insthook == NULL)
 	{
 		return NULL;
@@ -588,61 +518,8 @@ int COutGoingFileToolDlg::UncompreFile(const char* uncomTowhere, const char* nee
 	free((void *)needUncom);
 	return ret;
 }
-//char* COutGoingFileToolDlg::CString2char(CString src)
-//{
-//	char *m_date;
-//	size_t m_length;
-//	m_length = src.GetLength() * 2 + 1;
-//	m_date = (char *)malloc(m_length);
-//	memset(m_date, 0, m_length);
-//	size_t nlength = wcslen(src.GetBuffer());
-//	//获取转换后的长度
-//	int nbytes = WideCharToMultiByte(0, 0,src.GetBuffer(),nlength,  NULL, 0,NULL,NULL);
-//	if (nbytes>(int)m_length)   nbytes = m_length;
-//	// 通过以上得到的结果，转换unicode 字符为ascii 字符
-//	WideCharToMultiByte(0, 0, src.GetBuffer(),nlength, m_date,nbytes,NULL,NULL);
-//	return m_date;
-//}
 void COutGoingFileToolDlg::OnBnClickedButton2()
 {
-	// TODO: 在此添加控件通知处理程序代码
-	//char   Ext[250];
-	//char  pBuffer[250];
-	//INT eof = -1;
-	//encryptInfo = std::shared_ptr<rjFileInfo>(new rjFileInfo());
-	//memcpy(encryptInfo->encryptHead.FileHeadName, FileName, sizeof(FileName));
-	//encryptInfo->encryptHead.onlyread = 1;
-	//encryptInfo->encryptHead.forbidensaveas = 1;
-	//FILE * TEMP = fopen("C:\\Users\\Administrator\\Desktop\\121.docx", "rb+");
-	//FILE * TEMP1 = fopen("C:\\Users\\Administrator\\Desktop\\121.rjs", "wb+");
-	//_splitpath_s("C:\\Users\\Administrator\\Desktop\\121.docx", NULL, 0, NULL, 0, pBuffer, _MAX_FNAME, Ext, _MAX_FNAME);// 得到文件名
-	//strcat(pBuffer, Ext); //文件名衔接个后缀名
-	//fseek(TEMP, 0, SEEK_END);   //指针：移动到文件尾部
-	//encryptInfo->encryptHead.length = ftell(TEMP); //获取文件大小
-	//memcpy(encryptInfo->encryptHead.FileSrcName, pBuffer, 60);//填写原文件名
-	//encryptInfo->encryptHead.Count = 1000; //文件使用次数
-	//size_t iflag = 0;
-	//size_t len = sizeof(RjFileSrtuct);
-	////从结构体头开始复制，已经是1字节对齐了
-	//while (iflag <= len)
-	//{
-	//	fwrite(encryptInfo->encryptHead.FileHeadName+iflag, 1, 1, TEMP1);//这个encryptInfo->encryptHead.FileHeadName指针写法不太规范,一般懂汇编和C的编程设计者容易理解，也没用原始指针。
-	//	iflag++;
-	//	fflush(TEMP1);
-	//}
-	//char*  buf = new char[encryptInfo->encryptHead.length];
-	//ZeroMemory(buf, (int)encryptInfo->encryptHead.length);
-	//fseek(TEMP, 0, SEEK_SET);//移动到头部
-	//while (fread(buf, 1, 1, TEMP)) {
-	//	buf[0] ^= 'a';
-	//	fseek(TEMP1, 0, SEEK_END);
-	//	fwrite(buf, 1, 1, TEMP1);
-	//	fflush(TEMP1);
-	//}
-	//fseek(TEMP1, 0, SEEK_END);
-	//fclose(TEMP);
-	//fclose(TEMP1);
-	//delete buf;
 	return;
 }
 void COutGoingFileToolDlg::OnHdnEnddragList1(NMHDR *pNMHDR, LRESULT *pResult)

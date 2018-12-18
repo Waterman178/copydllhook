@@ -42,6 +42,7 @@ protected:
 public:
 	//afx_msg void OnBnClickedOpenFile();
 	//afx_msg void OnDropFiles(HDROP hDropInfo);
+	PROCESS_INFORMATION pi;
 	afx_msg void OnBnClickedButton2();
 	lxListBox fileList;
 	//lxListBox m_wndListCtrl;
